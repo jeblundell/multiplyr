@@ -1,10 +1,14 @@
 Package: fastdf
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Fast implementation of data.frame using bigmemory
 Version: 0.1
 Date: 2016-04-10
-Author: Who wrote it
-Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line)
-License: What license is it under?
+Author: Jim Blundell
+Maintainer: Jim Blundell <james.blundell@keble.ox.ac.uk>
+Description: Data frames are easy to use and bigmemory matrices are
+    fast and can be used in parallel settings: this package is an
+    attempt to combine them
+License: GPL-2
+Depends: bigmemory (>= 4.5.19), bigmemory.sri (>= 0.1.3),
+    magrittr (>= 1.5), Rdsm (>= 2.1.1), parallel
 LazyData: TRUE
