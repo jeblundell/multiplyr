@@ -171,6 +171,35 @@ as.data.frame.fastdf <- function (x) {
 }
 
 #' @export
+`[.fastdf` <- function (x, cols) {
+    m <- match (cols, attr(x, "colnames"))
+    out <- NULL
+    for (i in m) {
+        itype <- attr(x, "type.cols")[i]
+        if (itype == 0) {
+            o <- (x[[1]][,i])
+        } else if (itype == 1) {
+            f <- match (i, attr(x, "factor.cols"))
+            o <- (factor(x[[1]][,i],
+                           levels=seq_len(length(attr(x, "factor.levels")[[f]])),
+                           labels=attr(x, "factor.levels")[[f]]))
+        } else if (itype == 2) {
+            f <- match (i, attr(x, "factor.cols"))
+            o <- (attr(x, "factor.levels")[[f]][x[[1]][,i]])
+        }
+        if (is.null(out)) {
+            out <- o
+        } else {
+            out <- cbind (data.frame(out), data.frame(o))
+        }
+    }
+    if (length(m) > 1) {
+        names (out) <- attr(x, "colnames")[m]
+    }
+    return (out)
+}
+
+#' @export
 `names<-.fastdf` <- function (x, value) {
     attr(x, "colnames") <- value
 }
@@ -180,12 +209,11 @@ names.fastdf <- function (x) {
     attr(x, "colnames")
 }
 
-
 #' @export
 bind_variables <- function (dat, envir) {
     rm (list=ls(envir=envir), envir=envir)
     for (var in names(dat)) {
-        f <- local ({.var<-var; .dat<-dat; function (x) {.var}})
+        f <- local ({.var<-var; .dat<-dat; function (x) {.dat[.var]}})
         makeActiveBinding(var, f, env=envir)
     }
     return (ls(envir=envir))
