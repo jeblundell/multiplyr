@@ -147,3 +147,30 @@ as.data.frame.fastdf <- function (x) {
     attr(value, "class") <- "data.frame"
     value
 }
+
+#' @export
+`$.fastdf` <- function (x, name) {
+    i <- match (name, attr(x, "colnames"))
+    itype <- attr(x, "type.cols")[i]
+    if (itype == 0) {
+        return (x[[1]][,i])
+    } else if (itype == 1) {
+        f <- match (i, attr(x, "factor.cols"))
+        return (factor(x[[1]][,i],
+                             levels=seq_len(length(attr(x, "factor.levels")[[f]])),
+                             labels=attr(x, "factor.levels")[[f]]))
+    } else if (itype == 2) {
+        f <- match (i, attr(x, "factor.cols"))
+        return (attr(x, "factor.levels")[[f]][x[[1]][,i]])
+    }
+}
+
+#' @export
+`names<-.fastdf` <- function (x, value) {
+    attr(x, "colnames") <- value
+}
+
+#' @export
+names.fastdf <- function (x) {
+    attr(x, "colnames")
+}
