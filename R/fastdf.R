@@ -1,8 +1,9 @@
 
 #' Constructor
-#' @params .cl Cluster object, number of nodes or NULL (default)
+#' @param .cl Cluster object, number of nodes or NULL (default)
+#' @param alloc Allocate additional space
 #' @export
-fastdf <- function (..., cl = NULL) {
+fastdf <- function (..., alloc=0, cl = NULL) {
     vars <- list(...)
 
     if (length(vars) == 1) {
@@ -19,15 +20,17 @@ fastdf <- function (..., cl = NULL) {
         Rdsm::mgrinit (cl)
     }
 
+    parallel::clusterEvalQ (cl, library(fastdf))
+
     nrows <- length(vars[[1]])
-    ncols <- length(vars)
+    ncols <- length(vars) + alloc
     Rdsm::mgrmakevar(cl, ".bm", nr=nrows, nc=ncols)
 
     factor.cols <- c()
     factor.levels <- list()
     type.cols <- rep(0, ncols)
 
-    for (i in 1:ncols) {
+    for (i in 1:length(vars)) {
         tmp <- vars[[i]][1]
         if (is.numeric (tmp)) {
             .bm[,i] <- vars[[i]]
@@ -48,11 +51,13 @@ fastdf <- function (..., cl = NULL) {
     for (i in seq_len(length(factor.cols))) {
         pad[factor.cols[i]] <- max(nchar(factor.levels[[i]]))
     }
+    order.cols <- c(seq_len(length(vars)), rep(0, alloc))
 
     return (structure(list(.bm),
                       factor.cols=factor.cols,
                       factor.levels=factor.levels,
                       type.cols=type.cols,
+                      order.cols=order.cols,
                       pad=pad,
                       cl = cl,
                       colnames = names(vars),
@@ -173,4 +178,27 @@ as.data.frame.fastdf <- function (x) {
 #' @export
 names.fastdf <- function (x) {
     attr(x, "colnames")
+}
+
+
+#' @export
+bind_variables <- function (dat, envir) {
+    rm (list=ls(envir=envir), envir=envir)
+    for (var in names(dat)) {
+        f <- local ({.var<-var; .dat<-dat; function (x) {.var}})
+        makeActiveBinding(var, f, env=envir)
+    }
+    return (ls(envir=envir))
+}
+
+#' @export
+with.fastdf <- function (data, expr, ...) {
+    eval (substitute(expr), as.environment.fastdf(data), enclos = parent.frame())
+}
+
+#' @export
+as.environment.fastdf <- function (x) {
+    attr(x, "bindenv") <- new.env()
+    bind_variables (x, attr(x, "bindenv"))
+    attr (x, "bindenv")
 }
