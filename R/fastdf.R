@@ -21,6 +21,7 @@ fastdf <- function (..., alloc=0, cl = NULL) {
     }
 
     parallel::clusterEvalQ (cl, library(fastdf))
+    parallel::clusterEvalQ (cl, library(lazyeval))
 
     nrows <- length(vars[[1]])
     ncols <- length(vars) + alloc
@@ -53,7 +54,7 @@ fastdf <- function (..., alloc=0, cl = NULL) {
     }
     order.cols <- c(seq_len(length(vars)), rep(0, alloc))
 
-    return (structure(list(.bm),
+    .master <- structure(list(.bm),
                       factor.cols=factor.cols,
                       factor.levels=factor.levels,
                       type.cols=type.cols,
@@ -61,7 +62,13 @@ fastdf <- function (..., alloc=0, cl = NULL) {
                       pad=pad,
                       cl = cl,
                       colnames = names(vars),
-                      class = append("fastdf", "list")))
+                      class = append("fastdf", "list"))
+    .desc <- describe (.bm)
+    clusterExport (cl, ".desc", envir=environment())
+    clusterExport (cl, ".master", envir=environment())
+    clusterEvalQ (cl, {.master[[1]] <- attach.big.matrix (.desc); NULL})
+    clusterEvalQ (cl, {.local <- .master; NULL})
+    return (.master)
 }
 
 #' @export
