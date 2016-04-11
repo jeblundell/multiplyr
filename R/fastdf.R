@@ -23,8 +23,11 @@ fastdf <- function (..., alloc=0, cl = NULL) {
     parallel::clusterEvalQ (cl, library(fastdf))
     parallel::clusterEvalQ (cl, library(lazyeval))
 
+    special <- c(".sort")
     nrows <- length(vars[[1]])
-    ncols <- length(vars) + alloc
+    ncols <- length(vars) + alloc + length(special)
+    names.cols <- c(names(vars), rep(NA, alloc), special)
+    order.cols <- c(seq_len(length(vars)), rep(0, alloc), rep(0, length(special)))
     Rdsm::mgrmakevar(cl, ".bm", nr=nrows, nc=ncols)
 
     factor.cols <- c()
@@ -52,7 +55,6 @@ fastdf <- function (..., alloc=0, cl = NULL) {
     for (i in seq_len(length(factor.cols))) {
         pad[factor.cols[i]] <- max(nchar(factor.levels[[i]]))
     }
-    order.cols <- c(seq_len(length(vars)), rep(0, alloc))
 
     .master <- structure(list(.bm),
                       factor.cols=factor.cols,
@@ -61,7 +63,7 @@ fastdf <- function (..., alloc=0, cl = NULL) {
                       order.cols=order.cols,
                       pad=pad,
                       cl = cl,
-                      colnames = names(vars),
+                      colnames = names.cols,
                       class = append("fastdf", "list"))
     .desc <- describe (.bm)
     clusterExport (cl, ".desc", envir=environment())
@@ -102,10 +104,14 @@ print.fastdf <- function (x, max.row = 10) {
         max.row <- nrow(x[[1]])
     }
 
+    ord <- attr(x, "order.cols")
+    cols <- seq_len(length(ord))[order(ord)]
+    cols <- cols[ord[order(ord)] > 0]
+
     cat (sprintf ("\n    Fast data frame\n\n"))
     pc <- pad.cols(x, max.row)
     out <- ""
-    for (i in seq_len(ncol(x[[1]]))) {
+    for (i in cols) {
         out <- .p(out,
                   sprintf(.p("%",pc[i],"s "),
                       attr(x, "colnames")[i]))
@@ -114,7 +120,7 @@ print.fastdf <- function (x, max.row = 10) {
 
     for (i in seq_len(max.row)) {
         out <- ""
-        for (j in seq_len(ncol(x[[1]]))) {
+        for (j in cols) {
             v <- x[[1]][i,j]
             if (attr(x, "type.cols")[j] > 0) {
                 f <- match (j, attr(x, "factor.cols"))
