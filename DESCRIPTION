@@ -1,13 +1,12 @@
-Package: fastdf
+Package: multiplyr
 Type: Package
-Title: Fast implementation of data.frame using bigmemory
+Title: dplyr-like package with shared memory bigmemory matrices
 Version: 0.1
 Date: 2016-04-10
 Author: Jim Blundell
 Maintainer: Jim Blundell <james.blundell@keble.ox.ac.uk>
-Description: Data frames are easy to use and bigmemory matrices are
-    fast and can be used in parallel settings: this package is an
-    attempt to combine them
+Description: Data frames are easy to use with dplyr, whilst bigmemory 
+    matrices are fast and can be used in parallel settings. This package is     an attempt to combine them.
 License: GPL-2
 Depends: bigmemory (>= 4.5.19), bigmemory.sri (>= 0.1.3),
     magrittr (>= 1.5), Rdsm (>= 2.1.1), parallel
