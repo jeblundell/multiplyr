@@ -26,6 +26,89 @@ arrange <- function (.data, ...) {
 }
 
 #' @export
+fast_filter <- function (.data, ...) {
+    .dots <- lazyeval::lazy_dots (...)
+    filtercol <- match (".filter", attr(.data, "colnames"))
+    res <- ff_mwhich(.data, .dots)
+
+    #FIXME: parallel
+    #FIXME: more elegant version?
+
+    .data[[1]][res, filtercol] <-
+        .data[[1]][res, filtercol] & 1
+
+    antires <- setdiff (1:nrow(.data[[1]]), res)
+    .data[[1]][antires, filtercol] <- 0
+}
+
+.filter_rewrite <- function (lazyobj) {
+    op <- lazyobj$expr[1]
+    if (op == quote(`<`())) {
+        op <- quote (`ff_lt`())
+    } else if (op == quote(`<=`())) {
+        op <- quote (`ff_le`())
+    } else if (op == quote(`>`())) {
+        op <- quote (`ff_gt`())
+    } else if (op == quote(`>=`())) {
+        op <- quote (`ff_ge`())
+    } else if (op == quote(`==`())) {
+        op <- quote (`ff_eq`())
+    } else if (op == quote(`!=`())) {
+        op <- quote (`ff_neq`())
+    } else {
+        stop ("Operator not supported for fast_filter")
+    }
+    lazyobj$expr[1] <- op
+    return (lazyobj)
+}
+ff_lt <- function (cmp, expr) {
+    return (list(as.character(as.name(substitute(cmp))),
+                 c("gt", "lt"),
+                 c(-Inf, expr)))
+}
+ff_le <- function (cmp, expr) {
+    return (list(as.character(as.name(substitute(cmp))),
+                 c("gt", "le"),
+                 c(-Inf, expr)))
+}
+ff_gt <- function (cmp, expr) {
+    return (list(as.character(as.name(substitute(cmp))),
+                 c("gt", "lt"),
+                 c(expr, Inf)))
+}
+ff_ge <- function (cmp, expr) {
+    return (list(as.character(as.name(substitute(cmp))),
+                 c("ge", "lt"),
+                 c(expr, Inf)))
+}
+ff_neq <- function (cmp, expr) {
+    return (list(as.character(as.name(substitute(cmp))),
+                 c("neq"),
+                 c(expr)))
+}
+ff_eq <- function (cmp, expr) {
+    return (list(as.character(as.name(substitute(cmp))),
+                 c("eq"),
+                 c(expr)))
+}
+ff_mwhich <- function (x, lazyobj) {
+    lazyobj <- lapply (lazyobj, .filter_rewrite) #FIXME: eval in x
+    class (lazyobj) <- "lazy_dots"
+    l <- lazyeval::lazy_eval (lazyobj)
+
+    coln <- do.call (c, lapply (l, function (x) { x[[1]] }))
+    cols <- match (coln, attr(x, "colnames"))
+    comps <- lapply (l, function (x) { x[[2]] })
+    vals  <- lapply (l, function (x) { x[[3]] })
+
+    bigmemory::mwhich (x[[1]],
+            cols = cols,
+            vals = vals,
+            comps = comps,
+            op = "AND")
+}
+
+#' @export
 group_by <- function (.data, ...) {
     dots <- lazyeval::lazy_dots (...)
 

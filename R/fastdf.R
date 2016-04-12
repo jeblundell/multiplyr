@@ -23,12 +23,14 @@ fastdf <- function (..., alloc=0, cl = NULL) {
     parallel::clusterEvalQ (cl, library(fastdf))
     parallel::clusterEvalQ (cl, library(lazyeval))
 
-    special <- c(".sort")
+    special <- c(".sort", ".filter")
     nrows <- length(vars[[1]])
     ncols <- length(vars) + alloc + length(special)
     names.cols <- c(names(vars), rep(NA, alloc), special)
     order.cols <- c(seq_len(length(vars)), rep(0, alloc), rep(0, length(special)))
     Rdsm::mgrmakevar(cl, ".bm", nr=nrows, nc=ncols)
+
+    .bm[,match(".filter", names.cols)] <- 1
 
     factor.cols <- c()
     factor.levels <- list()
@@ -118,7 +120,16 @@ print.fastdf <- function (x, max.row = 10) {
     }
     cat (.p(out, "\n"))
 
-    for (i in seq_len(max.row)) {
+    rows <- bigmemory::mwhich (x[[1]],
+                    cols=match(".filter", attr(x, "colnames")),
+                    vals=1,
+                    comps=list("eq"))
+    rows.avail <- length(rows)
+    if ((is.null(max.row) || max.row == 0) && rows.avail > max.row) {
+        rows <- rows[1:max.row]
+    }
+
+    for (i in rows) {
         out <- ""
         for (j in cols) {
             v <- x[[1]][i,j]
@@ -132,10 +143,10 @@ print.fastdf <- function (x, max.row = 10) {
         }
         cat (.p(out, "\n"))
     }
-    if (max.row < nrow(x[[1]])) {
+    if (rows.avail > max.row) {
         cat (sprintf ("\n... %d of %d rows omitted ...\n",
-                      nrow(x[[1]]) - max.row,
-                      nrow(x[[1]])))
+                      rows.avail - max.row,
+                      rows.avail))
     }
     cat ("\n")
 }
