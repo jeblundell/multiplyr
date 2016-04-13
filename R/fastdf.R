@@ -23,7 +23,7 @@ fastdf <- function (..., alloc=0, cl = NULL) {
     parallel::clusterEvalQ (cl, library(multiplyr))
     parallel::clusterEvalQ (cl, library(lazyeval))
 
-    special <- c(".sort", ".filter")
+    special <- c(".filter", ".group", ".tmp")
     nrows <- length(vars[[1]])
     ncols <- length(vars) + alloc + length(special)
     names.cols <- c(names(vars), rep(NA, alloc), special)

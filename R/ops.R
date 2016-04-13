@@ -67,19 +67,24 @@ arrange <- function (.data, ...) {
 #' @export
 fast_filter <- function (.data, ...) {
     .dots <- lazyeval::lazy_dots (...)
-    filtercol <- match (".filter", attr(.data, "colnames"))
 
     parallel::clusterExport (attr(.data, "cl"), ".dots", envir=environment())
 
     parallel::clusterEvalQ (attr(.data, "cl"), {
         filtercol <- match (".filter", attr(.local, "colnames"))
+        tmpcol    <- match (".tmp", attr(.local, "colnames"))
         res <- ff_mwhich(.local, .dots)
-        .local[[1]][res, filtercol] <-
-            .local[[1]][res, filtercol] & 1
 
-        antires <- setdiff (1:nrow(.local[[1]]), res)
-        .local[[1]][antires, filtercol] <- 0
-        NULL
+        if (length(res) == 0) {
+            .local[[1]][, filtercol] <- 0
+        } else {
+            .local[[1]][, tmpcol] <- 0
+            .local[[1]][res, tmpcol] <- 1
+
+            .local[[1]][, filtercol] <- .local[[1]][, filtercol] &
+                .local[[1]][, tmpcol]
+        }
+        res
     })
     return (.data)
 }
@@ -176,7 +181,7 @@ group_by <- function (.data, ...) {
 
     namelist <- .dots2names (.data, dots)
     cols <- match(namelist, attr(.data, "colnames"))
-    Gcol <- match(".sort", attr(.data, "colnames"))
+    Gcol <- match(".group", attr(.data, "colnames"))
 
     .sort.fastdf (.data, decreasing=FALSE, dots)
     sm1 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=1, lastRow=nrow(.data[[1]])-1)
@@ -200,6 +205,7 @@ group_by <- function (.data, ...) {
 distinct <- function (.data, ...) {
     dots <- lazyeval::lazy_dots (...)
     filtercol <- match(".filter", attr(.data, "colnames"))
+    tmpcol <- match(".tmp", attr(.data, "colnames"))
 
     if (length(dots) > 0) {
         namelist <- .dots2names (.data, dots)
@@ -219,11 +225,12 @@ distinct <- function (.data, ...) {
         breaks <- which (!apply (sm1[,cols] == sm2[,cols], 1, all))
     }
     breaks <- c(0, breaks) + 1
-    .data[[1]][breaks, filtercol] <-
-        .data[[1]][breaks, filtercol] & 1
 
-    antires <- setdiff (1:nrow(.data[[1]]), breaks)
-    .data[[1]][antires, filtercol] <- 0
+    .data[[1]][, tmpcol] <- 0
+    .data[[1]][breaks, tmpcol] <- 1
+    .data[[1]][, filtercol] <- .data[[1]][, filtercol] &
+        .data[[1]][, tmpcol]
+
     .data
 }
 
@@ -272,11 +279,15 @@ slice <- function (.data, rows=NULL, start=NULL, end=NULL) {
     }
 
     filtercol <- match(".filter", attr(.data, "colnames"))
+    tmpcol <- match(".tmp", attr(.data, "colnames"))
 
-    .data[[1]][rows, filtercol] <-
-        .data[[1]][rows, filtercol] & 1
+    filtered <- bigmemory::mwhich (.data[[1]],
+                                   cols=filtercol,
+                                   vals=1,
+                                   comps="eq")
+    rows <- filtered[rows]
+    .data[[1]][, filtercol] <- 0
+    .data[[1]][rows, filtercol] <- 1
 
-    antires <- setdiff (1:nrow(.data[[1]]), rows)
-    .data[[1]][antires, filtercol] <- 0
     .data
 }
