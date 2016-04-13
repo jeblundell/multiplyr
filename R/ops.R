@@ -3,7 +3,6 @@
 }
 
 .sort.fastdf <- function (x, decreasing=FALSE, dots) {
-    #FIXME: parallel version
     namelist <- .dots2names (x, dots)
     cols <- match(namelist, attr(x, "colnames"))
     bigmemory::mpermute (x[[1]], cols=cols)
@@ -180,8 +179,6 @@ group_by <- function (.data, ...) {
     Gcol <- match(".sort", attr(.data, "colnames"))
 
     .sort.fastdf (.data, decreasing=FALSE, dots)
-    #FIXME: parallel version
-    #FIXME: more efficient version
     sm1 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=1, lastRow=nrow(.data[[1]])-1)
     sm2 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=2, lastRow=nrow(.data[[1]]))
     if (length(cols) == 1) {
@@ -214,8 +211,6 @@ distinct <- function (.data, ...) {
         bigmemory::mpermute (.data[[1]], cols=cols)
     }
 
-    #FIXME: parallel version
-    #FIXME: more efficient version
     sm1 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=1, lastRow=nrow(.data[[1]])-1)
     sm2 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=2, lastRow=nrow(.data[[1]]))
     if (length(cols) == 1) {
@@ -261,5 +256,27 @@ select <- function (.data, ...) {
     attr(.data, "order.cols")[sort(cols)] <- order(cols)
     # not propagated to .local on cluster as this is only for
     # display purposes (currently)
+    .data
+}
+
+#' @export
+slice <- function (.data, rows=NULL, start=NULL, end=NULL) {
+    if (is.null(rows) && (is.null(start) || is.null(end))) {
+        stop ("Must specify either rows or start and stop")
+    } else if (!is.null(rows) && !(is.null(start) || is.null(end))) {
+        stop ("Can either specify rows or start and stop; not both")
+    }
+
+    if (is.null(rows)) {
+        rows <- start:end
+    }
+
+    filtercol <- match(".filter", attr(.data, "colnames"))
+
+    .data[[1]][rows, filtercol] <-
+        .data[[1]][rows, filtercol] & 1
+
+    antires <- setdiff (1:nrow(.data[[1]]), rows)
+    .data[[1]][antires, filtercol] <- 0
     .data
 }
