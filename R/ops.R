@@ -1,3 +1,43 @@
+.dots2names <- function (x, dots) {
+    as.vector (sapply (dots, function (x) { as.character (x$expr) }))
+}
+
+.sort.fastdf <- function (x, decreasing=FALSE, dots) {
+    #FIXME: parallel version
+    namelist <- .dots2names (x, dots)
+    cols <- match(namelist, attr(x, "colnames"))
+    bigmemory::mpermute (x[[1]], cols=cols)
+}
+
+#' @export
+sort.fastdf <- function (x, decreasing = FALSE, ...) {
+    dots <- lazyeval::lazy_dots (...)
+    .sort.fastdf (x, decreasing, dots)
+}
+
+#' @export
+partition <- function (.data) {
+    cl <- attr(.data, "cl")
+    N <- length(cl)
+    nr <- rep(floor(nrow(.data[[1]])/N), N)
+    nr[1] <- nr[1] + (nrow(.data[[1]])-sum(nr))
+    last <- cumsum(nr)
+    first <- c(0, last)[1:N] + 1
+    for (i in 1:N) {
+        .first <- first[i]
+        .last <- last[i]
+        parallel::clusterExport (cl[i], c(".first", ".last"), envir=environment())
+    }
+    parallel::clusterEvalQ (cl, {
+        if (!exists(".local")) {
+            .local <- .master
+        }
+        .local[[1]] <- sub.big.matrix(.master[[1]],
+                                      firstRow=.first,
+                                      lastRow=.last)
+        NULL})
+    return(.data)
+}
 
 #' @export
 cldo <- function (.data, ...) {
@@ -29,16 +69,19 @@ arrange <- function (.data, ...) {
 fast_filter <- function (.data, ...) {
     .dots <- lazyeval::lazy_dots (...)
     filtercol <- match (".filter", attr(.data, "colnames"))
-    res <- ff_mwhich(.data, .dots)
 
-    #FIXME: parallel
-    #FIXME: more elegant version?
+    parallel::clusterExport (attr(.data, "cl"), ".dots", envir=environment())
 
-    .data[[1]][res, filtercol] <-
-        .data[[1]][res, filtercol] & 1
+    parallel::clusterEvalQ (attr(.data, "cl"), {
+        filtercol <- match (".filter", attr(.local, "colnames"))
+        res <- ff_mwhich(.local, .dots)
+        .local[[1]][res, filtercol] <-
+            .local[[1]][res, filtercol] & 1
 
-    antires <- setdiff (1:nrow(.data[[1]]), res)
-    .data[[1]][antires, filtercol] <- 0
+        antires <- setdiff (1:nrow(.local[[1]]), res)
+        .local[[1]][antires, filtercol] <- 0
+    })
+    return (.data)
 }
 
 .filter_rewrite <- function (lazyobj) {
@@ -61,36 +104,43 @@ fast_filter <- function (.data, ...) {
     lazyobj$expr[1] <- op
     return (lazyobj)
 }
+#' @export
 ff_lt <- function (cmp, expr) {
     return (list(as.character(as.name(substitute(cmp))),
                  c("gt", "lt"),
                  c(-Inf, expr)))
 }
+#' @export
 ff_le <- function (cmp, expr) {
     return (list(as.character(as.name(substitute(cmp))),
                  c("gt", "le"),
                  c(-Inf, expr)))
 }
+#' @export
 ff_gt <- function (cmp, expr) {
     return (list(as.character(as.name(substitute(cmp))),
                  c("gt", "lt"),
                  c(expr, Inf)))
 }
+#' @export
 ff_ge <- function (cmp, expr) {
     return (list(as.character(as.name(substitute(cmp))),
                  c("ge", "lt"),
                  c(expr, Inf)))
 }
+#' @export
 ff_neq <- function (cmp, expr) {
     return (list(as.character(as.name(substitute(cmp))),
                  c("neq"),
                  c(expr)))
 }
+#' @export
 ff_eq <- function (cmp, expr) {
     return (list(as.character(as.name(substitute(cmp))),
                  c("eq"),
                  c(expr)))
 }
+#' @export
 ff_mwhich <- function (x, lazyobj) {
     lazyobj <- lapply (lazyobj, .filter_rewrite) #FIXME: eval in x
     class (lazyobj) <- "lazy_dots"
@@ -132,4 +182,5 @@ group_by <- function (.data, ...) {
         last <- breaks[i]
     }
     rm (sm1, sm2)
+    return (.data)
 }

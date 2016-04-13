@@ -20,7 +20,7 @@ fastdf <- function (..., alloc=0, cl = NULL) {
         Rdsm::mgrinit (cl)
     }
 
-    parallel::clusterEvalQ (cl, library(fastdf))
+    parallel::clusterEvalQ (cl, library(multiplyr))
     parallel::clusterEvalQ (cl, library(lazyeval))
 
     special <- c(".sort", ".filter")
@@ -68,11 +68,10 @@ fastdf <- function (..., alloc=0, cl = NULL) {
                       colnames = names.cols,
                       class = append("fastdf", "list"))
     .desc <- describe (.bm)
-    clusterExport (cl, ".desc", envir=environment())
-    clusterExport (cl, ".master", envir=environment())
-    clusterEvalQ (cl, {.master[[1]] <- attach.big.matrix (.desc); NULL})
-    clusterEvalQ (cl, {.local <- .master; NULL})
-    return (.master)
+    parallel::clusterExport (cl, ".desc", envir=environment())
+    parallel::clusterExport (cl, ".master", envir=environment())
+    parallel::clusterEvalQ (cl, {.master[[1]] <- attach.big.matrix (.desc); NULL})
+    return (.master %>% partition())
 }
 
 #' @export
@@ -125,7 +124,10 @@ print.fastdf <- function (x, max.row = 10) {
                     vals=1,
                     comps=list("eq"))
     rows.avail <- length(rows)
-    if ((is.null(max.row) || max.row == 0) && rows.avail > max.row) {
+    if (is.null(max.row) || max.row == 0) {
+        max.row <- nrow(x[[1]])
+    }
+    if (rows.avail > max.row) {
         rows <- rows[1:max.row]
     }
 
