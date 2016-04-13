@@ -80,6 +80,7 @@ fast_filter <- function (.data, ...) {
 
         antires <- setdiff (1:nrow(.local[[1]]), res)
         .local[[1]][antires, filtercol] <- 0
+        NULL
     })
     return (.data)
 }
@@ -195,4 +196,24 @@ group_by <- function (.data, ...) {
     }
     rm (sm1, sm2)
     return (.data)
+}
+
+#' @export
+rename <- function (.data, ...) {
+    dots <- lazyeval::lazy_dots (...)
+
+    .newnames <- names(dots)
+    .oldnames <- as.vector (vapply (dots, function (x) { as.character (x$expr) }, ""))
+    .match <- match(.oldnames, attr(.data, "colnames"))
+    attr(.data, "colnames")[.match] <- .newnames
+    parallel::clusterExport (attr(.data, "cl"), c(".oldnames",
+                                                  ".newnames",
+                                                  ".match"),
+                             envir=environment())
+    parallel::clusterEvalQ (attr(.data, "cl"), {
+        attr(.master, "colnames")[.match] <- .newnames
+        attr(.local, "colnames")[.match] <- .newnames
+        NULL
+    })
+    .data
 }
