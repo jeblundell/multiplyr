@@ -3,7 +3,7 @@
 #' @param .cl Cluster object, number of nodes or NULL (default)
 #' @param alloc Allocate additional space
 #' @export
-fastdf <- function (..., alloc=0, cl = NULL) {
+fastdf <- function (..., alloc=1, cl = NULL) {
     vars <- list(...)
 
     if (length(vars) == 1) {
@@ -23,7 +23,7 @@ fastdf <- function (..., alloc=0, cl = NULL) {
     parallel::clusterEvalQ (cl, library(multiplyr))
     parallel::clusterEvalQ (cl, library(lazyeval))
 
-    special <- c(".filter", ".group", ".tmp")
+    special <- c(".filter", ".group")
     nrows <- length(vars[[1]])
     ncols <- length(vars) + alloc + length(special)
     names.cols <- c(names(vars), rep(NA, alloc), special)

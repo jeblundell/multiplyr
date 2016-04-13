@@ -4,7 +4,7 @@
 \alias{fastdf}
 \title{Constructor}
 \usage{
-fastdf(..., alloc = 0, cl = NULL)
+fastdf(..., alloc = 1, cl = NULL)
 }
 \arguments{
 \item{alloc}{Allocate additional space}

@@ -9,6 +9,23 @@
 }
 
 #' @export
+alloc_col <- function (x, name=".tmp") {
+    res <- match (NA, attr(x, "colnames"))
+    if (length(res) == 0) {
+        stop ("No free columns available")
+    } else {
+        attr(x, "colnames")[res[1]] <- name
+        return (res[1])
+    }
+}
+
+#' @export
+free_col <- function (x, col) {
+    attr(x, "colnames")[col] <- NA
+}
+
+
+#' @export
 sort.fastdf <- function (x, decreasing = FALSE, ...) {
     dots <- lazyeval::lazy_dots (...)
     .sort.fastdf (x, decreasing, dots)
@@ -72,7 +89,7 @@ fast_filter <- function (.data, ...) {
 
     parallel::clusterEvalQ (attr(.data, "cl"), {
         filtercol <- match (".filter", attr(.local, "colnames"))
-        tmpcol    <- match (".tmp", attr(.local, "colnames"))
+        tmpcol <- alloc_col (.local)
         res <- ff_mwhich(.local, .dots)
 
         if (length(res) == 0) {
@@ -84,7 +101,8 @@ fast_filter <- function (.data, ...) {
             .local[[1]][, filtercol] <- .local[[1]][, filtercol] &
                 .local[[1]][, tmpcol]
         }
-        res
+        free_col (.local, tmpcol)
+        NULL
     })
     return (.data)
 }
@@ -205,7 +223,7 @@ group_by <- function (.data, ...) {
 distinct <- function (.data, ...) {
     dots <- lazyeval::lazy_dots (...)
     filtercol <- match(".filter", attr(.data, "colnames"))
-    tmpcol <- match(".tmp", attr(.data, "colnames"))
+    tmpcol <- alloc_col (.data)
 
     if (length(dots) > 0) {
         namelist <- .dots2names (.data, dots)
@@ -230,6 +248,8 @@ distinct <- function (.data, ...) {
     .data[[1]][breaks, tmpcol] <- 1
     .data[[1]][, filtercol] <- .data[[1]][, filtercol] &
         .data[[1]][, tmpcol]
+
+    free_col (.data, tmpcol)
 
     .data
 }
@@ -279,7 +299,6 @@ slice <- function (.data, rows=NULL, start=NULL, end=NULL) {
     }
 
     filtercol <- match(".filter", attr(.data, "colnames"))
-    tmpcol <- match(".tmp", attr(.data, "colnames"))
 
     filtered <- bigmemory::mwhich (.data[[1]],
                                    cols=filtercol,
