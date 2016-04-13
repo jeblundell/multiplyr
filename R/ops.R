@@ -217,3 +217,15 @@ rename <- function (.data, ...) {
     })
     .data
 }
+
+#' @export
+select <- function (.data, ...) {
+    dots <- lazyeval::lazy_dots (...)
+    coln <- as.vector (vapply (dots, function (x) { as.character (x$expr) }, ""))
+    cols <- match (coln, attr(.data, "colnames"))
+    attr(.data, "order.cols") <- 0
+    attr(.data, "order.cols")[sort(cols)] <- order(cols)
+    # not propagated to .local on cluster as this is only for
+    # display purposes (currently)
+    .data
+}
