@@ -105,40 +105,52 @@ fast_filter <- function (.data, ...) {
     return (lazyobj)
 }
 #' @export
+ff_expr <- function (var, expr) {
+    col <- match (var, attr(.local, "colnames"))
+    type <- attr(.local, "type.cols")[col]
+    if (type == 0) {
+        return (expr)
+    } else {
+        f <- match (col, attr(.local, "factor.cols"))
+        l <- match (expr, attr(.local, "factor.levels")[[f]])
+        return (l)
+    }
+}
+#' @export
 ff_lt <- function (cmp, expr) {
-    return (list(as.character(as.name(substitute(cmp))),
-                 c("gt", "lt"),
-                 c(-Inf, expr)))
+    var <- as.character(as.name(substitute(cmp)))
+    res <- ff_expr(var, expr)
+    return (list(var, c("gt", "lt"), c(-Inf, res)))
 }
 #' @export
 ff_le <- function (cmp, expr) {
-    return (list(as.character(as.name(substitute(cmp))),
-                 c("gt", "le"),
-                 c(-Inf, expr)))
+    var <- as.character(as.name(substitute(cmp)))
+    res <- ff_expr(var, expr)
+    return (list(var, c("gt", "le"), c(-Inf, res)))
 }
 #' @export
 ff_gt <- function (cmp, expr) {
-    return (list(as.character(as.name(substitute(cmp))),
-                 c("gt", "lt"),
-                 c(expr, Inf)))
+    var <- as.character(as.name(substitute(cmp)))
+    res <- ff_expr(var, expr)
+    return (list(var, c("gt", "lt"), c(res, Inf)))
 }
 #' @export
 ff_ge <- function (cmp, expr) {
-    return (list(as.character(as.name(substitute(cmp))),
-                 c("ge", "lt"),
-                 c(expr, Inf)))
+    var <- as.character(as.name(substitute(cmp)))
+    res <- ff_expr(var, expr)
+    return (list(var, c("ge", "lt"), c(res, Inf)))
 }
 #' @export
 ff_neq <- function (cmp, expr) {
-    return (list(as.character(as.name(substitute(cmp))),
-                 c("neq"),
-                 c(expr)))
+    var <- as.character(as.name(substitute(cmp)))
+    res <- ff_expr(var, expr)
+    return (list(var, c("neq"),c(res)))
 }
 #' @export
 ff_eq <- function (cmp, expr) {
-    return (list(as.character(as.name(substitute(cmp))),
-                 c("eq"),
-                 c(expr)))
+    var <- as.character(as.name(substitute(cmp)))
+    res <- ff_expr(var, expr)
+    return (list(var, c("eq"), c(res)))
 }
 #' @export
 ff_mwhich <- function (x, lazyobj) {
