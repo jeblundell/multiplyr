@@ -181,6 +181,7 @@ group_by <- function (.data, ...) {
 
     .sort.fastdf (.data, decreasing=FALSE, dots)
     #FIXME: parallel version
+    #FIXME: more efficient version
     sm1 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=1, lastRow=nrow(.data[[1]])-1)
     sm2 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=2, lastRow=nrow(.data[[1]]))
     if (length(cols) == 1) {
@@ -196,6 +197,39 @@ group_by <- function (.data, ...) {
     }
     rm (sm1, sm2)
     return (.data)
+}
+
+#' @export
+distinct <- function (.data, ...) {
+    dots <- lazyeval::lazy_dots (...)
+    filtercol <- match(".filter", attr(.data, "colnames"))
+
+    if (length(dots) > 0) {
+        namelist <- .dots2names (.data, dots)
+        cols <- match(namelist, attr(.data, "colnames"))
+        .sort.fastdf (.data, decreasing=FALSE, dots)
+    } else {
+        cols <- attr(.data, "order.cols") > 0
+        cols <- (1:length(cols))[cols]
+        bigmemory::mpermute (.data[[1]], cols=cols)
+    }
+
+    #FIXME: parallel version
+    #FIXME: more efficient version
+    sm1 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=1, lastRow=nrow(.data[[1]])-1)
+    sm2 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=2, lastRow=nrow(.data[[1]]))
+    if (length(cols) == 1) {
+        breaks <- which (sm1[,cols] != sm2[,cols])
+    } else {
+        breaks <- which (!apply (sm1[,cols] == sm2[,cols], 1, all))
+    }
+    breaks <- c(0, breaks) + 1
+    .data[[1]][breaks, filtercol] <-
+        .data[[1]][breaks, filtercol] & 1
+
+    antires <- setdiff (1:nrow(.data[[1]]), breaks)
+    .data[[1]][antires, filtercol] <- 0
+    .data
 }
 
 #' @export
