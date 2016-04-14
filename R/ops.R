@@ -10,18 +10,23 @@
 
 #' @export
 alloc_col <- function (x, name=".tmp") {
-    res <- match (NA, attr(x, "colnames"))
+    res <- which (is.na (attr(x, "colnames")))
     if (length(res) == 0) {
         stop ("No free columns available")
     } else {
         attr(x, "colnames")[res[1]] <- name
-        return (res[1])
+        attr(x, "type.cols")[res[1]] <- 0
+        attr(x, "order.cols")[res[1]] <- max(attr(x, "order.cols"))+1
+        return (x)
     }
 }
 
 #' @export
 free_col <- function (x, col) {
     attr(x, "colnames")[col] <- NA
+    attr(x, "type.cols")[col] <- 0
+    attr(x, "order.cols")[col] <- 0
+    return (x)
 }
 
 
@@ -89,7 +94,8 @@ fast_filter <- function (.data, ...) {
 
     parallel::clusterEvalQ (attr(.data, "cl"), {
         filtercol <- match (".filter", attr(.local, "colnames"))
-        tmpcol <- alloc_col (.local)
+        .local <- alloc_col (.local)
+        .tmpcol <- match (".tmp", attr(.local, "colnames"))
         res <- ff_mwhich(.local, .dots)
 
         if (length(res) == 0) {
@@ -101,7 +107,7 @@ fast_filter <- function (.data, ...) {
             .local[[1]][, filtercol] <- .local[[1]][, filtercol] &
                 .local[[1]][, tmpcol]
         }
-        free_col (.local, tmpcol)
+        .local <- free_col (.local, tmpcol)
         NULL
     })
     return (.data)
@@ -223,7 +229,8 @@ group_by <- function (.data, ...) {
 distinct <- function (.data, ...) {
     dots <- lazyeval::lazy_dots (...)
     filtercol <- match(".filter", attr(.data, "colnames"))
-    tmpcol <- alloc_col (.data)
+    .data <- alloc_col (.data)
+    tmpcol <- match (".tmp", attr(.data, "colnames"))
 
     if (length(dots) > 0) {
         namelist <- .dots2names (.data, dots)
@@ -249,7 +256,7 @@ distinct <- function (.data, ...) {
     .data[[1]][, filtercol] <- .data[[1]][, filtercol] &
         .data[[1]][, tmpcol]
 
-    free_col (.data, tmpcol)
+    .data <- free_col (.data, tmpcol)
 
     .data
 }
@@ -316,11 +323,9 @@ filter <- function (.data, ...) {
     .dots <- lazyeval::lazy_dots (...)
 
     .filtercol <- match(".filter", attr(.data, "colnames"))
-    .tmpcol <- alloc_col (.data)
 
     cl <- attr (.data, "cl")
     parallel::clusterExport (cl, c(".filtercol",
-                                   ".tmpcol",
                                    ".dots"), envir=environment())
     parallel::clusterEvalQ (cl, {
         .res <- lazyeval::lazy_eval (.dots, as.environment(.local))
@@ -330,5 +335,8 @@ filter <- function (.data, ...) {
         NULL
     })
 
-    free_col (.data, .tmpcol)
+    .data <- free_col (.data, .tmpcol)
+    .data
+}
+
 }
