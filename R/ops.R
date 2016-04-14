@@ -310,3 +310,25 @@ slice <- function (.data, rows=NULL, start=NULL, end=NULL) {
 
     .data
 }
+
+#' @export
+filter <- function (.data, ...) {
+    .dots <- lazyeval::lazy_dots (...)
+
+    .filtercol <- match(".filter", attr(.data, "colnames"))
+    .tmpcol <- alloc_col (.data)
+
+    cl <- attr (.data, "cl")
+    parallel::clusterExport (cl, c(".filtercol",
+                                   ".tmpcol",
+                                   ".dots"), envir=environment())
+    parallel::clusterEvalQ (cl, {
+        .res <- lazyeval::lazy_eval (.dots, as.environment(.local))
+        for (.r in .res) {
+            .local[[1]][, .filtercol] <- .local[[1]][, .filtercol] & .r
+        }
+        NULL
+    })
+
+    free_col (.data, .tmpcol)
+}
