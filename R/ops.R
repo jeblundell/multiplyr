@@ -335,7 +335,6 @@ filter <- function (.data, ...) {
         NULL
     })
 
-    .data <- free_col (.data, .tmpcol)
     .data
 }
 
