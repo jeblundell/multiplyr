@@ -101,13 +101,13 @@ fast_filter <- function (.data, ...) {
         if (length(res) == 0) {
             .local[[1]][, filtercol] <- 0
         } else {
-            .local[[1]][, tmpcol] <- 0
-            .local[[1]][res, tmpcol] <- 1
+            .local[[1]][, .tmpcol] <- 0
+            .local[[1]][res, .tmpcol] <- 1
 
             .local[[1]][, filtercol] <- .local[[1]][, filtercol] &
-                .local[[1]][, tmpcol]
+                .local[[1]][, .tmpcol]
         }
-        .local <- free_col (.local, tmpcol)
+        .local <- free_col (.local, .tmpcol)
         NULL
     })
     return (.data)
