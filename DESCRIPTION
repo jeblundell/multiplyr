@@ -1,13 +1,12 @@
 Package: multiplyr
 Type: Package
-Title: dplyr-like package with shared memory bigmemory matrices
+Title: dplyr-like package with shared memory matrices
+Description: Data frames are easy to use with dplyr, whilst bigmemory matrices are fast and can be used in parallel settings. This package is an attempt to combine them.
 Version: 0.1
 Date: 2016-04-10
-Author: Jim Blundell
 Maintainer: Jim Blundell <james.blundell@keble.ox.ac.uk>
-Description: Data frames are easy to use with dplyr, whilst bigmemory 
-    matrices are fast and can be used in parallel settings. This package is     an attempt to combine them.
-License: GPL-2
-Depends: bigmemory (>= 4.5.19), bigmemory.sri (>= 0.1.3),
-    magrittr (>= 1.5), Rdsm (>= 2.1.1), parallel
+Author: Jim Blundell
+Authors@R: c(person("Jim", "Blundell", role = c("aut", "cre", "cph"), email = "james.blundell@keble.ox.ac.uk>"))
+License: GPL-3
+Depends: bigmemory (>= 4.5.19), bigmemory.sri (>= 0.1.3), magrittr (>= 1.5), Rdsm (>= 2.1.1), parallel
 LazyData: TRUE
