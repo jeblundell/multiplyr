@@ -37,11 +37,14 @@ sort.fastdf <- function (x, decreasing = FALSE, ...) {
 }
 
 #' @export
-partition <- function (.data) {
+partition <- function (.data, max.row = NULL) {
+    if (is.null (max.row) || max.row == 0) {
+        max.row <- nrow(.data[[1]])
+    }
     cl <- attr(.data, "cl")
     N <- length(cl)
-    nr <- rep(floor(nrow(.data[[1]])/N), N)
-    nr[1] <- nr[1] + (nrow(.data[[1]])-sum(nr))
+    nr <- rep(floor(max.row / N), N)
+    nr[1] <- nr[1] + (max.row - sum(nr))
     last <- cumsum(nr)
     first <- c(0, last)[1:N] + 1
     for (i in 1:N) {
@@ -50,6 +53,8 @@ partition <- function (.data) {
         parallel::clusterExport (cl[i], c(".first", ".last"), envir=environment())
     }
     parallel::clusterEvalQ (cl, {
+        .empty <- (.last < .first || .last == 0)
+        if (.empty) { return (NULL) }
         if (!exists(".local")) {
             .local <- .master
         }
@@ -68,7 +73,10 @@ cldo <- function (.data, ...) {
 #' @export
 clget_ <- function (.data, .dots) {
     parallel::clusterExport (attr(.data, "cl"), ".dots", envir=environment())
-    parallel::clusterEvalQ (attr(.data, "cl"), lazy_eval (.dots, as.environment(.local)))
+    parallel::clusterEvalQ (attr(.data, "cl"), {
+        if (.empty) { return (NULL) }
+        lazy_eval (.dots, as.environment(.local))
+    })
 }
 
 #' @export
@@ -93,6 +101,7 @@ fast_filter <- function (.data, ...) {
     parallel::clusterExport (attr(.data, "cl"), ".dots", envir=environment())
 
     parallel::clusterEvalQ (attr(.data, "cl"), {
+        if (.empty) { return (NULL) }
         filtercol <- match (".filter", attr(.local, "colnames"))
         .local <- alloc_col (.local)
         .tmpcol <- match (".tmp", attr(.local, "colnames"))
@@ -328,6 +337,7 @@ filter <- function (.data, ...) {
     parallel::clusterExport (cl, c(".filtercol",
                                    ".dots"), envir=environment())
     parallel::clusterEvalQ (cl, {
+        if (.empty) { return (NULL) }
         .res <- lazyeval::lazy_eval (.dots, as.environment(.local))
         for (.r in .res) {
             .local[[1]][, .filtercol] <- .local[[1]][, .filtercol] * .r
@@ -355,6 +365,7 @@ mutate <- function (.data, ...) {
                                    ".rescols",
                                    ".dots"), envir=environment())
     parallel::clusterEvalQ (cl, {
+        if (.empty) { return (NULL) }
         .res <- do.call (cbind, lazyeval::lazy_eval (.dots, as.environment(no.strings.attached(.local))))
         .local[[1]][, .rescols] <- .res
         NULL
@@ -380,6 +391,7 @@ transmute <- function (.data, ...) {
                                    ".rescols",
                                    ".dots"), envir=environment())
     parallel::clusterEvalQ (cl, {
+        if (.empty) { return (NULL) }
         .res <- do.call (cbind, lazyeval::lazy_eval (.dots, as.environment(no.strings.attached(.local))))
         .local[[1]][, .rescols] <- .res
         NULL
@@ -412,6 +424,46 @@ define <- function (.data, ...) {
                 attr(.data, "factor.cols") <- c(attr(.data, "factor.cols"), col)
                 attr(.data, "factor.levels") <- append(attr(.data, "factor.levels"), list(
                                                        attr(.data, "factor.levels")[[f]]))
+            }
+        }
+    }
+    .data
+}
+
+#' @export
+compact <- function (.data, redistribute=FALSE) {
+    cl <- attr(.data, "cl")
+
+    .filtercol <- match (".filter", attr(.data, "colnames"))
+    .redis <- redistribute
+    parallel::clusterExport (cl, c(".filtercol",
+                                   ".redis"), envir=environment())
+    parallel::clusterEvalQ(cl, {
+        if (.empty) { return (NULL) }
+        bigmemory::mpermute (.local[[1]], cols=.filtercol, decreasing=TRUE)
+        if (!.redis) {
+            .complast <- match (0, .local[[1]][, .filtercol])
+            if (!is.na (.complast)) {
+                if (.complast == 1) {
+                    .empty <- TRUE
+                } else {
+                    .local[[1]] <- sub.big.matrix(.local[[1]],
+                                                  firstRow=1,
+                                                  lastRow=.complast-1)
+                }
+            }
+        }
+        NULL
+    })
+    if (redistribute) {
+        bigmemory::mpermute (.data[[1]], cols=.filtercol, decreasing=TRUE)
+        complast <- match(0, .data[[1]][, .filtercol])
+        if (!is.na (complast)) {
+            if (complast == 1) {
+                .empty <- TRUE
+                parallel::clusterExport (cl, ".empty", envir=environment())
+            } else {
+                .data <- .data %>% partition (max.row = complast-1)
             }
         }
     }
