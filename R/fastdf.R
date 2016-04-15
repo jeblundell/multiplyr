@@ -66,6 +66,7 @@ fastdf <- function (..., alloc=1, cl = NULL) {
                       pad=pad,
                       cl = cl,
                       colnames = names.cols,
+                      nsa = FALSE,
                       class = append("fastdf", "list"))
     .desc <- describe (.bm)
     parallel::clusterExport (cl, ".desc", envir=environment())
@@ -239,7 +240,24 @@ names.fastdf <- function (x) {
 bind_variables <- function (dat, envir) {
     rm (list=ls(envir=envir), envir=envir)
     for (var in names(dat)) {
-        f <- local ({.var<-var; .dat<-dat; function (x) {.dat[.var]}})
+        if (!attr(dat, "nsa")) {
+            f <- local ({
+                .var<-var
+                .dat<-dat
+                function (x) {
+                    .dat[.var]
+                }
+            })
+        } else {
+            f <- local ({
+                .var<-var
+                .dat<-dat
+                function (x) {
+                    .col <- match(.var, attr(.dat, "colnames"))
+                    .dat[[1]][, .col]
+                }
+            })
+        }
         makeActiveBinding(var, f, env=envir)
     }
     return (ls(envir=envir))
@@ -255,4 +273,10 @@ as.environment.fastdf <- function (x) {
     attr(x, "bindenv") <- new.env()
     bind_variables (x, attr(x, "bindenv"))
     attr (x, "bindenv")
+}
+
+#' @export
+no.strings.attached <- function (x) {
+    attr(x, "nsa") <- TRUE
+    x
 }
