@@ -104,7 +104,7 @@ fast_filter <- function (.data, ...) {
             .local[[1]][, .tmpcol] <- 0
             .local[[1]][res, .tmpcol] <- 1
 
-            .local[[1]][, filtercol] <- .local[[1]][, filtercol] &
+            .local[[1]][, filtercol] <- .local[[1]][, filtercol] *
                 .local[[1]][, .tmpcol]
         }
         .local <- free_col (.local, .tmpcol)
@@ -253,7 +253,7 @@ distinct <- function (.data, ...) {
 
     .data[[1]][, tmpcol] <- 0
     .data[[1]][breaks, tmpcol] <- 1
-    .data[[1]][, filtercol] <- .data[[1]][, filtercol] &
+    .data[[1]][, filtercol] <- .data[[1]][, filtercol] *
         .data[[1]][, tmpcol]
 
     .data <- free_col (.data, tmpcol)
