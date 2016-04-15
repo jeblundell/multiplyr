@@ -92,6 +92,7 @@ arrange <- function (.data, ...) {
 
     dots <- lazyeval::lazy_dots(...)
     .sort.fastdf(.data, decreasing, dots)
+    .data
 }
 
 #' @export
