@@ -2,9 +2,11 @@
     as.vector (sapply (dots, function (x) { as.character (x$expr) }))
 }
 
-.sort.fastdf <- function (x, decreasing=FALSE, dots) {
-    namelist <- .dots2names (x, dots)
-    cols <- match(namelist, attr(x, "colnames"))
+.sort.fastdf <- function (x, decreasing=FALSE, dots=NULL, cols=NULL) {
+    if (is.null(cols)) {
+        namelist <- .dots2names (x, dots)
+        cols <- match(namelist, attr(x, "colnames"))
+    }
     bigmemory::mpermute (x[[1]], cols=cols)
 }
 
@@ -245,11 +247,11 @@ distinct <- function (.data, ...) {
     if (length(dots) > 0) {
         namelist <- .dots2names (.data, dots)
         cols <- match(namelist, attr(.data, "colnames"))
-        .sort.fastdf (.data, decreasing=FALSE, dots)
+        .sort.fastdf (.data, decreasing=FALSE, dots=dots)
     } else {
         cols <- attr(.data, "order.cols") > 0
         cols <- (1:length(cols))[cols]
-        bigmemory::mpermute (.data[[1]], cols=cols)
+        .sort.fastdf (.data, decreasing=FALSE, cols=cols)
     }
 
     sm1 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=1, lastRow=nrow(.data[[1]])-1)
