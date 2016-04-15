@@ -330,7 +330,7 @@ filter <- function (.data, ...) {
     parallel::clusterEvalQ (cl, {
         .res <- lazyeval::lazy_eval (.dots, as.environment(.local))
         for (.r in .res) {
-            .local[[1]][, .filtercol] <- .local[[1]][, .filtercol] & .r
+            .local[[1]][, .filtercol] <- .local[[1]][, .filtercol] * .r
         }
         NULL
     })
