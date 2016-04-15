@@ -71,7 +71,11 @@ fastdf <- function (..., alloc=1, cl = NULL) {
     .desc <- describe (.bm)
     parallel::clusterExport (cl, ".desc", envir=environment())
     parallel::clusterExport (cl, ".master", envir=environment())
-    parallel::clusterEvalQ (cl, {.master[[1]] <- attach.big.matrix (.desc); NULL})
+    parallel::clusterEvalQ (cl, {
+        .master[[1]] <- attach.big.matrix (.desc)
+        attr(.master, "cl") <- NULL
+        NULL
+    })
     return (.master %>% partition())
 }
 
