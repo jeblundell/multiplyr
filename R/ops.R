@@ -217,24 +217,84 @@ group_by <- function (.data, ...) {
     dots <- lazyeval::lazy_dots (...)
 
     namelist <- .dots2names (.data, dots)
-    cols <- match(namelist, attr(.data, "colnames"))
-    Gcol <- match(".group", attr(.data, "colnames"))
+    .cols <- match(namelist, attr(.data, "colnames"))
+    .Gcol <- match(".group", attr(.data, "colnames"))
+    N <- length(attr(.data, "cl"))
 
     .sort.fastdf (.data, decreasing=FALSE, dots)
+    if (N == 1) {
+        sm1 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=1, lastRow=nrow(.data[[1]])-1)
+        sm2 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=2, lastRow=nrow(.data[[1]]))
+        if (length(.cols) == 1) {
+            breaks <- which (sm1[,.cols] != sm2[,.cols])
+        } else {
+            breaks <- which (!apply (sm1[,.cols] == sm2[,.cols], 1, all))
+        }
+        breaks <- c(0, breaks) + 1
+        last <- 0
+        for (i in 1:length(breaks)) {
+            .data[[1]][(last+1):breaks[i],.Gcol] <- i
+            last <- breaks[i]
+        }
+        return (.data)
+    }
+
+    # (1) determine local groupings
+    parallel::clusterExport (attr(.data, "cl"), c(".cols", ".Gcol"), envir=environment())
+    trans <- parallel::clusterEvalQ (attr(.data, "cl"), {
+        .sm1 <- bigmemory::sub.big.matrix (.local[[1]], firstRow=1, lastRow=nrow(.local[[1]])-1)
+        .sm2 <- bigmemory::sub.big.matrix (.local[[1]], firstRow=2, lastRow=nrow(.local[[1]]))
+        if (length(.cols) == 1) {
+            .breaks <- which (.sm1[,.cols] != .sm2[,.cols])
+        } else {
+            .breaks <- which (!apply (.sm1[,.cols] == .sm2[,.cols], 1, all))
+        }
+        rm (.sm1, .sm2)
+
+        .breaks <- c(.breaks, nrow(.local[[1]]))
+        .prev <- 0
+        for (.i in 1:length(.breaks)) {
+            .local[[1]][(.prev+1):.breaks[.i],.Gcol] <- .i
+            .prev <- .breaks[.i]
+        }
+
+        .last
+    })
+    # (2) work out if there's a group change between local[1] and local[2] etc.
+    trans <- do.call (c, trans)
+    trans <- trans[-length(trans)]
+
     sm1 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=1, lastRow=nrow(.data[[1]])-1)
     sm2 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=2, lastRow=nrow(.data[[1]]))
-    if (length(cols) == 1) {
-        breaks <- which (sm1[,cols] != sm2[,cols])
+    if (length(.cols) == 1) {
+        tg <- sm1[trans, .cols] != sm2[trans, .cols]
     } else {
-        breaks <- which (!apply (sm1[,cols] == sm2[,cols], 1, all))
-    }
-    breaks <- c(breaks, nrow(.data[[1]]))
-    last <- 0
-    for (i in 1:length(breaks)) {
-        .data[[1]][(last+1):breaks[i],Gcol] <- i
-        last <- breaks[i]
+        tg <- !apply (sm1[trans, .cols] == sm2[trans, .cols], 1, all)
     }
     rm (sm1, sm2)
+
+    # (3) add group base to each local
+    Gcount <- do.call (c, parallel::clusterEvalQ (attr(.data, "cl"), .local[[1]][nrow(.local[[1]]), .Gcol]))
+    Gcount <- Gcount[-length(Gcount)]
+
+    Gtr <- rep(1, length(Gcount))
+    Gtr[tg] <- 0
+    Gbase <- cumsum(c(0, Gcount-Gtr))
+    for (i in 1:N) {
+        .Gbase <- Gbase[i]
+        parallel::clusterExport(attr(.data, "cl")[i], ".Gbase", envir=environment())
+    }
+    parallel::clusterEvalQ (attr(.data, "cl"), {
+        .local[[1]][, .Gcol] <- .local[[1]][, .Gcol] + .Gbase
+        NULL
+    })
+
+    # Input      Gcount   tg      Gbase  Output
+    # 1: G=1,2   2        FALSE   0      G=1,2
+    # 2: G=1,2   2        TRUE    1      G=2,3
+    # --transition between 2->3--
+    # 3: G=1,2                           G=4,5
+
     return (.data)
 }
 
