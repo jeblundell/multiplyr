@@ -362,3 +362,32 @@ mutate <- function (.data, ...) {
     })
     .data
 }
+
+#' @export
+transmute <- function (.data, ...) {
+    #mutate
+    .dots <- lazyeval::lazy_dots (...)
+
+    .resnames <- names(.dots)
+    .rescols <- match (.resnames, attr(.data, "colnames"))
+    needalloc <- which (is.na(.rescols))
+    for (i in needalloc) {
+        .data <- alloc_col (.data, .resnames[i])
+        .rescols[i] <- match (.resnames[i], attr(.data, "colnames"))
+    }
+
+    cl <- attr (.data, "cl")
+    parallel::clusterExport (cl, c(".resnames",
+                                   ".rescols",
+                                   ".dots"), envir=environment())
+    parallel::clusterEvalQ (cl, {
+        .res <- do.call (cbind, lazyeval::lazy_eval (.dots, as.environment(.local)))
+        .local[[1]][, .rescols] <- .res
+        NULL
+    })
+    #/mutate
+
+    dropcols <- setdiff (which(attr(.data, "order.cols") > 0), .rescols)
+    .data <- free_col (.data, dropcols)
+    .data
+}
