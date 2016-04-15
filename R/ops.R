@@ -391,3 +391,30 @@ transmute <- function (.data, ...) {
     .data <- free_col (.data, dropcols)
     .data
 }
+
+#' @export
+define <- function (.data, ...) {
+    dots <- lazyeval::lazy_dots (...)
+    nm <- names(dots)
+    for (i in 1:length(dots)) {
+        if (nm[i] == "") {
+            var <- as.character(dots[[i]]$expr)
+            .data <- alloc_col (.data, var)
+        } else {
+            var <- nm[i]
+            .data <- alloc_col (.data, nm[i])
+            col <- match (var, attr(.data, "colnames"))
+
+            tpl <- as.character(dots[[i]]$expr)
+            tcol <- match (tpl, attr(.data, "colnames"))
+            attr(.data, "type.cols")[col] <- attr(.data, "type.cols")[tcol]
+            if (attr(.data, "type.cols")[tcol] > 0) {
+                f <- match (tcol, attr(.data, "factor.cols"))
+                attr(.data, "factor.cols") <- c(attr(.data, "factor.cols"), col)
+                attr(.data, "factor.levels") <- append(attr(.data, "factor.levels"), list(
+                                                       attr(.data, "factor.levels")[[f]]))
+            }
+        }
+    }
+    .data
+}
