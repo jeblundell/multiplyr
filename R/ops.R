@@ -8,6 +8,7 @@
         cols <- match(namelist, attr(x, "colnames"))
     }
     bigmemory::mpermute (x[[1]], cols=cols)
+    x
 }
 
 #' @export
