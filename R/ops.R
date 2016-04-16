@@ -479,9 +479,19 @@ filter <- function (.data, ...) {
                                    ".dots"), envir=environment())
     parallel::clusterEvalQ (cl, {
         if (.empty) { return (NULL) }
-        .res <- lazyeval::lazy_eval (.dots, as.environment(.local))
-        for (.r in .res) {
-            .local[[1]][, .filtercol] <- .local[[1]][, .filtercol] * .r
+        if (attr(.local, "grouped")) {
+            for (.g in .groups) {
+                .grouped <- group_restrict (.local, .g)
+                .res <- lazyeval::lazy_eval (.dots, as.environment(.grouped))
+                for (.r in .res) {
+                    .grouped[[1]][, .filtercol] <- .grouped[[1]][, .filtercol] * .r
+                }
+            }
+        } else {
+            .res <- lazyeval::lazy_eval (.dots, as.environment(.local))
+            for (.r in .res) {
+                .local[[1]][, .filtercol] <- .local[[1]][, .filtercol] * .r
+            }
         }
         NULL
     })
