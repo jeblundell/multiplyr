@@ -301,35 +301,95 @@ group_by <- function (.data, ...) {
 #' @export
 distinct <- function (.data, ...) {
     dots <- lazyeval::lazy_dots (...)
-    filtercol <- match(".filter", attr(.data, "colnames"))
+    .filtercol <- match(".filter", attr(.data, "colnames"))
     .data <- alloc_col (.data)
-    tmpcol <- match (".tmp", attr(.data, "colnames"))
+    .tmpcol <- match (".tmp", attr(.data, "colnames"))
+    N <- length (attr(.data, "cl"))
 
     if (length(dots) > 0) {
         namelist <- .dots2names (.data, dots)
-        cols <- match(namelist, attr(.data, "colnames"))
+        .cols <- match(namelist, attr(.data, "colnames"))
         .sort.fastdf (.data, decreasing=FALSE, dots=dots)
     } else {
-        cols <- attr(.data, "order.cols") > 0
-        cols <- (1:length(cols))[cols]
-        .sort.fastdf (.data, decreasing=FALSE, cols=cols)
+        .cols <- attr(.data, "order.cols") > 0
+        .cols <- (1:length(.cols))[.cols]
+        .sort.fastdf (.data, decreasing=FALSE, cols=.cols)
     }
+
+    .sort.fastdf (.data, decreasing=FALSE, dots)
+    if (N == 1) {
+        sm1 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=1, lastRow=nrow(.data[[1]])-1)
+        sm2 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=2, lastRow=nrow(.data[[1]]))
+        if (length(.cols) == 1) {
+            breaks <- which (sm1[,.cols] != sm2[,.cols])
+        } else {
+            breaks <- which (!apply (sm1[,.cols] == sm2[,.cols], 1, all))
+        }
+        breaks <- c(0, breaks) + 1
+
+        .data[[1]][, .tmpcol] <- 0
+        .data[[1]][breaks, .tmpcol] <- 1
+        .data[[1]][, .filtercol] <- .data[[1]][, .filtercol] *
+            .data[[1]][, .tmpcol]
+
+        .data <- free_col (.data, .tmpcol)
+        return (.data)
+    }
+
+    parallel::clusterExport (attr(.data, "cl"), c(".cols",
+                                                  ".filtercol",
+                                                  ".tmpcol"),
+                             envir=environment())
+
+    # (1) determine local distinct rows
+    trans <- parallel::clusterEvalQ (attr(.data, "cl"), {
+        .sm1 <- bigmemory::sub.big.matrix (.local[[1]], firstRow=1, lastRow=nrow(.local[[1]])-1)
+        .sm2 <- bigmemory::sub.big.matrix (.local[[1]], firstRow=2, lastRow=nrow(.local[[1]]))
+        if (length(.cols) == 1) {
+            .breaks <- which (.sm1[,.cols] != .sm2[,.cols])
+        } else {
+            .breaks <- which (!apply (.sm1[,.cols] == .sm2[,.cols], 1, all))
+        }
+        rm (.sm1, .sm2)
+        .breaks <- .breaks + 1
+
+        .last
+    })
+
+    # (2) work out if there's a group change between local[1] and local[2] etc.
+    trans <- do.call (c, trans)
+    trans <- trans[-length(trans)]
 
     sm1 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=1, lastRow=nrow(.data[[1]])-1)
     sm2 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=2, lastRow=nrow(.data[[1]]))
-    if (length(cols) == 1) {
-        breaks <- which (sm1[,cols] != sm2[,cols])
+    if (length(.cols) == 1) {
+        tg <- sm1[trans, .cols] != sm2[trans, .cols]
     } else {
-        breaks <- which (!apply (sm1[,cols] == sm2[,cols], 1, all))
+        tg <- !apply (sm1[trans, .cols] == sm2[trans, .cols], 1, all)
     }
-    breaks <- c(0, breaks) + 1
+    rm (sm1, sm2)
 
-    .data[[1]][, tmpcol] <- 0
-    .data[[1]][breaks, tmpcol] <- 1
-    .data[[1]][, filtercol] <- .data[[1]][, filtercol] *
-        .data[[1]][, tmpcol]
+    # (3) set breaks=1 for all where there's a transition
+    tg <- c(TRUE, tg)
+    for (i in 1:N) {
+        if (tg[i]) {
+            parallel::clusterEvalQ (attr(.data, "cl")[i], {
+                .breaks <- c(1, .breaks)
+                NULL
+            })
+        }
+    }
 
-    .data <- free_col (.data, tmpcol)
+    # (4) filter at breaks
+    parallel::clusterEvalQ (attr(.data, "cl"), {
+        .local[[1]][, .tmpcol] <- 0
+        .local[[1]][.breaks, .tmpcol] <- 1
+        .local[[1]][, .filtercol] <- .local[[1]][, .filtercol] *
+            .local[[1]][, .tmpcol]
+        NULL
+    })
+
+    .data <- free_col (.data, .tmpcol)
 
     .data
 }
