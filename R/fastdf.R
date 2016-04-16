@@ -190,22 +190,26 @@ as.data.frame.fastdf <- function (x) {
 `$.fastdf` <- function (x, name) {
     i <- match (name, attr(x, "colnames"))
     itype <- attr(x, "type.cols")[i]
+    filtercol <- match (".filter", attr(x, "colnames"))
+    filtered <- x[[1]][, filtercol] == 1
     if (itype == 0) {
-        return (x[[1]][,i])
+        return (x[[1]][filtered,i])
     } else if (itype == 1) {
         f <- match (i, attr(x, "factor.cols"))
-        return (factor(x[[1]][,i],
+        return (factor(x[[1]][filtered,i],
                              levels=seq_len(length(attr(x, "factor.levels")[[f]])),
                              labels=attr(x, "factor.levels")[[f]]))
     } else if (itype == 2) {
         f <- match (i, attr(x, "factor.cols"))
-        return (attr(x, "factor.levels")[[f]][x[[1]][,i]])
+        return (attr(x, "factor.levels")[[f]][x[[1]][filtered,i]])
     }
 }
 
 #' @export
 `[.fastdf` <- function (x, cols) {
     m <- match (cols, attr(x, "colnames"))
+    filtercol <- match (".filter", attr(x, "colnames"))
+    filtered <- x[[1]][, filtercol] == 1
     out <- NULL
     for (i in m) {
         itype <- attr(x, "type.cols")[i]
@@ -220,6 +224,7 @@ as.data.frame.fastdf <- function (x) {
             f <- match (i, attr(x, "factor.cols"))
             o <- (attr(x, "factor.levels")[[f]][x[[1]][,i]])
         }
+        o <- o[filtered]
         if (is.null(out)) {
             out <- o
         } else {
