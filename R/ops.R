@@ -242,12 +242,15 @@ group_by <- function (.data, ...) {
         } else {
             breaks <- which (!apply (sm1[,.cols] == sm2[,.cols], 1, all))
         }
+        sizes <- c(breaks, 100) - c(0, breaks)
         breaks <- c(0, breaks) + 1
         last <- 0
         for (i in 1:length(breaks)) {
             .data[[1]][(last+1):breaks[i],.Gcol] <- i
             last <- breaks[i]
         }
+        attr (.data, "group_sizes") <- sizes
+        attr (.data, "group_max") <- length(sizes)
         return (.data)
     }
 
@@ -272,6 +275,7 @@ group_by <- function (.data, ...) {
 
         .last
     })
+
     # (2) work out if there's a group change between local[1] and local[2] etc.
     trans <- do.call (c, trans)
     trans <- trans[-length(trans)]
@@ -302,7 +306,28 @@ group_by <- function (.data, ...) {
         NULL
     })
 
-    attr(.data, "group_max") <- .data[[1]][nrow(.data[[1]]), .Gcol]
+    # (4) figure out group sizes
+    res <- parallel::clusterEvalQ(attr(.data, "cl"), .breaks)
+    for (i in 1:length(res)) {
+        if (length(res[[i]]) > 1) {
+            for (j in 2:length(res[[i]])) {
+                res[[i]][j] <- res[[i]][j] - res[[i]][j-1]
+            }
+        }
+    }
+    sizes <- res[[1]]
+    for (i in 2:length(res)) {
+        if (!tg[i-1]) {
+            sizes[length(sizes)] <- sizes[length(sizes)] +
+                res[[i]][1]
+            sizes <- c(sizes, res[[i]][-1])
+        } else {
+            sizes <- c(sizes, res[[i]])
+        }
+    }
+
+    attr(.data, "group_sizes") <- sizes
+    attr(.data, "group_max") <- max(sizes)
 
     # Input      Gcount   tg      Gbase  Output
     # 1: G=1,2   2        FALSE   0      G=1,2
@@ -311,6 +336,11 @@ group_by <- function (.data, ...) {
     # 3: G=1,2                           G=4,5
 
     return (.data)
+}
+
+#' @export
+group_sizes <- function (.data) {
+    attr(.data, "group_sizes")
 }
 
 #' @export
