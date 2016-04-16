@@ -275,6 +275,21 @@ bind_variables <- function (dat, envir) {
 }
 
 #' @export
+group_restrict <- function (dat, group) {
+    if (group <= 0) { return (dat) }
+    attr(dat, "group") <- group
+
+    #presumes that dat is sorted by grouping column first
+    Gcol <- match (".group", attr(dat, "colnames"))
+    lims <- range(which (dat[[1]][, Gcol] == attr(dat, "group")))
+    dat[[1]] <- bigmemory::sub.big.matrix(dat[[1]],
+                                          firstRow=lims[1],
+                                          lastRow=lims[2])
+
+    return (dat)
+}
+
+#' @export
 with.fastdf <- function (data, expr, ...) {
     eval (substitute(expr), as.environment.fastdf(data), enclos = parent.frame())
 }

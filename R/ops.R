@@ -297,6 +297,7 @@ group_by <- function (.data, ...) {
     }
     parallel::clusterEvalQ (attr(.data, "cl"), {
         .local[[1]][, .Gcol] <- .local[[1]][, .Gcol] + .Gbase
+        .groups <- unique (.local[[1]][, .Gcol]) #FIXME
         NULL
     })
 
@@ -506,10 +507,20 @@ mutate <- function (.data, ...) {
                                    ".dots"), envir=environment())
     parallel::clusterEvalQ (cl, {
         if (.empty) { return (NULL) }
-        # can't just use do.call(cbind...) as some may return length(1)
-        .res <- lazyeval::lazy_eval (.dots, as.environment(no.strings.attached(.local)))
-        for (.i in 1:length(.res)) {
-            .local[[1]][, .rescols[.i]] <- .res[[.i]]
+        if (attr(.local, "grouped")) {
+            for (.g in .groups) {
+                .grouped <- group_restrict (.local, .g)
+                # can't just use do.call(cbind...) as some may return length(1)
+                .res <- lazyeval::lazy_eval (.dots, as.environment(no.strings.attached(.grouped)))
+                for (.i in 1:length(.res)) {
+                    .grouped[[1]][, .rescols[.i]] <- .res[[.i]]
+                }
+            }
+        } else {
+            .res <- lazyeval::lazy_eval (.dots, as.environment(no.strings.attached(.local)))
+            for (.i in 1:length(.res)) {
+                .local[[1]][, .rescols[.i]] <- .res[[.i]]
+            }
         }
         NULL
     })
@@ -535,10 +546,20 @@ transmute <- function (.data, ...) {
                                    ".dots"), envir=environment())
     parallel::clusterEvalQ (cl, {
         if (.empty) { return (NULL) }
-        # can't just use do.call(cbind...) as some may return length(1)
-        .res <- lazyeval::lazy_eval (.dots, as.environment(no.strings.attached(.local)))
-        for (.i in 1:length(.res)) {
-            .local[[1]][, .rescols[.i]] <- .res[[.i]]
+        if (attr(.local, "grouped")) {
+            for (.g in .groups) {
+                .grouped <- group_restrict (.local, .g)
+                # can't just use do.call(cbind...) as some may return length(1)
+                .res <- lazyeval::lazy_eval (.dots, as.environment(no.strings.attached(.grouped)))
+                for (.i in 1:length(.res)) {
+                    .grouped[[1]][, .rescols[.i]] <- .res[[.i]]
+                }
+            }
+        } else {
+            .res <- lazyeval::lazy_eval (.dots, as.environment(no.strings.attached(.local)))
+            for (.i in 1:length(.res)) {
+                .local[[1]][, .rescols[.i]] <- .res[[.i]]
+            }
         }
         NULL
     })
