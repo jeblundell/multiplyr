@@ -506,8 +506,11 @@ mutate <- function (.data, ...) {
                                    ".dots"), envir=environment())
     parallel::clusterEvalQ (cl, {
         if (.empty) { return (NULL) }
-        .res <- do.call (cbind, lazyeval::lazy_eval (.dots, as.environment(no.strings.attached(.local))))
-        .local[[1]][, .rescols] <- .res
+        # can't just use do.call(cbind...) as some may return length(1)
+        .res <- lazyeval::lazy_eval (.dots, as.environment(no.strings.attached(.local)))
+        for (.i in 1:length(.res)) {
+            .local[[1]][, .rescols[.i]] <- .res[[.i]]
+        }
         NULL
     })
     .data
@@ -532,8 +535,11 @@ transmute <- function (.data, ...) {
                                    ".dots"), envir=environment())
     parallel::clusterEvalQ (cl, {
         if (.empty) { return (NULL) }
-        .res <- do.call (cbind, lazyeval::lazy_eval (.dots, as.environment(no.strings.attached(.local))))
-        .local[[1]][, .rescols] <- .res
+        # can't just use do.call(cbind...) as some may return length(1)
+        .res <- lazyeval::lazy_eval (.dots, as.environment(no.strings.attached(.local)))
+        for (.i in 1:length(.res)) {
+            .local[[1]][, .rescols[.i]] <- .res[[.i]]
+        }
         NULL
     })
     #/mutate
