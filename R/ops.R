@@ -53,8 +53,9 @@ partition <- function (.data, max.row = NULL) {
     }
     cl <- attr(.data, "cl")
     N <- length(cl)
-    nr <- rep(floor(max.row / N), N)
-    nr[1] <- nr[1] + (max.row - sum(nr))
+
+    nr <- distribute (max.row, N)
+
     last <- cumsum(nr)
     first <- c(0, last)[1:N] + 1
     for (i in 1:N) {
