@@ -598,6 +598,25 @@ define <- function (.data, ...) {
 }
 
 #' @export
+undefine <- function (.data, ...) {
+    dots <- lazyeval::lazy_dots (...)
+    nm <- names(dots)
+    for (i in 1:length(dots)) {
+        if (nm[i] == "") {
+            var <- as.character(dots[[i]]$expr)
+        } else {
+            var <- nm[i]
+        }
+        col <- match (var, attr(.data, "colnames"))
+        .data <- free_col(.data, col)
+    }
+    .data
+}
+
+#' @export
+unselect <- undefine
+
+#' @export
 compact <- function (.data, redistribute=FALSE) {
     cl <- attr(.data, "cl")
 
