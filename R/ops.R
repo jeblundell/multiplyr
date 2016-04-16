@@ -327,7 +327,7 @@ group_by <- function (.data, ...) {
     }
 
     attr(.data, "group_sizes") <- sizes
-    attr(.data, "group_max") <- max(sizes)
+    attr(.data, "group_max") <- length(sizes)
 
     # Input      Gcount   tg      Gbase  Output
     # 1: G=1,2   2        FALSE   0      G=1,2
