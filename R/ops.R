@@ -327,7 +327,12 @@ distinct <- function (.data, ...) {
         .sort.fastdf (.data, decreasing=FALSE, cols=.cols)
     }
 
-    .sort.fastdf (.data, decreasing=FALSE, dots)
+    if (attr(.data, "grouped")) {
+        Gcol <- match (".group", attr(.data, "colnames"))
+        .cols <- c(Gcol, .cols)
+    }
+
+    .sort.fastdf (.data, decreasing=FALSE, cols=.cols)
     if (N == 1) {
         sm1 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=1, lastRow=nrow(.data[[1]])-1)
         sm2 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=2, lastRow=nrow(.data[[1]]))
