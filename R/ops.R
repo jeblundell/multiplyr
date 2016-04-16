@@ -2,10 +2,17 @@
     as.vector (sapply (dots, function (x) { as.character (x$expr) }))
 }
 
-.sort.fastdf <- function (x, decreasing=FALSE, dots=NULL, cols=NULL) {
+.sort.fastdf <- function (x, decreasing=FALSE, dots=NULL, cols=NULL, with.group=FALSE) {
     if (is.null(cols)) {
         namelist <- .dots2names (x, dots)
         cols <- match(namelist, attr(x, "colnames"))
+    }
+    if (with.group) {
+        Gcol <- match(".group", attr(x, "colnames"))
+        if (Gcol %in% cols) {
+            cols <- cols[cols != Gcol]
+        }
+        cols <- c(Gcol, cols)
     }
     bigmemory::mpermute (x[[1]], cols=cols)
     x
@@ -94,7 +101,7 @@ arrange <- function (.data, ...) {
     #sorted already
 
     dots <- lazyeval::lazy_dots(...)
-    .sort.fastdf(.data, decreasing, dots)
+    .sort.fastdf(.data, decreasing=FALSE, dots, with.group = attr(.data, "grouped"))
     .data
 }
 
@@ -222,6 +229,10 @@ group_by <- function (.data, ...) {
     N <- length(attr(.data, "cl"))
 
     .sort.fastdf (.data, decreasing=FALSE, dots)
+
+    attr (.data, "grouped") <- TRUE
+    parallel::clusterEvalQ (attr(.data, "cl"), attr(.local, "grouped") <- TRUE)
+
     if (N == 1) {
         sm1 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=1, lastRow=nrow(.data[[1]])-1)
         sm2 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=2, lastRow=nrow(.data[[1]]))
@@ -593,3 +604,23 @@ compact <- function (.data, redistribute=FALSE) {
     }
     .data
 }
+
+#' @export
+ungroup <- function (.data) {
+    attr (.data, "grouped") <- FALSE
+    parallel::clusterEvalQ (attr(.data, "cl"), attr(.local, "grouped") <- FALSE)
+    return (.data)
+}
+
+#' @export
+regroup <- function (.data) {
+    attr (.data, "grouped") <- TRUE
+    parallel::clusterEvalQ (attr(.data, "cl"), attr(.local, "grouped") <- TRUE)
+    return (.data)
+}
+
+#' @export
+rowwise <- ungroup
+
+#' @export
+groupwise <- regroup

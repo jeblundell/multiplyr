@@ -67,6 +67,8 @@ fastdf <- function (..., alloc=1, cl = NULL) {
                       cl = cl,
                       colnames = names.cols,
                       nsa = FALSE,
+                      grouped = FALSE,
+                      group = 0,
                       class = append("fastdf", "list"))
     .desc <- describe (.bm)
     parallel::clusterExport (cl, ".desc", envir=environment())
