@@ -301,6 +301,8 @@ group_by <- function (.data, ...) {
         NULL
     })
 
+    attr(.data, "group_max") <- .data[[1]][nrow(.data[[1]]), .Gcol]
+
     # Input      Gcount   tg      Gbase  Output
     # 1: G=1,2   2        FALSE   0      G=1,2
     # 2: G=1,2   2        TRUE    1      G=2,3
@@ -457,13 +459,26 @@ slice <- function (.data, rows=NULL, start=NULL, end=NULL) {
 
     filtercol <- match(".filter", attr(.data, "colnames"))
 
-    filtered <- bigmemory::mwhich (.data[[1]],
-                                   cols=filtercol,
-                                   vals=1,
-                                   comps="eq")
-    rows <- filtered[rows]
-    .data[[1]][, filtercol] <- 0
-    .data[[1]][rows, filtercol] <- 1
+    if (attr(.data, "grouped")) {
+        for (g in 1:attr(.data, "group_max")) {
+            grouped <- group_restrict (.data, g)
+            filtered <- bigmemory::mwhich (grouped[[1]],
+                                           cols=filtercol,
+                                           vals=1,
+                                           comps="eq")
+            rows <- filtered[rows]
+            grouped[[1]][, filtercol] <- 0
+            grouped[[1]][rows, filtercol] <- 1
+        }
+    } else {
+        filtered <- bigmemory::mwhich (.data[[1]],
+                                       cols=filtercol,
+                                       vals=1,
+                                       comps="eq")
+        rows <- filtered[rows]
+        .data[[1]][, filtercol] <- 0
+        .data[[1]][rows, filtercol] <- 1
+    }
 
     .data
 }
