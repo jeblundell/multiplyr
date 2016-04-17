@@ -39,7 +39,6 @@ free_col <- function (x, col) {
     return (x)
 }
 
-
 #' @export
 sort.fastdf <- function (x, decreasing = FALSE, ...) {
     dots <- lazyeval::lazy_dots (...)
@@ -131,31 +130,11 @@ clget_ <- function (.data, ..., .dots) {
 }
 
 #' @export
-clget <- function (.data, ...) {
-    dots <- lazyeval::lazy_dots(...)
-    return (clget_ (.data, .dots=dots))
-}
-
-
-#' @export
-arrange <- function (.data, ...) {
+arrange_ <- function (.data, ..., .dots) {
     #This works on the presumption that factors have levels
     #sorted already
-
-    .dots <- lazyeval::lazy_dots(...)
-    arrange_ (.data, .dots=.dots)
-}
-
-#' @export
-arrange_ <- function (.data, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
     .sort.fastdf(.data, decreasing=FALSE, .dots, with.group = attr(.data, "grouped"))
-}
-
-#' @export
-fast_filter <- function (.data, ...) {
-    .dots <- lazyeval::lazy_dots (...)
-    fast_filter_ (.data, .dots=.dots)
 }
 
 #' @export
@@ -277,12 +256,6 @@ ff_mwhich <- function (x, lazyobj) {
             vals = vals,
             comps = comps,
             op = "AND")
-}
-
-#' @export
-group_by <- function (.data, ...) {
-    .dots <- lazyeval::lazy_dots (...)
-    group_by_ (.data, .dots=.dots)
 }
 
 #' @export
@@ -418,12 +391,6 @@ group_sizes <- function (.data) {
 }
 
 #' @export
-distinct <- function (.data, ...) {
-    .dots <- lazyeval::lazy_dots (...)
-    distinct_ (.data, .dots=.dots)
-}
-
-#' @export
 distinct_ <- function (.data, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
     .filtercol <- match(".filter", attr(.data, "colnames"))
@@ -536,12 +503,6 @@ distinct_ <- function (.data, ..., .dots) {
 }
 
 #' @export
-rename <- function (.data, ...) {
-    .dots <- lazyeval::lazy_dots (...)
-    rename_ (.data, .dots=.dots)
-}
-
-#' @export
 rename_ <- function (.data, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
     .newnames <- names(.dots)
@@ -558,12 +519,6 @@ rename_ <- function (.data, ..., .dots) {
         NULL
     })
     .data
-}
-
-#' @export
-select <- function (.data, ...) {
-    .dots <- lazyeval::lazy_dots (...)
-    select_ (.data, .dots=.dots)
 }
 
 #' @export
@@ -641,12 +596,6 @@ slice <- function (.data, rows=NULL, start=NULL, end=NULL) {
 }
 
 #' @export
-filter <- function (.data, ...) {
-    .dots <- lazyeval::lazy_dots (...)
-    filter_ (.data, .dots=.dots)
-}
-
-#' @export
 filter_ <- function (.data, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
     .filtercol <- match(".filter", attr(.data, "colnames"))
@@ -674,12 +623,6 @@ filter_ <- function (.data, ..., .dots) {
     })
 
     .data
-}
-
-#' @export
-mutate <- function (.data, ...) {
-    .dots <- lazyeval::lazy_dots (...)
-    mutate_ (.data, .dots=.dots)
 }
 
 #' @export
@@ -717,12 +660,6 @@ mutate_ <- function (.data, ..., .dots) {
         NULL
     })
     .data
-}
-
-#' @export
-transmute <- function (.data, ...) {
-    .dots <- lazyeval::lazy_dots (...)
-    transmute_ (.data, .dots=.dots)
 }
 
 #' @export
@@ -768,12 +705,6 @@ transmute_ <- function (.data, ..., .dots) {
 }
 
 #' @export
-define <- function (.data, ...) {
-    .dots <- lazyeval::lazy_dots (...)
-    define_ (.data, .dots=.dots)
-}
-
-#' @export
 define_ <- function (.data, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
     nm <- names(.dots)
@@ -801,12 +732,6 @@ define_ <- function (.data, ..., .dots) {
 }
 
 #' @export
-undefine <- function (.data, ...) {
-    .dots <- lazyeval::lazy_dots (...)
-    undefine_ (.data, .dots=.dots)
-}
-
-#' @export
 undefine_ <- function (.data, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
     nm <- names(.dots)
@@ -821,9 +746,6 @@ undefine_ <- function (.data, ..., .dots) {
     }
     .data
 }
-
-#' @export
-unselect <- undefine
 
 #' @export
 unselect_ <- undefine_
@@ -866,13 +788,6 @@ compact <- function (.data, redistribute=FALSE) {
         }
     }
     .data
-}
-
-#' @export
-ungroup <- function (.data) {
-    attr (.data, "grouped") <- FALSE
-    parallel::clusterEvalQ (attr(.data, "cl"), attr(.local, "grouped") <- FALSE)
-    return (.data)
 }
 
 #' @export
