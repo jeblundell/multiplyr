@@ -117,11 +117,12 @@ partition_group <- function (.data) {
 
 #' @export
 cldo <- function (.data, ...) {
-    clusterEvalQ (attr(.data, "cl"), ...)
+    parallel::clusterEvalQ (attr(.data, "cl"), ...)
 }
 
 #' @export
-clget_ <- function (.data, .dots) {
+clget_ <- function (.data, ..., .dots) {
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
     parallel::clusterExport (attr(.data, "cl"), ".dots", envir=environment())
     parallel::clusterEvalQ (attr(.data, "cl"), {
         if (.empty) { return (NULL) }
@@ -132,23 +133,34 @@ clget_ <- function (.data, .dots) {
 #' @export
 clget <- function (.data, ...) {
     dots <- lazyeval::lazy_dots(...)
-    return (clget_ (.data, dots))
+    return (clget_ (.data, .dots=dots))
 }
+
 
 #' @export
 arrange <- function (.data, ...) {
     #This works on the presumption that factors have levels
     #sorted already
 
-    dots <- lazyeval::lazy_dots(...)
-    .sort.fastdf(.data, decreasing=FALSE, dots, with.group = attr(.data, "grouped"))
-    .data
+    .dots <- lazyeval::lazy_dots(...)
+    arrange_ (.data, .dots=.dots)
+}
+
+#' @export
+arrange_ <- function (.data, ..., .dots) {
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    .sort.fastdf(.data, decreasing=FALSE, .dots, with.group = attr(.data, "grouped"))
 }
 
 #' @export
 fast_filter <- function (.data, ...) {
     .dots <- lazyeval::lazy_dots (...)
+    fast_filter_ (.data, .dots=.dots)
+}
 
+#' @export
+fast_filter_ <- function (.data, ..., .dots) {
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
     parallel::clusterExport (attr(.data, "cl"), ".dots", envir=environment())
 
     parallel::clusterEvalQ (attr(.data, "cl"), {
@@ -193,6 +205,7 @@ fast_filter <- function (.data, ...) {
     lazyobj$expr[1] <- op
     return (lazyobj)
 }
+
 #' @export
 ff_expr <- function (var, expr) {
     col <- match (var, attr(.local, "colnames"))
@@ -205,42 +218,49 @@ ff_expr <- function (var, expr) {
         return (l)
     }
 }
+
 #' @export
 ff_lt <- function (cmp, expr) {
     var <- as.character(as.name(substitute(cmp)))
     res <- ff_expr(var, expr)
     return (list(var, c("gt", "lt"), c(-Inf, res)))
 }
+
 #' @export
 ff_le <- function (cmp, expr) {
     var <- as.character(as.name(substitute(cmp)))
     res <- ff_expr(var, expr)
     return (list(var, c("gt", "le"), c(-Inf, res)))
 }
+
 #' @export
 ff_gt <- function (cmp, expr) {
     var <- as.character(as.name(substitute(cmp)))
     res <- ff_expr(var, expr)
     return (list(var, c("gt", "lt"), c(res, Inf)))
 }
+
 #' @export
 ff_ge <- function (cmp, expr) {
     var <- as.character(as.name(substitute(cmp)))
     res <- ff_expr(var, expr)
     return (list(var, c("ge", "lt"), c(res, Inf)))
 }
+
 #' @export
 ff_neq <- function (cmp, expr) {
     var <- as.character(as.name(substitute(cmp)))
     res <- ff_expr(var, expr)
     return (list(var, c("neq"),c(res)))
 }
+
 #' @export
 ff_eq <- function (cmp, expr) {
     var <- as.character(as.name(substitute(cmp)))
     res <- ff_expr(var, expr)
     return (list(var, c("eq"), c(res)))
 }
+
 #' @export
 ff_mwhich <- function (x, lazyobj) {
     lazyobj <- lapply (lazyobj, .filter_rewrite) #FIXME: eval in x
@@ -261,14 +281,19 @@ ff_mwhich <- function (x, lazyobj) {
 
 #' @export
 group_by <- function (.data, ...) {
-    dots <- lazyeval::lazy_dots (...)
+    .dots <- lazyeval::lazy_dots (...)
+    group_by_ (.data, .dots=.dots)
+}
 
-    namelist <- .dots2names (.data, dots)
+#' @export
+group_by_ <- function (.data, ..., .dots) {
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    namelist <- .dots2names (.data, .dots)
     .cols <- match(namelist, attr(.data, "colnames"))
     .Gcol <- match(".group", attr(.data, "colnames"))
     N <- length(attr(.data, "cl"))
 
-    .sort.fastdf (.data, decreasing=FALSE, dots)
+    .sort.fastdf (.data, decreasing=FALSE, .dots)
 
     attr (.data, "grouped") <- TRUE
     parallel::clusterEvalQ (attr(.data, "cl"), attr(.local, "grouped") <- TRUE)
@@ -394,16 +419,22 @@ group_sizes <- function (.data) {
 
 #' @export
 distinct <- function (.data, ...) {
-    dots <- lazyeval::lazy_dots (...)
+    .dots <- lazyeval::lazy_dots (...)
+    distinct_ (.data, .dots=.dots)
+}
+
+#' @export
+distinct_ <- function (.data, ..., .dots) {
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
     .filtercol <- match(".filter", attr(.data, "colnames"))
     .data <- alloc_col (.data)
     .tmpcol <- match (".tmp", attr(.data, "colnames"))
     N <- length (attr(.data, "cl"))
 
-    if (length(dots) > 0) {
-        namelist <- .dots2names (.data, dots)
+    if (length(.dots) > 0) {
+        namelist <- .dots2names (.data, .dots)
         .cols <- match(namelist, attr(.data, "colnames"))
-        .sort.fastdf (.data, decreasing=FALSE, dots=dots)
+        .sort.fastdf (.data, decreasing=FALSE, dots=.dots)
     } else {
         .cols <- attr(.data, "order.cols") > 0
         .cols <- (1:length(.cols))[.cols]
@@ -506,10 +537,15 @@ distinct <- function (.data, ...) {
 
 #' @export
 rename <- function (.data, ...) {
-    dots <- lazyeval::lazy_dots (...)
+    .dots <- lazyeval::lazy_dots (...)
+    rename_ (.data, .dots=.dots)
+}
 
-    .newnames <- names(dots)
-    .oldnames <- as.vector (vapply (dots, function (x) { as.character (x$expr) }, ""))
+#' @export
+rename_ <- function (.data, ..., .dots) {
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    .newnames <- names(.dots)
+    .oldnames <- as.vector (vapply (.dots, function (x) { as.character (x$expr) }, ""))
     .match <- match(.oldnames, attr(.data, "colnames"))
     attr(.data, "colnames")[.match] <- .newnames
     parallel::clusterExport (attr(.data, "cl"), c(".oldnames",
@@ -526,8 +562,14 @@ rename <- function (.data, ...) {
 
 #' @export
 select <- function (.data, ...) {
-    dots <- lazyeval::lazy_dots (...)
-    coln <- as.vector (vapply (dots, function (x) { as.character (x$expr) }, ""))
+    .dots <- lazyeval::lazy_dots (...)
+    select_ (.data, .dots=.dots)
+}
+
+#' @export
+select_ <- function (.data, ..., .dots) {
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    coln <- as.vector (vapply (.dots, function (x) { as.character (x$expr) }, ""))
     cols <- match (coln, attr(.data, "colnames"))
     attr(.data, "order.cols") <- 0
     attr(.data, "order.cols")[sort(cols)] <- order(cols)
@@ -535,6 +577,7 @@ select <- function (.data, ...) {
     # display purposes (currently)
     .data
 }
+
 
 #' @export
 slice <- function (.data, rows=NULL, start=NULL, end=NULL) {
@@ -600,7 +643,12 @@ slice <- function (.data, rows=NULL, start=NULL, end=NULL) {
 #' @export
 filter <- function (.data, ...) {
     .dots <- lazyeval::lazy_dots (...)
+    filter_ (.data, .dots=.dots)
+}
 
+#' @export
+filter_ <- function (.data, ..., .dots) {
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
     .filtercol <- match(".filter", attr(.data, "colnames"))
 
     cl <- attr (.data, "cl")
@@ -631,7 +679,12 @@ filter <- function (.data, ...) {
 #' @export
 mutate <- function (.data, ...) {
     .dots <- lazyeval::lazy_dots (...)
+    mutate_ (.data, .dots=.dots)
+}
 
+#' @export
+mutate_ <- function (.data, ..., .dots) {
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
     .resnames <- names(.dots)
     .rescols <- match (.resnames, attr(.data, "colnames"))
     needalloc <- which (is.na(.rescols))
@@ -668,9 +721,14 @@ mutate <- function (.data, ...) {
 
 #' @export
 transmute <- function (.data, ...) {
-    #mutate
     .dots <- lazyeval::lazy_dots (...)
+    transmute_ (.data, .dots=.dots)
+}
 
+#' @export
+transmute_ <- function (.data, ..., .dots) {
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    #mutate
     .resnames <- names(.dots)
     .rescols <- match (.resnames, attr(.data, "colnames"))
     needalloc <- which (is.na(.rescols))
@@ -711,18 +769,24 @@ transmute <- function (.data, ...) {
 
 #' @export
 define <- function (.data, ...) {
-    dots <- lazyeval::lazy_dots (...)
-    nm <- names(dots)
-    for (i in 1:length(dots)) {
+    .dots <- lazyeval::lazy_dots (...)
+    define_ (.data, .dots=.dots)
+}
+
+#' @export
+define_ <- function (.data, ..., .dots) {
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    nm <- names(.dots)
+    for (i in 1:length(.dots)) {
         if (nm[i] == "") {
-            var <- as.character(dots[[i]]$expr)
+            var <- as.character(.dots[[i]]$expr)
             .data <- alloc_col (.data, var)
         } else {
             var <- nm[i]
             .data <- alloc_col (.data, nm[i])
             col <- match (var, attr(.data, "colnames"))
 
-            tpl <- as.character(dots[[i]]$expr)
+            tpl <- as.character(.dots[[i]]$expr)
             tcol <- match (tpl, attr(.data, "colnames"))
             attr(.data, "type.cols")[col] <- attr(.data, "type.cols")[tcol]
             if (attr(.data, "type.cols")[tcol] > 0) {
@@ -738,11 +802,17 @@ define <- function (.data, ...) {
 
 #' @export
 undefine <- function (.data, ...) {
-    dots <- lazyeval::lazy_dots (...)
-    nm <- names(dots)
-    for (i in 1:length(dots)) {
+    .dots <- lazyeval::lazy_dots (...)
+    undefine_ (.data, .dots=.dots)
+}
+
+#' @export
+undefine_ <- function (.data, ..., .dots) {
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    nm <- names(.dots)
+    for (i in 1:length(.dots)) {
         if (nm[i] == "") {
-            var <- as.character(dots[[i]]$expr)
+            var <- as.character(.dots[[i]]$expr)
         } else {
             var <- nm[i]
         }
@@ -754,6 +824,9 @@ undefine <- function (.data, ...) {
 
 #' @export
 unselect <- undefine
+
+#' @export
+unselect_ <- undefine_
 
 #' @export
 compact <- function (.data, redistribute=FALSE) {
