@@ -95,7 +95,7 @@ as.fastdf.data.frame <- function (x, cl=NULL) {
 
 #' @export
 print.fastdf <- function (x, max.row = 10) {
-    if (is.null(max.row) || max.row == 0) {
+    if (is.null(max.row) || max.row == 0 || max.row > nrow(x[[1]])) {
         max.row <- nrow(x[[1]])
     }
 

@@ -18,6 +18,7 @@
 \alias{free_col}
 \alias{internal}
 \alias{no.strings.attached}
+\alias{pad.cols}
 \title{Internal functions}
 \usage{
 .p(...)
@@ -52,6 +53,8 @@ free_col(x, col)
 .partition_all(.data, max.row = nrow(.data[[1]]))
 
 no.strings.attached(x)
+
+pad.cols(x, max.row = 10)
 }
 \description{
 Internal functions

@@ -183,20 +183,27 @@ free_col <- function (x, col) {
     N <- length(cl)
 
     nr <- distribute (max.row, N)
-
-    last <- cumsum(nr)
-    first <- c(0, last)[1:N] + 1
-    for (i in 1:N) {
-        .first <- first[i]
-        .last <- last[i]
-        parallel::clusterExport (cl[i], c(".first", ".last"), envir=environment())
+    if (max.row < N) {
+        nr[nr != 0] <- 1:max.row
+        for (i in 1:N) {
+            .first <- .last <- nr[i]
+            parallel::clusterExport (cl[i], c(".first", ".last"), envir=environment())
+        }
+    } else {
+        last <- cumsum(nr)
+        first <- c(0, last)[1:N] + 1
+        for (i in 1:N) {
+            .first <- first[i]
+            .last <- last[i]
+            parallel::clusterExport (cl[i], c(".first", ".last"), envir=environment())
+        }
     }
     parallel::clusterEvalQ (cl, {
         .empty <- (.last < .first || .last == 0)
-        if (.empty) { return (NULL) }
         if (!exists(".local")) {
             .local <- .master
         }
+        if (.empty) { return (NULL) }
         .local[[1]] <- sub.big.matrix(.master[[1]],
                                       firstRow=.first,
                                       lastRow=.last)
@@ -211,4 +218,19 @@ free_col <- function (x, col) {
 no.strings.attached <- function (x) {
     attr(x, "nsa") <- TRUE
     x
+}
+
+#' @export
+#' @keywords internal
+#' @rdname internal
+pad.cols <- function (x, max.row=10) {
+    #FIXME: more efficient way of doing this?
+    if (is.null (max.row) || max.row==0 || max.row > nrow(x[[1]])) {
+        max.row <- nrow(x[[1]])
+    }
+    pc <- attr(x, "pad")
+    for (i in seq_len(ncol(x[[1]]))[pc==0 & attr(x, "order.cols") > 0]) {
+        pc[i] <- max(nchar(as.character(x[[1]][1:max.row,i])))
+    }
+    pc
 }
