@@ -92,8 +92,6 @@ as.fastdf.data.frame <- function (x, cl=NULL) {
     return (fastdf (x))
 }
 
-.p <- function (...) { paste (..., sep="") }
-
 #' @export
 pad.cols <- function (x, max.row=10) {
     #FIXME: more efficient way of doing this?

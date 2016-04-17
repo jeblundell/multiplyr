@@ -1,43 +1,3 @@
-.dots2names <- function (x, dots) {
-    as.vector (sapply (dots, function (x) { as.character (x$expr) }))
-}
-
-.sort.fastdf <- function (x, decreasing=FALSE, dots=NULL, cols=NULL, with.group=FALSE) {
-    if (is.null(cols)) {
-        namelist <- .dots2names (x, dots)
-        cols <- match(namelist, attr(x, "colnames"))
-    }
-    if (with.group) {
-        Gcol <- match(".group", attr(x, "colnames"))
-        if (Gcol %in% cols) {
-            cols <- cols[cols != Gcol]
-        }
-        cols <- c(Gcol, cols)
-    }
-    bigmemory::mpermute (x[[1]], cols=cols)
-    x
-}
-
-#' @export
-alloc_col <- function (x, name=".tmp") {
-    res <- which (is.na (attr(x, "colnames")))
-    if (length(res) == 0) {
-        stop ("No free columns available")
-    } else {
-        attr(x, "colnames")[res[1]] <- name
-        attr(x, "type.cols")[res[1]] <- 0
-        attr(x, "order.cols")[res[1]] <- max(attr(x, "order.cols"))+1
-        return (x)
-    }
-}
-
-#' @export
-free_col <- function (x, col) {
-    attr(x, "colnames")[col] <- NA
-    attr(x, "type.cols")[col] <- 0
-    attr(x, "order.cols")[col] <- 0
-    return (x)
-}
 
 #' @export
 sort.fastdf <- function (x, decreasing = FALSE, ...) {
@@ -45,6 +5,9 @@ sort.fastdf <- function (x, decreasing = FALSE, ...) {
     .sort.fastdf (x, decreasing, dots)
 }
 
+#' @export
+#' @keywords internal
+# (kept here rather than internal.R as it's an op)
 .partition_all <- function (.data, max.row = nrow(.data[[1]])) {
     cl <- attr(.data, "cl")
     N <- length(cl)
@@ -162,100 +125,6 @@ fast_filter_ <- function (.data, ..., .dots) {
         NULL
     })
     return (.data)
-}
-
-.filter_rewrite <- function (lazyobj) {
-    op <- lazyobj$expr[1]
-    if (op == quote(`<`())) {
-        op <- quote (`ff_lt`())
-    } else if (op == quote(`<=`())) {
-        op <- quote (`ff_le`())
-    } else if (op == quote(`>`())) {
-        op <- quote (`ff_gt`())
-    } else if (op == quote(`>=`())) {
-        op <- quote (`ff_ge`())
-    } else if (op == quote(`==`())) {
-        op <- quote (`ff_eq`())
-    } else if (op == quote(`!=`())) {
-        op <- quote (`ff_neq`())
-    } else {
-        stop ("Operator not supported for fast_filter")
-    }
-    lazyobj$expr[1] <- op
-    return (lazyobj)
-}
-
-#' @export
-ff_expr <- function (var, expr) {
-    col <- match (var, attr(.local, "colnames"))
-    type <- attr(.local, "type.cols")[col]
-    if (type == 0) {
-        return (expr)
-    } else {
-        f <- match (col, attr(.local, "factor.cols"))
-        l <- match (expr, attr(.local, "factor.levels")[[f]])
-        return (l)
-    }
-}
-
-#' @export
-ff_lt <- function (cmp, expr) {
-    var <- as.character(as.name(substitute(cmp)))
-    res <- ff_expr(var, expr)
-    return (list(var, c("gt", "lt"), c(-Inf, res)))
-}
-
-#' @export
-ff_le <- function (cmp, expr) {
-    var <- as.character(as.name(substitute(cmp)))
-    res <- ff_expr(var, expr)
-    return (list(var, c("gt", "le"), c(-Inf, res)))
-}
-
-#' @export
-ff_gt <- function (cmp, expr) {
-    var <- as.character(as.name(substitute(cmp)))
-    res <- ff_expr(var, expr)
-    return (list(var, c("gt", "lt"), c(res, Inf)))
-}
-
-#' @export
-ff_ge <- function (cmp, expr) {
-    var <- as.character(as.name(substitute(cmp)))
-    res <- ff_expr(var, expr)
-    return (list(var, c("ge", "lt"), c(res, Inf)))
-}
-
-#' @export
-ff_neq <- function (cmp, expr) {
-    var <- as.character(as.name(substitute(cmp)))
-    res <- ff_expr(var, expr)
-    return (list(var, c("neq"),c(res)))
-}
-
-#' @export
-ff_eq <- function (cmp, expr) {
-    var <- as.character(as.name(substitute(cmp)))
-    res <- ff_expr(var, expr)
-    return (list(var, c("eq"), c(res)))
-}
-
-#' @export
-ff_mwhich <- function (x, lazyobj) {
-    lazyobj <- lapply (lazyobj, .filter_rewrite) #FIXME: eval in x
-    class (lazyobj) <- "lazy_dots"
-    l <- lazyeval::lazy_eval (lazyobj)
-
-    coln <- do.call (c, lapply (l, function (x) { x[[1]] }))
-    cols <- match (coln, attr(x, "colnames"))
-    comps <- lapply (l, function (x) { x[[2]] })
-    vals  <- lapply (l, function (x) { x[[3]] })
-
-    bigmemory::mwhich (x[[1]],
-            cols = cols,
-            vals = vals,
-            comps = comps,
-            op = "AND")
 }
 
 #' @export
