@@ -61,6 +61,12 @@ select <- function (.data, ...) {
 }
 
 #' @export
+summarise <- function (.data, ...) {
+    .dots <- lazyeval::lazy_dots (...)
+    summarise_ (.data, .dots=.dots)
+}
+
+#' @export
 transmute <- function (.data, ...) {
     .dots <- lazyeval::lazy_dots (...)
     transmute_ (.data, .dots=.dots)

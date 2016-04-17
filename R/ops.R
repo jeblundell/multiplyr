@@ -636,3 +636,16 @@ rowwise <- ungroup
 
 #' @export
 groupwise <- regroup
+
+#' @export
+summarise_ <- function (.data, ..., .dots) {
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    if (!attr(.data, "grouped")) {
+        res <- lazyeval::lazy_eval(.dots, as.environment(.data))
+        #FIXME: horrible bodge for now
+        dat <- as.data.frame (res)
+        return (fastdf(dat, cl=attr(.data, "cl")))
+    } else {
+        #FIXME
+    }
+}
