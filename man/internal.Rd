@@ -4,6 +4,7 @@
 \alias{.dots2names}
 \alias{.filter_rewrite}
 \alias{.p}
+\alias{.partition_all}
 \alias{.sort.fastdf}
 \alias{alloc_col}
 \alias{ff_eq}
@@ -16,6 +17,7 @@
 \alias{ff_neq}
 \alias{free_col}
 \alias{internal}
+\alias{no.strings.attached}
 \title{Internal functions}
 \usage{
 .p(...)
@@ -46,14 +48,13 @@ ff_mwhich(x, lazyobj)
 alloc_col(x, name = ".tmp")
 
 free_col(x, col)
-}
-\arguments{
-\item{...}{Strings}
+
+.partition_all(.data, max.row = nrow(.data[[1]]))
+
+no.strings.attached(x)
 }
 \description{
 Internal functions
-
-Paste parameters together without spaces
 }
 \keyword{internal}
 

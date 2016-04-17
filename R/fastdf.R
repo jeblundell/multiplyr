@@ -1,3 +1,4 @@
+# fastdf class functions
 
 #' Constructor
 #' @param .cl Cluster object, number of nodes or NULL (default)
@@ -90,19 +91,6 @@ as.fastdf <- function (x, cl=NULL) {
 #' @export
 as.fastdf.data.frame <- function (x, cl=NULL) {
     return (fastdf (x))
-}
-
-#' @export
-pad.cols <- function (x, max.row=10) {
-    #FIXME: more efficient way of doing this?
-    if (is.null (max.row) || max.row==0) {
-        max.row <- nrow(x[[1]])
-    }
-    pc <- attr(x, "pad")
-    for (i in seq_len(ncol(x[[1]]))[pc==0]) {
-        pc[i] <- max(nchar(as.character(x[[1]][1:max.row,i])))
-    }
-    pc
 }
 
 #' @export
@@ -246,47 +234,6 @@ names.fastdf <- function (x) {
     attr(x, "colnames")
 }
 
-#' @export
-bind_variables <- function (dat, envir) {
-    rm (list=ls(envir=envir), envir=envir)
-    for (var in names(dat)) {
-        if (!attr(dat, "nsa")) {
-            f <- local ({
-                .var<-var
-                .dat<-dat
-                function (x) {
-                    .dat[.var]
-                }
-            })
-        } else {
-            f <- local ({
-                .var<-var
-                .dat<-dat
-                function (x) {
-                    .col <- match(.var, attr(.dat, "colnames"))
-                    .dat[[1]][, .col]
-                }
-            })
-        }
-        makeActiveBinding(var, f, env=envir)
-    }
-    return (ls(envir=envir))
-}
-
-#' @export
-group_restrict <- function (dat, group) {
-    if (group <= 0) { return (dat) }
-    attr(dat, "group") <- group
-
-    #presumes that dat is sorted by grouping column first
-    Gcol <- match (".group", attr(dat, "colnames"))
-    lims <- range(which (dat[[1]][, Gcol] == attr(dat, "group")))
-    dat[[1]] <- bigmemory::sub.big.matrix(dat[[1]],
-                                          firstRow=lims[1],
-                                          lastRow=lims[2])
-
-    return (dat)
-}
 
 #' @export
 with.fastdf <- function (data, expr, ...) {
@@ -301,7 +248,7 @@ as.environment.fastdf <- function (x) {
 }
 
 #' @export
-no.strings.attached <- function (x) {
-    attr(x, "nsa") <- TRUE
-    x
+sort.fastdf <- function (x, decreasing = FALSE, ...) {
+    dots <- lazyeval::lazy_dots (...)
+    .sort.fastdf (x, decreasing, dots)
 }

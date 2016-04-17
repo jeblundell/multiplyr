@@ -1,39 +1,4 @@
-
-#' @export
-sort.fastdf <- function (x, decreasing = FALSE, ...) {
-    dots <- lazyeval::lazy_dots (...)
-    .sort.fastdf (x, decreasing, dots)
-}
-
-#' @export
-#' @keywords internal
-# (kept here rather than internal.R as it's an op)
-.partition_all <- function (.data, max.row = nrow(.data[[1]])) {
-    cl <- attr(.data, "cl")
-    N <- length(cl)
-
-    nr <- distribute (max.row, N)
-
-    last <- cumsum(nr)
-    first <- c(0, last)[1:N] + 1
-    for (i in 1:N) {
-        .first <- first[i]
-        .last <- last[i]
-        parallel::clusterExport (cl[i], c(".first", ".last"), envir=environment())
-    }
-    parallel::clusterEvalQ (cl, {
-        .empty <- (.last < .first || .last == 0)
-        if (.empty) { return (NULL) }
-        if (!exists(".local")) {
-            .local <- .master
-        }
-        .local[[1]] <- sub.big.matrix(.master[[1]],
-                                      firstRow=.first,
-                                      lastRow=.last)
-        NULL
-    })
-    return(.data)
-}
+# Operations on fastdf objects
 
 #' @export
 partition <- function (.data, max.row = NULL) {

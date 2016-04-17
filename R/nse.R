@@ -1,3 +1,4 @@
+# Workarounds for non-standard evaluation
 
 #' @export
 arrange <- function (.data, ...) {
