@@ -86,3 +86,12 @@ group_restrict <- function (dat, group) {
 
     return (dat)
 }
+
+#' @export
+warn.suboptimal <- function (expr, warn) {
+    if (getOption("warn.suboptimal", default=FALSE)) {
+        if (expr) {
+            warning (warn, call.=FALSE)
+        }
+    }
+}
