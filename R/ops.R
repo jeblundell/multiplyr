@@ -46,11 +46,7 @@ sort.fastdf <- function (x, decreasing = FALSE, ...) {
     .sort.fastdf (x, decreasing, dots)
 }
 
-#' @export
-partition <- function (.data, max.row = NULL) {
-    if (is.null (max.row) || max.row == 0) {
-        max.row <- nrow(.data[[1]])
-    }
+.partition_all <- function (.data, max.row = nrow(.data[[1]])) {
     cl <- attr(.data, "cl")
     N <- length(cl)
 
@@ -72,8 +68,51 @@ partition <- function (.data, max.row = NULL) {
         .local[[1]] <- sub.big.matrix(.master[[1]],
                                       firstRow=.first,
                                       lastRow=.last)
-        NULL})
+        NULL
+    })
     return(.data)
+}
+
+#' @export
+partition <- function (.data, max.row = NULL) {
+    if (is.null (max.row) || max.row == 0) {
+        max.row <- nrow(.data[[1]])
+    }
+
+    .data <- .partition_all (.data, max.row = max.row)
+
+    attr (.data, "group_partition") <- FALSE
+    parallel::clusterEvalQ (attr(.data, "cl"), {
+        attr(.local, "group_partition") <- FALSE
+        attr(.master, "group_partition") <- FALSE
+    })
+    return(.data)
+}
+
+#' @export
+partition_group <- function (.data) {
+    cl <- attr(.data, "cl")
+    N <- length(cl)
+
+    G <- attr(.data, "group_sizes")
+    Gi <- distribute (G, N)
+
+    for (i in 1:N) {
+        .groups <- Gi[[i]]
+        parallel::clusterExport (cl[i], ".groups", envir=environment())
+    }
+    parallel::clusterEvalQ (cl, {
+        if (NA %in% .groups) {
+            .empty <- TRUE
+            return (NULL)
+        }
+
+        .local[[1]] <- .master[[1]]
+        attr(.local, "group_partition") <- TRUE
+        NULL
+    })
+    attr (.data, "group_partition") <- TRUE
+    .data
 }
 
 #' @export
@@ -254,6 +293,11 @@ group_by <- function (.data, ...) {
         return (.data)
     }
 
+    # (0) If partitioned by group, temporarily repartition evenly
+    if (attr(.data, "group_partition")) {
+        .data <- .partition_all (.data)
+    }
+
     # (1) determine local groupings
     parallel::clusterExport (attr(.data, "cl"), c(".cols", ".Gcol"), envir=environment())
     trans <- parallel::clusterEvalQ (attr(.data, "cl"), {
@@ -335,6 +379,11 @@ group_by <- function (.data, ...) {
     # --transition between 2->3--
     # 3: G=1,2                           G=4,5
 
+    # Repartition by group if appropriate
+    if (attr(.data, "group_partition")) {
+        return (.data %>% partition_group())
+    }
+
     return (.data)
 }
 
@@ -391,6 +440,12 @@ distinct <- function (.data, ...) {
                                                   ".tmpcol"),
                              envir=environment())
 
+
+    # (0) If partitioned by group, temporarily repartition evenly
+    if (attr(.data, "group_partition")) {
+        .data <- .partition_all (.data)
+    }
+
     # (1) determine local distinct rows
     trans <- parallel::clusterEvalQ (attr(.data, "cl"), {
         .sm1 <- bigmemory::sub.big.matrix (.local[[1]], firstRow=1, lastRow=nrow(.local[[1]])-1)
@@ -441,7 +496,12 @@ distinct <- function (.data, ...) {
 
     .data <- free_col (.data, .tmpcol)
 
-    .data
+    # Repartition by group if appropriate
+    if (attr(.data, "group_partition")) {
+        return (.data %>% partition_group())
+    }
+
+    return(.data)
 }
 
 #' @export
@@ -491,17 +551,40 @@ slice <- function (.data, rows=NULL, start=NULL, end=NULL) {
     filtercol <- match(".filter", attr(.data, "colnames"))
 
     if (attr(.data, "grouped")) {
-        for (g in 1:attr(.data, "group_max")) {
-            grouped <- group_restrict (.data, g)
-            filtered <- bigmemory::mwhich (grouped[[1]],
-                                           cols=filtercol,
-                                           vals=1,
-                                           comps="eq")
-            rows <- filtered[rows]
-            grouped[[1]][, filtercol] <- 0
-            grouped[[1]][rows, filtercol] <- 1
+        if (attr(.data, "group_partition")) {
+            .rows <- rows
+            .filtercol <- filtercol
+            parallel::clusterExport (attr(.data, "cl"), c(".rows",
+                                                          ".filtercol"), envir=environment())
+            parallel::clusterEvalQ (attr(.data, "cl"), {
+                if (.empty) { return (NULL) }
+                for (.g in .groups) {
+                    .grouped <- group_restrict (.local, .g)
+                    .filtered <- bigmemory::mwhich (.grouped[[1]],
+                                                   cols=.filtercol,
+                                                   vals=1,
+                                                   comps="eq")
+                    .rows <- .filtered[.rows]
+                    .grouped[[1]][, .filtercol] <- 0
+                    .grouped[[1]][.rows, .filtercol] <- 1
+                }
+                NULL
+            })
+        } else {
+            #FIXME: pass g on to clusters to do parallel, i.e. temporary partition_group
+            for (g in 1:attr(.data, "group_max")) {
+                grouped <- group_restrict (.data, g)
+                filtered <- bigmemory::mwhich (grouped[[1]],
+                                               cols=filtercol,
+                                               vals=1,
+                                               comps="eq")
+                rows <- filtered[rows]
+                grouped[[1]][, filtercol] <- 0
+                grouped[[1]][rows, filtercol] <- 1
+            }
         }
     } else {
+        #FIXME: partition rows across clusters or parition data frame across clusters?
         filtered <- bigmemory::mwhich (.data[[1]],
                                        cols=filtercol,
                                        vals=1,

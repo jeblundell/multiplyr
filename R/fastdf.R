@@ -69,6 +69,7 @@ fastdf <- function (..., alloc=1, cl = NULL) {
                       nsa = FALSE,
                       grouped = FALSE,
                       group = 0,
+                      group_partition = FALSE,
                       class = append("fastdf", "list"))
     .desc <- describe (.bm)
     parallel::clusterExport (cl, ".desc", envir=environment())
@@ -331,6 +332,9 @@ distribute <- function (x, N) {
                 bin.indices[[b]] <- c(bin.indices[[b]], i)
                 bin.size[b] <- bin.size[b] + x[i]
             }
+        }
+        if (length(bin.indices) < N) {
+            bin.indices <- append(bin.indices, NA)
         }
         return (bin.indices)
     }
