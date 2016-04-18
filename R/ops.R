@@ -105,6 +105,8 @@ group_by_ <- function (.data, ..., .dots) {
     attr (.data, "grouped") <- TRUE
     parallel::clusterEvalQ (attr(.data, "cl"), attr(.local, "grouped") <- TRUE)
 
+    attr (.data, "group_cols") <- .cols
+
     if (N == 1) {
         sm1 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=1, lastRow=nrow(.data[[1]])-1)
         sm2 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=2, lastRow=nrow(.data[[1]]))
@@ -639,13 +641,69 @@ groupwise <- regroup
 
 #' @export
 summarise_ <- function (.data, ..., .dots) {
+    #FIXME: non-parallel & inefficient, but functional
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+
     if (!attr(.data, "grouped")) {
         res <- lazyeval::lazy_eval(.dots, as.environment(.data))
-        #FIXME: horrible bodge for now
-        dat <- as.data.frame (res)
-        return (fastdf(dat, cl=attr(.data, "cl")))
+
+        # (1) select special columns
+        keep <- which(substr (attr(.data, "colnames"), 1, 1) == ".")
+        attr(.data, "colnames")[-keep] <- NA
+        attr(.data, "order.cols")[-keep] <- 0
+
+        # (2) alloc new columns
+        rescols <- c()
+        for (i in 1:length(res)) {
+            var <- names(.dots)[i]
+            if (var != "") {
+                .data <- alloc_col (.data, var)
+                rescols <- c(rescols, match(var, attr(.data, "colnames")))
+            } else {
+                stop ("FIXME")
+            }
+        }
+
+        # (3) import
+        for (i in 1:length(res)) {
+            .data[[1]][, rescols[i]] <- res[[i]]
+        }
+        filtercol <- match (".filter", attr(.data, "colnames"))
+        .data[[1]][, filtercol] <- 0
+        .data[[1]][1:length(res[[1]]), filtercol] <- 1
     } else {
-        #FIXME
+        for (g in 1:attr(.data, "group_max")) {
+            grouped <- group_restrict (.data, g)
+            res <- lazyeval::lazy_eval(.dots, as.environment(grouped))
+
+            # (1) select special columns
+            keep <- which(substr (attr(grouped, "colnames"), 1, 1) == ".")
+            keep <- unique(c(keep, attr(grouped, "group_cols")))
+            attr(grouped, "colnames")[-keep] <- NA
+            attr(grouped, "order.cols")[-keep] <- 0
+
+            # (2) alloc new columns
+            rescols <- c()
+            for (i in 1:length(res)) {
+                var <- names(.dots)[i]
+                if (var != "") {
+                    grouped <- alloc_col (grouped, var)
+                    rescols <- c(rescols, match(var, attr(grouped, "colnames")))
+                } else {
+                    stop ("FIXME")
+                }
+            }
+
+            # (3) import
+            for (i in 1:length(res)) {
+                grouped[[1]][, rescols[i]] <- res[[i]]
+            }
+            filtercol <- match (".filter", attr(grouped, "colnames"))
+            grouped[[1]][, filtercol] <- 0
+            grouped[[1]][1:length(res[[1]]), filtercol] <- 1
+        }
+        attr(.data, "colnames") <- attr(grouped, "colnames")
+        attr(.data, "order.cols") <- attr(grouped, "order.cols")
     }
+    .data
 }
