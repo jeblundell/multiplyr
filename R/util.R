@@ -35,6 +35,14 @@ distribute <- function (x, N) {
 #' @export
 bind_variables <- function (dat, envir) {
     rm (list=ls(envir=envir), envir=envir)
+
+    makeActiveBinding (".", local({
+        .dat <- dat
+        function (x) {
+            .dat
+        }
+    }), env=envir)
+
     for (var in names(dat)) {
         if (!attr(dat, "nsa")) {
             f <- local ({

@@ -193,6 +193,13 @@ as.data.frame.fastdf <- function (x) {
 }
 
 #' @export
+`$<-.fastdf` <- function (x, var, value) {
+    i <- match (var, attr(x, "colnames"))
+    x[[1]][, i] <- value
+    return (x)
+}
+
+#' @export
 `[.fastdf` <- function (x, cols) {
     m <- match (cols, attr(x, "colnames"))
     filtercol <- match (".filter", attr(x, "colnames"))
