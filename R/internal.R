@@ -234,3 +234,22 @@ pad.cols <- function (x, max.row=10) {
     }
     pc
 }
+
+#' @export
+#' @keywords internal
+#' @rdname internal
+.rebuild_grouped <- function (.data) {
+    parallel::clusterEvalQ (attr(.data, "cl"), {
+        if (length(.groups) == 0) { return(NULL) }
+
+        .grouped <- list()
+        for (.g in 1:length(.groups)) {
+            .grp <- group_restrict(.local, .groups[.g])
+            attr(.grp, "bindenv") <- as.environment (.grp)
+            .grouped <- append(.grouped, list(.grp))
+        }
+
+        NULL
+    })
+    .data
+}

@@ -242,9 +242,17 @@ with.fastdf <- function (data, expr, ...) {
 
 #' @export
 as.environment.fastdf <- function (x) {
-    attr(x, "bindenv") <- new.env()
-    bind_variables (x, attr(x, "bindenv"))
-    attr (x, "bindenv")
+    # Intended use: attr(dat, "bindenv") <- as.environment(dat)
+    if (!"bindenv" %in% names(attributes(x))) {
+        bindenv <- new.env()
+        localenv <- new.env(parent=bindenv)
+    } else {
+        localenv <- attr(x, "bindenv")
+        bindenv <- parent.env(localenv)
+    }
+    bindenv <- bind_variables (x, bindenv)
+
+    return (localenv)
 }
 
 #' @export

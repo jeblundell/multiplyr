@@ -5,6 +5,7 @@
 \alias{.filter_rewrite}
 \alias{.p}
 \alias{.partition_all}
+\alias{.rebuild_grouped}
 \alias{.sort.fastdf}
 \alias{alloc_col}
 \alias{ff_eq}
@@ -55,6 +56,8 @@ free_col(x, col)
 no.strings.attached(x)
 
 pad.cols(x, max.row = 10)
+
+.rebuild_grouped(.data)
 }
 \description{
 Internal functions

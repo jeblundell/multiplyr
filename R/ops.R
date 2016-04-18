@@ -39,7 +39,7 @@ partition_group <- function (.data) {
         NULL
     })
     attr (.data, "group_partition") <- TRUE
-    .data
+    return (.rebuild_grouped (.data))
 }
 
 #' @export
@@ -216,9 +216,9 @@ group_by_ <- function (.data, ..., .dots) {
     # Repartition by group if appropriate
     if (attr(.data, "group_partition")) {
         return (.data %>% partition_group())
+    } else {
+        return (.rebuild_grouped (.data))
     }
-
-    return (.data)
 }
 
 #' @export
@@ -392,15 +392,14 @@ slice <- function (.data, rows=NULL, start=NULL, end=NULL) {
                                                           ".filtercol"), envir=environment())
             parallel::clusterEvalQ (attr(.data, "cl"), {
                 if (.empty) { return (NULL) }
-                for (.g in .groups) {
-                    .grouped <- group_restrict (.local, .g)
-                    .filtered <- bigmemory::mwhich (.grouped[[1]],
+                for (.g in 1:length(.groups)) {
+                    .filtered <- bigmemory::mwhich (.grouped[[.g]][[1]],
                                                    cols=.filtercol,
                                                    vals=1,
                                                    comps="eq")
                     .rows <- .filtered[.rows]
-                    .grouped[[1]][, .filtercol] <- 0
-                    .grouped[[1]][.rows, .filtercol] <- 1
+                    .grouped[[.g]][[1]][, .filtercol] <- 0
+                    .grouped[[.g]][[1]][.rows, .filtercol] <- 1
                 }
                 NULL
             })
@@ -442,11 +441,10 @@ filter_ <- function (.data, ..., .dots) {
     parallel::clusterEvalQ (cl, {
         if (.empty) { return (NULL) }
         if (attr(.local, "grouped")) {
-            for (.g in .groups) {
-                .grouped <- group_restrict (.local, .g)
-                .res <- lazyeval::lazy_eval (.dots, as.environment(.grouped))
+            for (.g in 1:length(.groups)) {
+                .res <- lazyeval::lazy_eval (.dots, as.environment(.grouped[[.g]]))
                 for (.r in .res) {
-                    .grouped[[1]][, .filtercol] <- .grouped[[1]][, .filtercol] * .r
+                    .grouped[[.g]][[1]][, .filtercol] <- .grouped[[.g]][[1]][, .filtercol] * .r
                 }
             }
         } else {
@@ -479,12 +477,11 @@ mutate_ <- function (.data, ..., .dots) {
     parallel::clusterEvalQ (cl, {
         if (.empty) { return (NULL) }
         if (attr(.local, "grouped")) {
-            for (.g in .groups) {
-                .grouped <- group_restrict (.local, .g)
+            for (.g in 1:length(.groups)) {
                 # can't just use do.call(cbind...) as some may return length(1)
-                .res <- lazyeval::lazy_eval (.dots, as.environment(no.strings.attached(.grouped)))
+                .res <- lazyeval::lazy_eval (.dots, as.environment(no.strings.attached(.grouped[[.g]])))
                 for (.i in 1:length(.res)) {
-                    .grouped[[1]][, .rescols[.i]] <- .res[[.i]]
+                    .grouped[[.g]][[1]][, .rescols[.i]] <- .res[[.i]]
                 }
             }
         } else {
@@ -517,12 +514,11 @@ transmute_ <- function (.data, ..., .dots) {
     parallel::clusterEvalQ (cl, {
         if (.empty) { return (NULL) }
         if (attr(.local, "grouped")) {
-            for (.g in .groups) {
-                .grouped <- group_restrict (.local, .g)
+            for (.g in 1:length(.groups)) {
                 # can't just use do.call(cbind...) as some may return length(1)
-                .res <- lazyeval::lazy_eval (.dots, as.environment(no.strings.attached(.grouped)))
+                .res <- lazyeval::lazy_eval (.dots, as.environment(no.strings.attached(.grouped[[.g]])))
                 for (.i in 1:length(.res)) {
-                    .grouped[[1]][, .rescols[.i]] <- .res[[.i]]
+                    .grouped[[.g]][[1]][, .rescols[.i]] <- .res[[.i]]
                 }
             }
         } else {

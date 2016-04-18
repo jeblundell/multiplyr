@@ -56,7 +56,7 @@ bind_variables <- function (dat, envir) {
         }
         makeActiveBinding(var, f, env=envir)
     }
-    return (ls(envir=envir))
+    return (envir)
 }
 
 #' @export
