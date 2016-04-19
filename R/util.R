@@ -1,5 +1,8 @@
 # Misc functions that don't belong elsewhere
 
+#' Calculations for how to distribute x items over N nodes
+#' @param x Number of items or a vector of group sizes
+#' @param N Number of nodes
 #' @export
 distribute <- function (x, N) {
     if (length(x) == 1) {
@@ -32,6 +35,9 @@ distribute <- function (x, N) {
     }
 }
 
+#' Bind parallel data frame variables to an environment
+#' @param dat Data frame
+#' @param envir Environment
 #' @export
 bind_variables <- function (dat, envir) {
      vars.active <- names (which (vapply (ls(envir=envir),
@@ -80,6 +86,9 @@ bind_variables <- function (dat, envir) {
     return (envir)
 }
 
+#' Return a parallel data frame mapped to a particular group
+#' @param dat Data frame
+#' @param group Group ID
 #' @export
 group_restrict <- function (dat, group) {
     if (group <= 0) { return (dat) }
@@ -95,6 +104,9 @@ group_restrict <- function (dat, group) {
     return (dat)
 }
 
+#' Display a warning if a condition is sub-optimal
+#' @param expr Expression
+#' @param warn Warning text
 #' @export
 warn.suboptimal <- function (expr, warn) {
     if (getOption("warn.suboptimal", default=FALSE)) {

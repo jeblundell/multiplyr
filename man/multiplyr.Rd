@@ -46,3 +46,12 @@ dplyr-like package with shared memory matrices
 }
 }
 
+\section{Utility functions}{
+
+\tabular{ll}{
+    \code{\link{bind_variables}} \tab Bind parallel data frame variables to an environment \cr
+    \code{\link{distribute}}     \tab Calculations for how to distribute x items over N nodes \cr
+    \code{\link{group_restrict}} \tab Return a parallel data frame mapped to a particular group \cr
+}
+}
+
