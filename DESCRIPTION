@@ -10,3 +10,4 @@ Authors@R: c(person("Jim", "Blundell", role = c("aut", "cre", "cph"), email = "j
 License: GPL-3
 Depends: bigmemory (>= 4.5.19), bigmemory.sri (>= 0.1.3), magrittr (>= 1.5), Rdsm (>= 2.1.1), parallel
 LazyData: TRUE
+Suggests: testthat
