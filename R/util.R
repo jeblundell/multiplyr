@@ -34,7 +34,12 @@ distribute <- function (x, N) {
 
 #' @export
 bind_variables <- function (dat, envir) {
-    rm (list=ls(envir=envir), envir=envir)
+     vars.active <- names (which (vapply (ls(envir=envir),
+                                          bindingIsActive,
+                                          FALSE, envir)))
+     if (length(vars.active) > 0) {
+         rm (list=vars.active, envir=envir)
+     }
 
     makeActiveBinding (".", local({
         .dat <- dat
