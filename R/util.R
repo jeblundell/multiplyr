@@ -107,6 +107,10 @@ factor_map <- function (x, var, vals) {
         col <- match (var, attr(x, "colnames"))
     }
 
+    if (attr(x, "type.cols")[col] == 0) {
+        return (vals)
+    }
+
     f <- match (col, attr(x, "factor.cols"))
     match (vals, attr(x, "factor.levels")[[f]])
 }
