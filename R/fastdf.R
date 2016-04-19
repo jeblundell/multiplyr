@@ -236,6 +236,7 @@ as.data.frame.fastdf <- function (x) {
 `[.fastdf` <- function (x, i, j) {
     if (nargs() == 2) {
         cols <- i
+        rowslice <- NULL
     } else {
         if (missing(i)) {
             rowslice <- NULL
