@@ -200,6 +200,41 @@ as.data.frame.fastdf <- function (x) {
 }
 
 #' @export
+`[<-.fastdf` <- function (x, i, j, value) {
+    if (nargs() == 4) {
+        missing.i <- missing(i)
+        missing.j <- missing(j)
+    } else {
+        j <- i
+        missing.i <- TRUE
+    }
+    len <- length(value)
+
+    if (!is.numeric(j)) {
+        j <- match (j, attr(x, "colnames"))
+    }
+
+    if (missing.i) {
+        # [, j] <-
+        # [j] <-
+        if (len == 1) {
+            x[[1]][, j] <- value
+        } else if (len == nrow(x[[1]])) {
+            x[[1]][, j] <- value
+        } else {
+            stop (sprintf("replacement data has %d rows to replace %d", len, nrow(x[[1]])))
+        }
+    } else if (missing.j) {
+        # [i, ] <-
+        stop ("FIXME: row replace")
+    } else {
+        # [i, j] <-
+        stop ("FIXME: row/col replace")
+    }
+    x
+}
+
+#' @export
 `[.fastdf` <- function (x, cols) {
     m <- match (cols, attr(x, "colnames"))
     filtercol <- match (".filter", attr(x, "colnames"))
@@ -252,14 +287,12 @@ as.environment.fastdf <- function (x) {
     # Intended use: attr(dat, "bindenv") <- as.environment(dat)
     if (!"bindenv" %in% names(attributes(x))) {
         bindenv <- new.env()
-        localenv <- new.env(parent=bindenv)
     } else {
-        localenv <- attr(x, "bindenv")
-        bindenv <- parent.env(localenv)
+        bindenv <- attr(x, "bindenv")
     }
     bindenv <- bind_variables (x, bindenv)
 
-    return (localenv)
+    return (bindenv)
 }
 
 #' @export

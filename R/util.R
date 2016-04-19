@@ -49,7 +49,11 @@ bind_variables <- function (dat, envir) {
                 .var<-var
                 .dat<-dat
                 function (x) {
-                    .dat[.var]
+                    if (missing(x)) {
+                        .dat[.var]
+                    } else {
+                        .dat[.var] <- x
+                    }
                 }
             })
         } else {
@@ -58,7 +62,11 @@ bind_variables <- function (dat, envir) {
                 .dat<-dat
                 function (x) {
                     .col <- match(.var, attr(.dat, "colnames"))
-                    .dat[[1]][, .col]
+                    if (missing(x)) {
+                        .dat[[1]][, .col]
+                    } else {
+                        .dat[[1]][, .col] <- x
+                    }
                 }
             })
         }

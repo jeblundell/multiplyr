@@ -3,6 +3,7 @@
 S3method("$",fastdf)
 S3method("$<-",fastdf)
 S3method("[",fastdf)
+S3method("[<-",fastdf)
 S3method("names<-",fastdf)
 S3method(as.data.frame,fastdf)
 S3method(as.environment,fastdf)
