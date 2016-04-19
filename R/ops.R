@@ -580,6 +580,9 @@ undefine_ <- function (.data, ..., .dots) {
 }
 
 #' @export
+unselect_ <- undefine_
+
+#' @export
 compact <- function (.data, redistribute=FALSE) {
     cl <- attr(.data, "cl")
 
@@ -626,6 +629,11 @@ regroup <- function (.data) {
     return (.data)
 }
 
+#' @export
+rowwise <- ungroup
+
+#' @export
+groupwise <- regroup
 
 #' @export
 summarise_ <- function (.data, ..., .dots) {

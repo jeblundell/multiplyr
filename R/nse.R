@@ -84,3 +84,6 @@ ungroup <- function (.data) {
     parallel::clusterEvalQ (attr(.data, "cl"), attr(.local, "grouped") <- FALSE)
     return (.data)
 }
+
+#' @export
+unselect <- undefine
