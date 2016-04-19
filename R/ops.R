@@ -369,7 +369,6 @@ select_ <- function (.data, ..., .dots) {
     .data
 }
 
-
 #' @export
 slice <- function (.data, rows=NULL, start=NULL, end=NULL) {
     if (is.null(rows) && (is.null(start) || is.null(end))) {
@@ -713,6 +712,17 @@ within_group <- function (.data, .expr) {
         for (.g in 1:length(.groups)) {
             eval (.expr, envir = as.environment(.grouped[[.g]]))
         }
+        NULL
+    })
+    .data
+}
+
+#' @export
+within_node <- function (.data, .expr) {
+    .expr <- substitute(.expr)
+    parallel::clusterExport (attr(.data, "cl"), c(".expr"), envir = environment())
+    parallel::clusterEvalQ (attr(.data, "cl"), {
+        eval (.expr, envir = as.environment(.local))
         NULL
     })
     .data
