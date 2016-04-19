@@ -49,6 +49,12 @@ mutate <- function (.data, ...) {
 }
 
 #' @export
+partition_group <- function (.data, ...) {
+    .dots <- lazyeval::lazy_dots (...)
+    partition_group_ (.data, .dots=.dots)
+}
+
+#' @export
 rename <- function (.data, ...) {
     .dots <- lazyeval::lazy_dots (...)
     rename_ (.data, .dots=.dots)

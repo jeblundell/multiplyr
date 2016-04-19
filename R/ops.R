@@ -17,7 +17,15 @@ partition <- function (.data, max.row = NULL) {
 }
 
 #' @export
-partition_group <- function (.data) {
+partition_group_ <- function (.data, ..., .dots) {
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+
+    if (length(.dots) > 0) {
+        attr (.data, "group_partition") <- TRUE
+        return (group_by_ (.data, .dots=.dots))
+        #group_by_ calls partition_group() on its return
+    }
+
     cl <- attr(.data, "cl")
     N <- length(cl)
 
@@ -38,7 +46,7 @@ partition_group <- function (.data) {
         attr(.local, "group_partition") <- TRUE
         NULL
     })
-    attr (.data, "group_partition") <- TRUE
+
     return (.rebuild_grouped (.data))
 }
 
