@@ -1,5 +1,9 @@
 # Operations on fastdf objects
 
+#' Partition data evenly amongst cluster nodes
+#' @param .data Data frame
+#' @param max.row Partition only these number of rows. NULL (default) or 0
+#'                will partition the entire data set
 #' @export
 partition <- function (.data, max.row = NULL) {
     if (is.null (max.row) || max.row == 0) {
@@ -16,6 +20,7 @@ partition <- function (.data, max.row = NULL) {
     return(.data)
 }
 
+#' @describeIn partition_group
 #' @export
 partition_group_ <- function (.data, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
@@ -65,6 +70,7 @@ clget_ <- function (.data, ..., .dots) {
     })
 }
 
+#' @describeIn arrange
 #' @export
 arrange_ <- function (.data, ..., .dots) {
     #This works on the presumption that factors have levels
@@ -73,6 +79,7 @@ arrange_ <- function (.data, ..., .dots) {
     .sort.fastdf(.data, decreasing=FALSE, .dots, with.group = attr(.data, "grouped"))
 }
 
+#' @describeIn fast_filter
 #' @export
 fast_filter_ <- function (.data, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
@@ -100,6 +107,7 @@ fast_filter_ <- function (.data, ..., .dots) {
     return (.data)
 }
 
+#' @describeIn group_by
 #' @export
 group_by_ <- function (.data, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
@@ -229,11 +237,14 @@ group_by_ <- function (.data, ..., .dots) {
     }
 }
 
+#' Return size of groups
+#' @param .data Data frame
 #' @export
 group_sizes <- function (.data) {
     attr(.data, "group_sizes")
 }
 
+#' @describeIn distinct
 #' @export
 distinct_ <- function (.data, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
@@ -346,6 +357,7 @@ distinct_ <- function (.data, ..., .dots) {
     return(.data)
 }
 
+#' @describeIn rename
 #' @export
 rename_ <- function (.data, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
@@ -365,6 +377,7 @@ rename_ <- function (.data, ..., .dots) {
     .data
 }
 
+#' @describeIn select
 #' @export
 select_ <- function (.data, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
@@ -437,6 +450,7 @@ slice <- function (.data, rows=NULL, start=NULL, end=NULL) {
     .data
 }
 
+#' @describeIn filter
 #' @export
 filter_ <- function (.data, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
@@ -466,6 +480,7 @@ filter_ <- function (.data, ..., .dots) {
     .data
 }
 
+#' @describeIn mutate
 #' @export
 mutate_ <- function (.data, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
@@ -502,6 +517,7 @@ mutate_ <- function (.data, ..., .dots) {
     .data
 }
 
+#' @describeIn transmute
 #' @export
 transmute_ <- function (.data, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
@@ -543,6 +559,7 @@ transmute_ <- function (.data, ..., .dots) {
     .data
 }
 
+#' @describeIn define
 #' @export
 define_ <- function (.data, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
@@ -570,6 +587,7 @@ define_ <- function (.data, ..., .dots) {
     .data
 }
 
+#' @describeIn undefine
 #' @export
 undefine_ <- function (.data, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
@@ -586,6 +604,7 @@ undefine_ <- function (.data, ..., .dots) {
     .data
 }
 
+#' @describeIn undefine
 #' @export
 unselect_ <- undefine_
 
@@ -629,6 +648,8 @@ compact <- function (.data, redistribute=FALSE) {
     .data
 }
 
+#' Return to grouped data
+#' @param .data Data frame
 #' @export
 regroup <- function (.data) {
     attr (.data, "grouped") <- TRUE
@@ -636,12 +657,15 @@ regroup <- function (.data) {
     return (.data)
 }
 
+#' @describeIn ungroup
 #' @export
 rowwise <- ungroup
 
+#' @describeIn regroup
 #' @export
 groupwise <- regroup
 
+#' @describeIn summarise
 #' @export
 summarise_ <- function (.data, ..., .dots) {
     #FIXME: non-parallel & inefficient, but functional
@@ -711,6 +735,9 @@ summarise_ <- function (.data, ..., .dots) {
     .data
 }
 
+#' Execute code within a group
+#' @param .data Data frame
+#' @param .expr Code to execute
 #' @export
 within_group <- function (.data, .expr) {
     .expr <- substitute(.expr)
@@ -725,6 +752,9 @@ within_group <- function (.data, .expr) {
     .data
 }
 
+#' Execute code within a node
+#' @param .data Data frame
+#' @param .expr Code to execute
 #' @export
 within_node <- function (.data, .expr) {
     .expr <- substitute(.expr)

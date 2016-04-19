@@ -1,6 +1,6 @@
 # fastdf class functions
 
-#' Constructor
+#' Create new parallel data frame
 #' @param .cl Cluster object, number of nodes or NULL (default)
 #' @param alloc Allocate additional space
 #' @export

@@ -2,7 +2,7 @@
 % Please edit documentation in R/fastdf.R
 \name{fastdf}
 \alias{fastdf}
-\title{Constructor}
+\title{Create new parallel data frame}
 \usage{
 fastdf(..., alloc = 1, cl = NULL)
 }
@@ -12,6 +12,6 @@ fastdf(..., alloc = 1, cl = NULL)
 \item{.cl}{Cluster object, number of nodes or NULL (default)}
 }
 \description{
-Constructor
+Create new parallel data frame
 }
 
