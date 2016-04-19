@@ -235,10 +235,28 @@ as.data.frame.fastdf <- function (x) {
 }
 
 #' @export
-`[.fastdf` <- function (x, cols) {
+`[.fastdf` <- function (x, i, j) {
+    if (nargs() == 2) {
+        cols <- i
+    } else {
+        if (missing(i)) {
+            rowslice <- NULL
+        } else {
+            rowslice <- i
+        }
+        if (missing(j)) {
+            j <- which (attr(x, "order.cols") > 0)
+            cols <- attr(x, "colnames")[j]
+        } else {
+            cols <- j
+        }
+    }
     m <- match (cols, attr(x, "colnames"))
     filtercol <- match (".filter", attr(x, "colnames"))
     filtered <- x[[1]][, filtercol] == 1
+    if (!is.null(rowslice)) {
+        filtered[-rowslice] <- FALSE
+    }
     out <- NULL
     for (i in m) {
         itype <- attr(x, "type.cols")[i]
