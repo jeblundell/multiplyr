@@ -98,3 +98,15 @@ warn.suboptimal <- function (expr, warn) {
         }
     }
 }
+
+#' @export
+factor_map <- function (x, var, vals) {
+    if (is.numeric(var)) {
+        col <- var
+    } else {
+        col <- match (var, attr(x, "colnames"))
+    }
+
+    f <- match (col, attr(x, "factor.cols"))
+    match (vals, attr(x, "factor.levels")[[f]])
+}

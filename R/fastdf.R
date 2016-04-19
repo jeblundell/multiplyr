@@ -217,10 +217,8 @@ as.data.frame.fastdf <- function (x) {
     if (missing.i) {
         # [, j] <-
         # [j] <-
-        if (len == 1) {
-            x[[1]][, j] <- value
-        } else if (len == nrow(x[[1]])) {
-            x[[1]][, j] <- value
+        if (len == 1 || len == nrow(x[[1]])) {
+            x[[1]][, j] <- factor_map (x, j, value)
         } else {
             stop (sprintf("replacement data has %d rows to replace %d", len, nrow(x[[1]])))
         }
