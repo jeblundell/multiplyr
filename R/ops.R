@@ -35,12 +35,18 @@ partition_group_ <- function (.data, ..., .dots) {
     N <- length(cl)
 
     G <- attr(.data, "group_sizes")
-    Gi <- distribute (G, N)
+    if (length(G) == 1) {
+        Gi <- distribute (1, N)
+        Gi[Gi == 0] <- NA
+    } else {
+        Gi <- distribute (G, N)
+    }
 
     for (i in 1:N) {
         .groups <- Gi[[i]]
         parallel::clusterExport (cl[i], ".groups", envir=environment())
     }
+
     parallel::clusterEvalQ (cl, {
         if (NA %in% .groups) {
             .empty <- TRUE

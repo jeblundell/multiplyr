@@ -240,6 +240,7 @@ pad.cols <- function (x, max.row=10) {
 #' @rdname internal
 .rebuild_grouped <- function (.data) {
     parallel::clusterEvalQ (attr(.data, "cl"), {
+        if (.empty) { return(NULL) }
         if (length(.groups) == 0) { return(NULL) }
 
         .grouped <- list()
