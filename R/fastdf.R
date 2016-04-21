@@ -194,8 +194,7 @@ as.data.frame.fastdf <- function (x) {
 
 #' @export
 `$<-.fastdf` <- function (x, var, value) {
-    i <- match (var, attr(x, "colnames"))
-    x[[1]][, i] <- value
+    x[, var] <- value
     return (x)
 }
 
