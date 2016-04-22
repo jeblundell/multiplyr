@@ -83,3 +83,14 @@ test_that("partition_group() with 3 groups partitions as 2,1 or 1,2", {
     stopCluster (attr(dat, "cl"))
 })
 
+test_that("partition_group() with 2 levels of 2 groups partitions as 2,2 with 2 clusters", {
+    dat <- fastdf (x=1:100, A=rep(c(1,2), each=50), B=rep(c(1,2), length.out=100), cl=2) %>%
+        partition_group (A, B)
+    res <- do.call (c, dat %>% cldo(length(.grouped)))
+    expect_equal (res, c(2,2))
+
+    res <- dat %>% cldo(.groups)
+    expect_equal (sort(do.call(c, res)), c(1, 2, 3, 4))
+
+    stopCluster (attr(dat, "cl"))
+})

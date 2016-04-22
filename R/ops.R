@@ -185,7 +185,11 @@ group_by_ <- function (.data, ..., .dots) {
     if (length(.cols) == 1) {
         tg <- sm1[trans, .cols] != sm2[trans, .cols]
     } else {
-        tg <- !apply (sm1[trans, .cols] == sm2[trans, .cols], 1, all)
+        if (length(trans) == 1) {
+            tg <- !all (sm1[trans, .cols] == sm2[trans, .cols])
+        } else {
+            tg <- !apply (sm1[trans, .cols] == sm2[trans, .cols], 1, all)
+        }
     }
     rm (sm1, sm2)
 
