@@ -113,3 +113,4 @@ test_that ("filter() combinations work", {
 })
 
 stopCluster (attr(dat, "cl"))
+rm (dat)
