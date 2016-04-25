@@ -129,7 +129,22 @@ group_by_ <- function (.data, ..., .dots) {
 
     attr (.data, "group_cols") <- .cols
 
+    if (nrow(.data[[1]]) == 1) {
+        .data[[1]][, .Gcol] <- 1
+        attr(.data, "group_sizes") <- 1
+        attr(.data, "group_max") <- 1
+        return (.data)
+    }
+
     if (N == 1) {
+        if (nrow(.data[[1]]) == 2) {
+            i <- ifelse (all(.data[[1]][1, .cols] ==
+                                 .data[[1]][2, .cols]), 1, 2)
+            .data[[1]][, .Gcol] <- 1:i
+            attr(.data, "group_sizes") <- rep(1, i)
+            attr(.data, "group_max") <- i
+            return (.data)
+        }
         sm1 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=1, lastRow=nrow(.data[[1]])-1)
         sm2 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=2, lastRow=nrow(.data[[1]]))
         if (length(.cols) == 1) {
@@ -157,6 +172,18 @@ group_by_ <- function (.data, ..., .dots) {
     # (1) determine local groupings
     parallel::clusterExport (attr(.data, "cl"), c(".cols", ".Gcol"), envir=environment())
     trans <- parallel::clusterEvalQ (attr(.data, "cl"), {
+        if (nrow(.local[[1]]) == 1) {
+            .breaks <- 1
+            return (1)
+        } else if (nrow(.local[[1]]) == 2) {
+            i <- ifelse (all(.local[[1]][1, .cols] ==
+                                 .local[[1]][2, .cols]), 1, 2)
+            .local[[1]][, .Gcol] <- 1:i
+            .breaks <- 1:i
+            attr(.local, "group_sizes") <- rep(1, i)
+            attr(.local, "group_max") <- i
+            return (i)
+        }
         .sm1 <- bigmemory::sub.big.matrix (.local[[1]], firstRow=1, lastRow=nrow(.local[[1]])-1)
         .sm2 <- bigmemory::sub.big.matrix (.local[[1]], firstRow=2, lastRow=nrow(.local[[1]]))
         if (length(.cols) == 1) {
