@@ -1,4 +1,57 @@
-context("group_by")
+context("groups")
+
+test_that ("distinct() returns unique rows", {
+    for (i in list(1:100, rep(1:50, length.out=100),
+                   c(rep(1:25, each=2), rep(1:25, length.out=50)))) {
+        dat <- fastdf (x=i, cl=2)
+        dat <- dat %>% distinct (x)
+        expect_equal (sort(dat$x), sort(unique(i)))
+        stopCluster (attr(dat, "cl"))
+        rm (dat)
+    }
+})
+
+test_that ("distinct() works when N=1", {
+    dat <- fastdf (x=1, y=1, cl=1)
+    dat <- dat %>% distinct (x, y)
+    expect_equal (dat$x, 1)
+    expect_equal (dat$y, 1)
+    stopCluster (attr(dat, "cl"))
+    rm (dat)
+
+    dat <- fastdf (x=1, y=1, cl=2)
+    dat <- dat %>% distinct (x, y)
+    expect_equal (dat$x, 1)
+    expect_equal (dat$y, 1)
+    stopCluster (attr(dat, "cl"))
+    rm (dat)
+})
+
+test_that ("distinct() works when N=2", {
+    dat <- fastdf (x=1:2, y=2:1, cl=1)
+    dat <- dat %>% distinct (x)
+    expect_equal (sort(dat$x), 1:2)
+    expect_equal (sort(dat$y), 1:2)
+    expect_false (all(dat$x == dat$y))
+    stopCluster (attr(dat, "cl"))
+    rm (dat)
+
+    dat <- fastdf (x=1:2, y=2:1, cl=2)
+    dat <- dat %>% distinct (x)
+    expect_equal (sort(dat$x), 1:2)
+    expect_equal (sort(dat$y), 1:2)
+    expect_false (all(dat$x == dat$y))
+    stopCluster (attr(dat, "cl"))
+    rm (dat)
+})
+
+test_that ("distinct() works when local N=2", {
+    dat <- fastdf (x=1:4, G=c(1,1,2,2), H=c(1,2,1,2), cl=2)
+    dat <- dat %>% distinct (G, H)
+    expect_equal (sort(dat$x), 1:4)
+    stopCluster (attr(dat, "cl"))
+    rm (dat)
+})
 
 test_that ("group_by() can group by one level", {
     dat <- fastdf (x=1:100, G=rep(1:4, each=25), cl=2)
