@@ -305,8 +305,17 @@ distinct_ <- function (.data, ..., .dots) {
         .cols <- c(Gcol, .cols)
     }
 
+    if (nrow(.data[[1]]) == 1) {
+        return (.data)
+    }
+
     .sort.fastdf (.data, decreasing=FALSE, cols=.cols)
     if (N == 1) {
+        if (nrow(.data[[1]]) == 2) {
+            .data[[1]][2, .filtercol] <- ifelse (
+                all(.data[[1]][1, .cols] == .data[[1]][2, .cols]), 0, 1)
+            return (.data)
+        }
         sm1 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=1, lastRow=nrow(.data[[1]])-1)
         sm2 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=2, lastRow=nrow(.data[[1]]))
         if (length(.cols) == 1) {
@@ -338,6 +347,15 @@ distinct_ <- function (.data, ..., .dots) {
 
     # (1) determine local distinct rows
     trans <- parallel::clusterEvalQ (attr(.data, "cl"), {
+        if (nrow(.local[[1]]) == 1) {
+            .breaks <- 1
+            return (1)
+        } else if (nrow(.local[[1]]) == 2) {
+            i <- ifelse (all(.local[[1]][1, .cols] ==
+                                 .local[[1]][2, .cols]), 1, 2)
+            .breaks <- 1:i
+            return (i)
+        }
         .sm1 <- bigmemory::sub.big.matrix (.local[[1]], firstRow=1, lastRow=nrow(.local[[1]])-1)
         .sm2 <- bigmemory::sub.big.matrix (.local[[1]], firstRow=2, lastRow=nrow(.local[[1]]))
         if (length(.cols) == 1) {
@@ -357,8 +375,8 @@ distinct_ <- function (.data, ..., .dots) {
 
     sm1 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=1, lastRow=nrow(.data[[1]])-1)
     sm2 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=2, lastRow=nrow(.data[[1]]))
-    if (length(.cols) == 1) {
-        tg <- sm1[trans, .cols] != sm2[trans, .cols]
+    if (length(.cols) == 1 || length(trans) == 1) {
+        tg <- all(sm1[trans, .cols] != sm2[trans, .cols])
     } else {
         tg <- !apply (sm1[trans, .cols] == sm2[trans, .cols], 1, all)
     }
