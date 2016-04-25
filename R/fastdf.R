@@ -72,7 +72,7 @@ fastdf <- function (..., alloc=1, cl = NULL) {
                       group = 0,
                       group_partition = FALSE,
                       class = append("fastdf", "list"))
-    .desc <- describe (.bm)
+    .desc <- bigmemory.sri::describe (.bm)
     parallel::clusterExport (cl, ".desc", envir=environment())
     parallel::clusterExport (cl, ".master", envir=environment())
     parallel::clusterEvalQ (cl, {
