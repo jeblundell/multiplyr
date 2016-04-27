@@ -647,6 +647,20 @@ define_ <- function (.data, ..., .dots) {
             }
         }
     }
+    #FIXME: make this a generic function
+    .attr <- attributes(.data)
+    parallel::clusterExport (attr(.data, "cl"), ".attr", envir = environment())
+    parallel::clusterEvalQ (attr(.data, "cl"), {
+        for (.at in c("colnames", "type.cols", "factor.cols", "factor.levels")) {
+            attr(.local, .at) <- .attr[[.at]]
+            if (attr(.local, "grouped")) {
+                for (.i in 1:length(.grouped)) {
+                    attr(.grouped[[.i]], .at) <- .attr[[.at]]
+                }
+            }
+        }
+        NULL
+    })
     .data
 }
 

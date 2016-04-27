@@ -31,6 +31,19 @@ test_that ("define() can copy an existing factor", {
     rm (dat)
 })
 
+test_that ("define() propagates to clusters/groups", {
+    dat <- fastdf (x=rep(c("A", "B"), each=50),
+                   G=rep(c("A", "B"), each=50), alloc=2, cl=2)
+    dat <- dat %>% partition_group (G)
+
+    dat <- dat %>% define (a=x)
+    dat <- dat %>% transmute (a="A")
+    expect_equal (dat$a, rep("A", each=100))
+
+    stopCluster (attr(dat, "cl"))
+    rm (dat)
+})
+
 test_that ("undefine() can drop a column", {
     dat <- fastdf (w=1:100, x=1:100, y=100:1, z=rep("A",100), cl=2)
     dat <- dat %>% undefine(w)
