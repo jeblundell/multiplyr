@@ -48,6 +48,14 @@ test_that("mutate(x=length(x)) works within group", {
     rm (dat)
 })
 
+test_that("mutate(x=\"A\") works", {
+    dat <- fastdf (x=rep(c("A", "B"), each=50), G=rep(1:5, each=20), cl=2)
+    dat <- dat %>% partition_group (G)
+    dat <- dat %>% mutate (x="A")
+    expect_equal (dat$x, rep("A", 100))
+    stopCluster(attr(dat, "cl"))
+    rm (dat)
+})
 
 test_that("transmute(x=123) works", {
     dat <- fastdf (x=1:100, cl=2)
@@ -101,3 +109,11 @@ test_that ("transmute(x=length(x)) works within a cluster", {
     rm (dat)
 })
 
+test_that("transmute(x=\"A\") works", {
+    dat <- fastdf (x=rep(c("A", "B"), each=50), G=rep(1:5, each=20), cl=2)
+    dat <- dat %>% partition_group (G)
+    dat <- dat %>% transmute (x="A")
+    expect_equal (dat$x, rep("A", 100))
+    stopCluster(attr(dat, "cl"))
+    rm (dat)
+})

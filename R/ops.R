@@ -562,13 +562,13 @@ mutate_ <- function (.data, ..., .dots) {
             for (.g in 1:length(.groups)) {
                 for (.i in 1:length(.dots)) {
                     .res <- lazyeval::lazy_eval (.dots[.i], as.environment(no.strings.attached(.grouped[[.g]])))
-                    .grouped[[.g]][[1]][, .rescols[.i]] <- .res[[1]]
+                    .grouped[[.g]][[1]][, .rescols[.i]] <- factor_map (.grouped[[.g]], .rescols[.i], .res[[1]])
                 }
             }
         } else {
             for (.i in 1:length(.dots)) {
                 .res <- lazyeval::lazy_eval (.dots[.i], as.environment(no.strings.attached(.local)))
-                .local[[1]][, .rescols[.i]] <- .res[[1]]
+                .local[[1]][, .rescols[.i]] <- factor_map (.local, .rescols[.i], .res[[1]])
             }
         }
         NULL
@@ -599,14 +599,14 @@ transmute_ <- function (.data, ..., .dots) {
             for (.g in 1:length(.groups)) {
                 for (.i in 1:length(.dots)) {
                     .res <- lazyeval::lazy_eval (.dots[.i], as.environment(no.strings.attached(.grouped[[.g]])))
-                    .grouped[[.g]][[1]][, .rescols[.i]] <- .res[[1]]
+                    .grouped[[.g]][[1]][, .rescols[.i]] <- factor_map (.grouped[[.g]], .rescols[.i], .res[[1]])
                     attr(.grouped[[.g]], "colnames")[.rescols[.i]] <- .resnames[.i]
                 }
             }
         } else {
             for (.i in 1:length(.dots)) {
                 .res <- lazyeval::lazy_eval (.dots[.i], as.environment(no.strings.attached(.local)))
-                .local[[1]][, .rescols[.i]] <- .res[[1]]
+                .local[[1]][, .rescols[.i]] <- factor_map (.local, .rescols[.i], .res[[1]])
                 attr(.local, "colnames")[.rescols[.i]] <- .resnames[.i]
             }
         }
