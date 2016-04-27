@@ -2,8 +2,10 @@
 % Please edit documentation in R/internal.R
 \name{internal}
 \alias{.dots2names}
+\alias{.filter_range}
 \alias{.filter_rewrite}
 \alias{.filter_rows}
+\alias{.filter_vector}
 \alias{.p}
 \alias{.partition_all}
 \alias{.rebuild_grouped}
@@ -61,6 +63,10 @@ pad.cols(x, max.row = 10)
 .rebuild_grouped(.data)
 
 .filter_rows(x, tmpcol, filtercol, rows)
+
+.filter_vector(x, filtercol, rows)
+
+.filter_range(x, filtercol, start, end)
 }
 \description{
 Internal functions

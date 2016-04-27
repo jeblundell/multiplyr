@@ -452,6 +452,8 @@ slice <- function (.data, rows=NULL, start=NULL, end=NULL) {
         rows <- start:end
     }
 
+    #.filter_range?
+
     filtercol <- match(".filter", attr(.data, "colnames"))
 
     if (attr(.data, "grouped")) {
@@ -513,15 +515,15 @@ filter_ <- function (.data, ..., .dots) {
         if (.empty) { return (NULL) }
         if (attr(.local, "grouped")) {
             for (.g in 1:length(.groups)) {
-                .res <- lazyeval::lazy_eval (.dots, as.environment(.grouped[[.g]]))
-                for (.r in .res) {
-                    .grouped[[.g]][[1]][, .filtercol] <- .grouped[[.g]][[1]][, .filtercol] * .r
+                for (.i in 1:length(.dots)) {
+                    .res <- lazyeval::lazy_eval (.dots[.i], as.environment(.grouped[[.g]]))
+                    .filter_vector (.grouped[[.g]], .filtercol, .res[[1]])
                 }
             }
         } else {
-            .res <- lazyeval::lazy_eval (.dots, as.environment(.local))
-            for (.r in .res) {
-                .local[[1]][, .filtercol] <- .local[[1]][, .filtercol] * .r
+            for (.i in 1:length(.dots)) {
+                .res <- lazyeval::lazy_eval (.dots[.i], as.environment(.local))
+                .filter_vector (.local, .filtercol, .res[[1]])
             }
         }
         NULL
@@ -774,8 +776,7 @@ summarise_ <- function (.data, ..., .dots) {
             .data[[1]][, rescols[i]] <- res[[i]]
         }
         filtercol <- match (".filter", attr(.data, "colnames"))
-        .data[[1]][, filtercol] <- 0
-        .data[[1]][1:length(res[[1]]), filtercol] <- 1
+        .filter_range (.data, filtercol, 1, length(res[[1]]))
     } else {
         for (g in 1:attr(.data, "group_max")) {
             grouped <- group_restrict (.data, g)
@@ -804,8 +805,7 @@ summarise_ <- function (.data, ..., .dots) {
                 grouped[[1]][, rescols[i]] <- res[[i]]
             }
             filtercol <- match (".filter", attr(grouped, "colnames"))
-            grouped[[1]][, filtercol] <- 0
-            grouped[[1]][1:length(res[[1]]), filtercol] <- 1
+            .filter_range (grouped, filtercol, 1, length(res[[1]]))
         }
         attr(.data, "colnames") <- attr(grouped, "colnames")
         attr(.data, "order.cols") <- attr(grouped, "order.cols")

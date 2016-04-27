@@ -265,3 +265,19 @@ pad.cols <- function (x, max.row=10) {
     x[[1]][, filtercol] <- x[[1]][, filtercol] *
         x[[1]][, tmpcol]
 }
+
+#' @export
+#' @keywords internal
+#' @rdname internal
+.filter_vector <- function (x, filtercol, rows) {
+    x[[1]][, filtercol] <- x[[1]][, filtercol] * rows
+}
+
+#' @export
+#' @keywords internal
+#' @rdname internal
+.filter_range <- function (x, filtercol, start, end) {
+    x[[1]][, filtercol] <- 0
+    x[[1]][start:end, filtercol] <- 1
+}
+
