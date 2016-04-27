@@ -555,16 +555,15 @@ mutate_ <- function (.data, ..., .dots) {
         if (.empty) { return (NULL) }
         if (attr(.local, "grouped")) {
             for (.g in 1:length(.groups)) {
-                # can't just use do.call(cbind...) as some may return length(1)
-                .res <- lazyeval::lazy_eval (.dots, as.environment(no.strings.attached(.grouped[[.g]])))
-                for (.i in 1:length(.res)) {
-                    .grouped[[.g]][[1]][, .rescols[.i]] <- .res[[.i]]
+                for (.i in 1:length(.dots)) {
+                    .res <- lazyeval::lazy_eval (.dots[.i], as.environment(no.strings.attached(.grouped[[.g]])))
+                    .grouped[[.g]][[1]][, .rescols[.i]] <- .res[[1]]
                 }
             }
         } else {
-            .res <- lazyeval::lazy_eval (.dots, as.environment(no.strings.attached(.local)))
-            for (.i in 1:length(.res)) {
-                .local[[1]][, .rescols[.i]] <- .res[[.i]]
+            for (.i in 1:length(.dots)) {
+                .res <- lazyeval::lazy_eval (.dots[.i], as.environment(no.strings.attached(.local)))
+                .local[[1]][, .rescols[.i]] <- .res[[1]]
             }
         }
         NULL
@@ -593,24 +592,28 @@ transmute_ <- function (.data, ..., .dots) {
         if (.empty) { return (NULL) }
         if (attr(.local, "grouped")) {
             for (.g in 1:length(.groups)) {
-                # can't just use do.call(cbind...) as some may return length(1)
-                .res <- lazyeval::lazy_eval (.dots, as.environment(no.strings.attached(.grouped[[.g]])))
-                for (.i in 1:length(.res)) {
-                    .grouped[[.g]][[1]][, .rescols[.i]] <- .res[[.i]]
+                for (.i in 1:length(.dots)) {
+                    .res <- lazyeval::lazy_eval (.dots[.i], as.environment(no.strings.attached(.grouped[[.g]])))
+                    .grouped[[.g]][[1]][, .rescols[.i]] <- .res[[1]]
+                    attr(.grouped[[.g]], "colnames")[.rescols[.i]] <- .resnames[.i]
                 }
             }
         } else {
-            .res <- lazyeval::lazy_eval (.dots, as.environment(no.strings.attached(.local)))
-            for (.i in 1:length(.res)) {
-                .local[[1]][, .rescols[.i]] <- .res[[.i]]
+            for (.i in 1:length(.dots)) {
+                .res <- lazyeval::lazy_eval (.dots[.i], as.environment(no.strings.attached(.local)))
+                .local[[1]][, .rescols[.i]] <- .res[[1]]
+                attr(.local, "colnames")[.rescols[.i]] <- .resnames[.i]
             }
         }
         NULL
     })
     #/mutate
 
+    #FIXME: do on local/grouped
     dropcols <- setdiff (which(attr(.data, "order.cols") > 0), .rescols)
     .data <- free_col (.data, dropcols)
+
+    attr(.data, "colnames")[.rescols] <- .resnames
     .data
 }
 
