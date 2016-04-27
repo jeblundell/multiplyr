@@ -161,3 +161,31 @@ test_that ("group_sizes() works appropriately", {
     stopCluster (attr(dat, "cl"))
     rm (dat)
 })
+
+test_that ("ungroup() works appropriately after group_by()", {
+    dat <- fastdf (x=1:100, G=rep(1, 100), H=rep(1:2, each=50),
+                   I=rep(1:4, each=25), cl=2)
+    dat <- dat %>% group_by (G) %>% ungroup()
+    dat <- dat %>% summarise (x=length(x))
+    expect_equal (dat$x, 100)
+    stopCluster (attr(dat, "cl"))
+    rm (dat)
+})
+test_that ("ungroup() works appropriately after partition_group()", {
+    dat <- fastdf (x=1:100, G=rep(c("A", "B", "C", "D"), each=25), cl=2)
+    dat <- dat %>% partition_group (G) %>% ungroup()
+    dat <- dat %>% summarise (x=length(x))
+    expect_equal (dat$x, 100)
+    stopCluster (attr(dat, "cl"))
+    rm (dat)
+})
+
+test_that ("regroup() works appropriately", {
+    dat <- fastdf (x=1:100, G=rep(c("A", "B", "C", "D"), each=25), cl=2)
+    dat <- dat %>% partition_group (G) %>% ungroup() %>% regroup()
+    dat <- dat %>% summarise (x=length(x))
+    expect_equal (dat$x, rep(25, 4))
+    stopCluster (attr(dat, "cl"))
+    rm (dat)
+})
+

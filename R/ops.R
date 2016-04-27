@@ -734,6 +734,17 @@ regroup <- function (.data) {
     return (.data)
 }
 
+#' Return data to non-grouped
+#' @param .data Data frame
+#' @param ... Additional parameters
+#' @param .dots Workaround for non-standard evaluation
+#' @export
+ungroup <- function (.data) {
+    attr (.data, "grouped") <- FALSE
+    parallel::clusterEvalQ (attr(.data, "cl"), attr(.local, "grouped") <- FALSE)
+    return (.data)
+}
+
 #' @describeIn ungroup
 #' @export
 rowwise <- ungroup
