@@ -76,6 +76,18 @@ test_that ("rename() preserves data and only renames", {
     rm (dat)
 })
 
+test_that ("rename() propagates to clusters/groups", {
+    dat <- fastdf (x=1:100, G=rep(c("A", "B"), each=50), cl=2)
+    dat <- dat %>% partition_group (G)
+
+    dat <- dat %>% rename (a=x)
+    dat <- dat %>% transmute (y=a)
+    expect_equal (dat$y, 1:100)
+
+    stopCluster (attr(dat, "cl"))
+    rm (dat)
+})
+
 test_that ("slice() works on ungrouped data", {
     dat <- fastdf (x=1:100, y=100:1, cl=2)
     dat <- dat %>% slice(start = 1, end = 50)

@@ -427,6 +427,11 @@ rename_ <- function (.data, ..., .dots) {
     parallel::clusterEvalQ (attr(.data, "cl"), {
         attr(.master, "colnames")[.match] <- .newnames
         attr(.local, "colnames")[.match] <- .newnames
+        if (attr(.local, "grouped")) {
+            for (.i in 1:length(.grouped)) {
+                attr(.grouped[[.i]], "colnames")[.match] <- .newnames
+            }
+        }
         NULL
     })
     .data
