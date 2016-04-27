@@ -3,6 +3,7 @@
 \name{internal}
 \alias{.dots2names}
 \alias{.filter_rewrite}
+\alias{.filter_rows}
 \alias{.p}
 \alias{.partition_all}
 \alias{.rebuild_grouped}
@@ -58,6 +59,8 @@ no.strings.attached(x)
 pad.cols(x, max.row = 10)
 
 .rebuild_grouped(.data)
+
+.filter_rows(x, tmpcol, filtercol, rows)
 }
 \description{
 Internal functions

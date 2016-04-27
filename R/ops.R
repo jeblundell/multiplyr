@@ -101,11 +101,7 @@ fast_filter_ <- function (.data, ..., .dots) {
         if (length(res) == 0) {
             .local[[1]][, filtercol] <- 0
         } else {
-            .local[[1]][, .tmpcol] <- 0
-            .local[[1]][res, .tmpcol] <- 1
-
-            .local[[1]][, filtercol] <- .local[[1]][, filtercol] *
-                .local[[1]][, .tmpcol]
+            .filter_rows (.local, .tmpcol, filtercol, res)
         }
         .local <- free_col (.local, .tmpcol)
         NULL
@@ -325,10 +321,7 @@ distinct_ <- function (.data, ..., .dots) {
         }
         breaks <- c(0, breaks) + 1
 
-        .data[[1]][, .tmpcol] <- 0
-        .data[[1]][breaks, .tmpcol] <- 1
-        .data[[1]][, .filtercol] <- .data[[1]][, .filtercol] *
-            .data[[1]][, .tmpcol]
+        .filter_rows (.data, .tmpcol, .filtercol, breaks)
 
         .data <- free_col (.data, .tmpcol)
         return (.data)
@@ -395,10 +388,7 @@ distinct_ <- function (.data, ..., .dots) {
 
     # (4) filter at breaks
     parallel::clusterEvalQ (attr(.data, "cl"), {
-        .local[[1]][, .tmpcol] <- 0
-        .local[[1]][.breaks, .tmpcol] <- 1
-        .local[[1]][, .filtercol] <- .local[[1]][, .filtercol] *
-            .local[[1]][, .tmpcol]
+        .filter_rows (.local, .tmpcol, .filtercol, .breaks)
         NULL
     })
 

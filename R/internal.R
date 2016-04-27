@@ -254,3 +254,14 @@ pad.cols <- function (x, max.row=10) {
     })
     .data
 }
+
+#' @export
+#' @keywords internal
+#' @rdname internal
+.filter_rows <- function (x, tmpcol, filtercol, rows) {
+    x[[1]][, tmpcol] <- 0
+    x[[1]][rows, tmpcol] <- 1
+
+    x[[1]][, filtercol] <- x[[1]][, filtercol] *
+        x[[1]][, tmpcol]
+}
