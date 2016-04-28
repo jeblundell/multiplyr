@@ -157,6 +157,51 @@ show = function (max.row=10) {
                       rows.avail))
     }
     cat ("\n")
+},
+get = function (i=NULL, j=NULL) {
+    if (is.null(i)) {
+        rowslice <- NULL
+    } else {
+        rowslice <- i
+    }
+    if (is.null(j)) {
+        j <- which (order.cols > 0)
+        cols <- col.names[j]
+    } else {
+        cols <- j
+    }
+
+    m <- match (cols, col.names)
+    filtercol <- match (".filter", col.names)
+    filtered <- bm[, filtercol] == 1
+    if (!is.null(rowslice)) {
+        filtered[-rowslice] <- FALSE
+    }
+    out <- NULL
+    for (i in m) {
+        itype <- type.cols[i]
+        if (itype == 0) {
+            o <- bm[,i]
+        } else if (itype == 1) {
+            f <- match (i, factor.cols)
+            o <- factor(bm[,i],
+                         levels=seq_len(length(factor.levels[[f]])),
+                         labels=factor.levels[[f]])
+        } else if (itype == 2) {
+            f <- match (i, factor.cols)
+            o <- factor.levels[[f]][bm[,i]]
+        }
+        o <- o[filtered]
+        if (is.null(out)) {
+            out <- o
+        } else {
+            out <- cbind (data.frame(out), data.frame(o))
+        }
+    }
+    if (length(m) > 1) {
+        names (out) <- col.names[m]
+    }
+    return (out)
 }
 ))
 
@@ -194,25 +239,6 @@ as.data.frame.fastdf <- function (x) {
     attr(value, "row.names") <- .set_row_names(nrows)
     attr(value, "class") <- "data.frame"
     value
-}
-
-#' @export
-`$.fastdf` <- function (x, name) {
-    i <- match (name, attr(x, "colnames"))
-    itype <- attr(x, "type.cols")[i]
-    filtercol <- match (".filter", attr(x, "colnames"))
-    filtered <- x[[1]][, filtercol] == 1
-    if (itype == 0) {
-        return (x[[1]][filtered,i])
-    } else if (itype == 1) {
-        f <- match (i, attr(x, "factor.cols"))
-        return (factor(x[[1]][filtered,i],
-                             levels=seq_len(length(attr(x, "factor.levels")[[f]])),
-                             labels=attr(x, "factor.levels")[[f]]))
-    } else if (itype == 2) {
-        f <- match (i, attr(x, "factor.cols"))
-        return (attr(x, "factor.levels")[[f]][x[[1]][filtered,i]])
-    }
 }
 
 #' @export
@@ -255,57 +281,6 @@ as.data.frame.fastdf <- function (x) {
 }
 
 #' @export
-`[.fastdf` <- function (x, i, j) {
-    if (nargs() == 2) {
-        cols <- i
-        rowslice <- NULL
-    } else {
-        if (missing(i)) {
-            rowslice <- NULL
-        } else {
-            rowslice <- i
-        }
-        if (missing(j)) {
-            j <- which (attr(x, "order.cols") > 0)
-            cols <- attr(x, "colnames")[j]
-        } else {
-            cols <- j
-        }
-    }
-    m <- match (cols, attr(x, "colnames"))
-    filtercol <- match (".filter", attr(x, "colnames"))
-    filtered <- x[[1]][, filtercol] == 1
-    if (!is.null(rowslice)) {
-        filtered[-rowslice] <- FALSE
-    }
-    out <- NULL
-    for (i in m) {
-        itype <- attr(x, "type.cols")[i]
-        if (itype == 0) {
-            o <- (x[[1]][,i])
-        } else if (itype == 1) {
-            f <- match (i, attr(x, "factor.cols"))
-            o <- (factor(x[[1]][,i],
-                           levels=seq_len(length(attr(x, "factor.levels")[[f]])),
-                           labels=attr(x, "factor.levels")[[f]]))
-        } else if (itype == 2) {
-            f <- match (i, attr(x, "factor.cols"))
-            o <- (attr(x, "factor.levels")[[f]][x[[1]][,i]])
-        }
-        o <- o[filtered]
-        if (is.null(out)) {
-            out <- o
-        } else {
-            out <- cbind (data.frame(out), data.frame(o))
-        }
-    }
-    if (length(m) > 1) {
-        names (out) <- attr(x, "colnames")[m]
-    }
-    return (out)
-}
-
-#' @export
 `names<-.fastdf` <- function (x, value) {
     attr(x, "colnames") <- value
 }
@@ -314,7 +289,6 @@ as.data.frame.fastdf <- function (x) {
 names.fastdf <- function (x) {
     attr(x, "colnames")
 }
-
 
 #' @export
 with.fastdf <- function (data, expr, ...) {
