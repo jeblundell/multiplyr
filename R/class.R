@@ -16,7 +16,7 @@ Multiplyr <- setRefClass("Multiplyr",
                 type.cols       = "numeric",
                 order.cols      = "numeric",
                 pad             = "numeric",
-                colnames        = "character",
+                col.names        = "character",
                 nsa             = "logical",
                 grouped         = "logical",
                 group           = "numeric",
@@ -49,12 +49,12 @@ initialize = function (..., alloc=1, cl=NULL) {
     special <- c(".filter", ".group")
     nrows <- length(vars[[1]])
     ncols <- length(vars) + alloc + length(special)
-    colnames <<- c(names(vars), rep(NA, alloc), special)
+    col.names <<- c(names(vars), rep(NA, alloc), special)
     order.cols <<- c(seq_len(length(vars)), rep(0, alloc), rep(0, length(special)))
     Rdsm::mgrmakevar(cls, ".bm", nr=nrows, nc=ncols)
     bm <<- .bm
 
-    bm[,match(".filter", colnames)] <<- 1
+    bm[,match(".filter", col.names)] <<- 1
 
     type.cols <<- rep(0, ncols)
 
@@ -102,46 +102,36 @@ cluster_export = function (var, envir=parent.frame()) {
 },
 cluster_eval = function (...) {
     parallel::clusterEvalQ (cls, ...)
-}
-))
-
-#' @export
-as.fastdf <- function (x, cl=NULL) {
-    UseMethod ("as.fastdf")
-}
-
-#' @export
-as.fastdf.data.frame <- function (x, cl=NULL) {
-    return (fastdf (x))
-}
-
-#' @export
-print.fastdf <- function (x, max.row = 10) {
-    if (is.null(max.row) || max.row == 0 || max.row > nrow(x[[1]])) {
-        max.row <- nrow(x[[1]])
+},
+show = function (max.row=10) {
+    if (is.null(max.row) || max.row == 0 || max.row > nrow(bm)) {
+        max.row <- nrow(bm)
     }
 
-    ord <- attr(x, "order.cols")
-    cols <- seq_len(length(ord))[order(ord)]
-    cols <- cols[ord[order(ord)] > 0]
+    cols <- seq_len(length(order.cols))[order(order.cols)]
+    cols <- cols[order.cols[order(order.cols)] > 0]
 
-    cat (sprintf ("\n    Fast data frame\n\n"))
-    pc <- pad.cols(x, max.row)
+    cat (sprintf ("\n    Multiplyr data frame\n\n"))
+    pc <- pad
+    for (i in seq_len(ncol(bm))[pc==0 & order.cols > 0]) {
+        pc[i] <- max(nchar(as.character(bm[1:max.row,i])))
+    }
+
     out <- ""
     for (i in cols) {
         out <- .p(out,
                   sprintf(.p("%",pc[i],"s "),
-                      attr(x, "colnames")[i]))
+                          col.names[i]))
     }
     cat (.p(out, "\n"))
 
-    rows <- bigmemory::mwhich (x[[1]],
-                    cols=match(".filter", attr(x, "colnames")),
-                    vals=1,
-                    comps=list("eq"))
+    rows <- bigmemory::mwhich (bm,
+                               cols=match(".filter", col.names),
+                               vals=1,
+                               comps=list("eq"))
     rows.avail <- length(rows)
     if (is.null(max.row) || max.row == 0) {
-        max.row <- nrow(x[[1]])
+        max.row <- nrow(bm)
     }
     if (rows.avail > max.row) {
         rows <- rows[1:max.row]
@@ -150,10 +140,10 @@ print.fastdf <- function (x, max.row = 10) {
     for (i in rows) {
         out <- ""
         for (j in cols) {
-            v <- x[[1]][i,j]
-            if (attr(x, "type.cols")[j] > 0) {
-                f <- match (j, attr(x, "factor.cols"))
-                v <- attr(x, "factor.levels")[[f]][v]
+            v <- bm[i,j]
+            if (type.cols[j] > 0) {
+                f <- match (j, factor.cols)
+                v <- factor.levels[[f]][v]
             }
             out <- .p(out,
                       sprintf(.p("%",pc[j],"s "),
@@ -167,6 +157,17 @@ print.fastdf <- function (x, max.row = 10) {
                       rows.avail))
     }
     cat ("\n")
+}
+))
+
+#' @export
+as.fastdf <- function (x, cl=NULL) {
+    UseMethod ("as.fastdf")
+}
+
+#' @export
+as.fastdf.data.frame <- function (x, cl=NULL) {
+    return (fastdf (x))
 }
 
 #' @export

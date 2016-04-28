@@ -223,21 +223,6 @@ no.strings.attached <- function (x) {
 #' @export
 #' @keywords internal
 #' @rdname internal
-pad.cols <- function (x, max.row=10) {
-    #FIXME: more efficient way of doing this?
-    if (is.null (max.row) || max.row==0 || max.row > nrow(x[[1]])) {
-        max.row <- nrow(x[[1]])
-    }
-    pc <- attr(x, "pad")
-    for (i in seq_len(ncol(x[[1]]))[pc==0 & attr(x, "order.cols") > 0]) {
-        pc[i] <- max(nchar(as.character(x[[1]][1:max.row,i])))
-    }
-    pc
-}
-
-#' @export
-#' @keywords internal
-#' @rdname internal
 .rebuild_grouped <- function (.data) {
     parallel::clusterEvalQ (attr(.data, "cl"), {
         if (.empty) { return(NULL) }
