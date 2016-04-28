@@ -1,10 +1,29 @@
 # fastdf class functions
 
+setOldClass (c("cluster", "SOCKcluster"))
 #' Create new parallel data frame
-#' @param .cl Cluster object, number of nodes or NULL (default)
+#' @param cl Cluster object, number of nodes or NULL (default)
 #' @param alloc Allocate additional space
-#' @export
-fastdf <- function (..., alloc=1, cl = NULL) {
+#' @import methods
+#' @exportClass Multiplyr
+#' @export Multiplyr
+Multiplyr <- setRefClass("Multiplyr",
+    fields=list(bm              = "big.matrix",
+                desc            = "big.matrix.descriptor",
+                cls             = "SOCKcluster",
+                factor.cols     = "numeric",
+                factor.levels   = "list",
+                type.cols       = "numeric",
+                order.cols      = "numeric",
+                pad             = "numeric",
+                colnames        = "character",
+                nsa             = "logical",
+                grouped         = "logical",
+                group           = "numeric",
+                group_partition = "logical"
+                ),
+    methods=list(
+initialize = function (..., alloc=1, cl=NULL) {
     vars <- list(...)
 
     if (length(vars) == 1) {
@@ -14,74 +33,77 @@ fastdf <- function (..., alloc=1, cl = NULL) {
     }
 
     if (is.null (cl)) {
-        cl <- parallel::makeCluster (parallel::detectCores() - 1)
+        cls <<- parallel::makeCluster (parallel::detectCores() - 1)
     } else if (is.numeric(cl)) {
-        cl <- parallel::makeCluster(cl)
+        cls <<- parallel::makeCluster(cl)
     } else {
         Rdsm::mgrinit (cl)
+        cls <<- cl
     }
 
-    parallel::clusterEvalQ (cl, library(multiplyr))
-    parallel::clusterEvalQ (cl, library(lazyeval))
+    cluster_eval ({
+        library (multiplyr)
+        library (lazyeval)
+    })
 
     special <- c(".filter", ".group")
     nrows <- length(vars[[1]])
     ncols <- length(vars) + alloc + length(special)
-    names.cols <- c(names(vars), rep(NA, alloc), special)
-    order.cols <- c(seq_len(length(vars)), rep(0, alloc), rep(0, length(special)))
-    Rdsm::mgrmakevar(cl, ".bm", nr=nrows, nc=ncols)
+    colnames <<- c(names(vars), rep(NA, alloc), special)
+    order.cols <<- c(seq_len(length(vars)), rep(0, alloc), rep(0, length(special)))
+    Rdsm::mgrmakevar(cls, ".bm", nr=nrows, nc=ncols)
+    bm <<- .bm
 
-    .bm[,match(".filter", names.cols)] <- 1
+    bm[,match(".filter", colnames)] <<- 1
 
-    factor.cols <- c()
-    factor.levels <- list()
-    type.cols <- rep(0, ncols)
+    type.cols <<- rep(0, ncols)
 
     for (i in 1:length(vars)) {
         tmp <- vars[[i]][1]
         if (is.numeric (tmp)) {
-            .bm[,i] <- vars[[i]]
+            bm[,i] <<- vars[[i]]
         } else if (is.factor (tmp)) {
-            factor.cols <- c(factor.cols, i)
-            factor.levels <- append(factor.levels, list(levels(vars[[i]])))
-            .bm[,i] <- as.numeric(vars[[i]])
-            type.cols[i] <- 1
+            factor.cols <<- c(factor.cols, i)
+            factor.levels <<- append(factor.levels, list(levels(vars[[i]])))
+            bm[,i] <<- as.numeric(vars[[i]])
+            type.cols[i] <<- 1
         } else if (is.character (tmp)) {
-            factor.cols <- c(factor.cols, i)
+            factor.cols <<- c(factor.cols, i)
             vars[[i]] <- as.factor(vars[[i]])
-            factor.levels <- append(factor.levels, list(levels(vars[[i]])))
-            .bm[,i] <- as.numeric(vars[[i]])
-            type.cols[i] <- 2
+            factor.levels <<- append(factor.levels, list(levels(vars[[i]])))
+            bm[,i] <<- as.numeric(vars[[i]])
+            type.cols[i] <<- 2
         }
     }
-    pad <- rep(0, ncols)
+    pad <<- rep(0, ncols)
     for (i in seq_len(length(factor.cols))) {
-        pad[factor.cols[i]] <- max(nchar(factor.levels[[i]]))
+        pad[factor.cols[i]] <<- max(nchar(factor.levels[[i]]))
     }
 
-    .master <- structure(list(.bm),
-                      factor.cols=factor.cols,
-                      factor.levels=factor.levels,
-                      type.cols=type.cols,
-                      order.cols=order.cols,
-                      pad=pad,
-                      cl = cl,
-                      colnames = names.cols,
-                      nsa = FALSE,
-                      grouped = FALSE,
-                      group = 0,
-                      group_partition = FALSE,
-                      class = append("fastdf", "list"))
-    .desc <- bigmemory.sri::describe (.bm)
-    parallel::clusterExport (cl, ".desc", envir=environment())
-    parallel::clusterExport (cl, ".master", envir=environment())
-    parallel::clusterEvalQ (cl, {
-        .master[[1]] <- attach.big.matrix (.desc)
-        attr(.master, "cl") <- NULL
+    nsa <<- FALSE
+    grouped <<- FALSE
+    group <<- 0
+    group_partition <<- FALSE
+
+    desc <<- bigmemory.sri::describe (.bm)
+    .master <- .self
+    cluster_export (".master")
+    cluster_eval ({
+        .master$reattach()
         NULL
     })
-    return (.master %>% partition())
+#     return (.master %>% partition())
+},
+reattach = function (descriptor = desc) {
+    bm <<- bigmemory::attach.big.matrix(descriptor)
+},
+cluster_export = function (var, envir=parent.frame()) {
+    parallel::clusterExport (cls, var, envir)
+},
+cluster_eval = function (...) {
+    parallel::clusterEvalQ (cls, ...)
 }
+))
 
 #' @export
 as.fastdf <- function (x, cl=NULL) {
