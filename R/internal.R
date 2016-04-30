@@ -13,27 +13,8 @@ NULL
 #' @export
 #' @keywords internal
 #' @rdname internal
-.dots2names <- function (x, dots) {
+.dots2names <- function (dots) {
     as.vector (sapply (dots, function (x) { as.character (x$expr) }))
-}
-
-#' @export
-#' @keywords internal
-#' @rdname internal
-.sort.fastdf <- function (x, decreasing=FALSE, dots=NULL, cols=NULL, with.group=FALSE) {
-    if (is.null(cols)) {
-        namelist <- .dots2names (x, dots)
-        cols <- match(namelist, attr(x, "colnames"))
-    }
-    if (with.group) {
-        Gcol <- match(".group", attr(x, "colnames"))
-        if (Gcol %in% cols) {
-            cols <- cols[cols != Gcol]
-        }
-        cols <- c(Gcol, cols)
-    }
-    bigmemory::mpermute (x[[1]], cols=cols)
-    x
 }
 
 #' @export

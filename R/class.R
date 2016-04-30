@@ -290,11 +290,20 @@ envir = function (nsa=FALSE) {
         makeActiveBinding(var, f, env=bindenv)
     }
     return (bindenv)
+},
+sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=FALSE) {
+    if (is.null(cols)) {
+        namelist <- .dots2names (dots)
+        cols <- match(namelist, col.names)
+    }
+    if (with.group) {
+        Gcol <- match(".group", col.names)
+        if (Gcol %in% cols) {
+            cols <- cols[cols != Gcol]
+        }
+        cols <- c(Gcol, cols)
+    }
+    bigmemory::mpermute (bm, cols=cols)
 }
 ))
 
-#' @export
-sort.fastdf <- function (x, decreasing = FALSE, ...) {
-    dots <- lazyeval::lazy_dots (...)
-    .sort.fastdf (x, decreasing, dots)
-}

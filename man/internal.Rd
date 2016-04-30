@@ -9,7 +9,6 @@
 \alias{.p}
 \alias{.partition_all}
 \alias{.rebuild_grouped}
-\alias{.sort.fastdf}
 \alias{alloc_col}
 \alias{ff_eq}
 \alias{ff_expr}
@@ -26,10 +25,7 @@
 \usage{
 .p(...)
 
-.dots2names(x, dots)
-
-.sort.fastdf(x, decreasing = FALSE, dots = NULL, cols = NULL,
-  with.group = FALSE)
+.dots2names(dots)
 
 .filter_rewrite(lazyobj)
 
