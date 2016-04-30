@@ -99,8 +99,25 @@ initialize = function (..., alloc=1, cl=NULL) {
 reattach = function (descriptor = desc) {
     bm <<- bigmemory::attach.big.matrix(descriptor)
 },
-cluster_export = function (var, envir=parent.frame()) {
-    parallel::clusterExport (cls, var, envir)
+cluster_export = function (var, var.as=NULL, envir=parent.frame()) {
+    if (is.null(var.as)) {
+        parallel::clusterExport (cls, var, envir)
+    } else {
+        tmp <- new.env()
+        for (i in 1:length(var)) {
+            assign (var.as[i], get(var[i], envir=envir), envir=tmp)
+            parallel::clusterExport (cls, var.as, envir=tmp)
+        }
+    }
+},
+cluster_export_each = function (var, var.as=var, envir=parent.frame()) {
+    tmp <- new.env()
+    for (i in 1:length(var)) {
+        for (j in 1:length(cls)) {
+            assign (var.as[i], get(var[i], envir=envir)[j], envir=tmp)
+            parallel::clusterExport (cls[j], var.as[i], envir=tmp)
+        }
+    }
 },
 cluster_eval = function (...) {
     parallel::clusterEvalQ (cls, ...)
