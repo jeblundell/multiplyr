@@ -9,6 +9,7 @@ setOldClass (c("cluster", "SOCKcluster"))
 #' @export Multiplyr
 Multiplyr <- setRefClass("Multiplyr",
     fields=list(bm              = "big.matrix",
+                bm.master       = "big.matrix",
                 desc            = "big.matrix.descriptor",
                 cls             = "SOCKcluster",
                 factor.cols     = "numeric",
@@ -21,7 +22,9 @@ Multiplyr <- setRefClass("Multiplyr",
                 grouped         = "logical",
                 group           = "numeric",
                 group_partition = "logical",
-                bindenv         = "environment"
+                bindenv         = "environment",
+                first           = "numeric",
+                last            = "numeric"
                 ),
     methods=list(
 initialize = function (..., alloc=1, cl=NULL) {
@@ -54,6 +57,9 @@ initialize = function (..., alloc=1, cl=NULL) {
     order.cols <<- c(seq_len(length(vars)), rep(0, alloc), rep(0, length(special)))
     Rdsm::mgrmakevar(cls, ".bm", nr=nrows, nc=ncols)
     bm <<- .bm
+    bm.master <<- .bm
+    first <<- 1
+    last <<- nrows
 
     bm[,match(".filter", col.names)] <<- 1
 
@@ -91,13 +97,13 @@ initialize = function (..., alloc=1, cl=NULL) {
     cluster_export (".master")
     cluster_eval ({
         .master$reattach()
-        .local <- .master
         NULL
     })
-#     return (.master %>% partition())
+    partition_even()
 },
 reattach = function (descriptor = desc) {
     bm <<- bigmemory::attach.big.matrix(descriptor)
+    bm.master <<- bm
 },
 cluster_export = function (var, var.as=NULL, envir=parent.frame()) {
     if (is.null(var.as)) {
@@ -339,8 +345,8 @@ free_col = function (col) {
     type.cols[col] <<- 0
     order.cols[col] <<- 0
 },
-update_fields = function () {
-    for (.fieldname in c("col.names", "type.cols", "factor.cols", "factor.levels")) {
+update_fields = function (fieldnames) {
+    for (.fieldname in fieldnames) {
         .fieldval <- .self$field(name=.fieldname)
         cluster_export (c(".fieldname", ".fieldval"))
         cluster_eval({
@@ -349,6 +355,38 @@ update_fields = function () {
             NULL
         })
     }
+},
+partition_even = function (max.row = nrow(bm)) {
+    N <- length(cls)
+
+    nr <- distribute (max.row, N)
+    if (max.row < N) {
+        nr[nr != 0] <- 1:max.row
+        nr <- c(nr, rep(0, N-max.row))
+        cluster_export_each ("nr", ".first")
+        cluster_export_each ("nr", ".last")
+    } else {
+        .last <- cumsum(nr)
+        .first <- c(0, .last)[1:N] + 1
+        cluster_export_each (".first")
+        cluster_export_each (".last")
+    }
+    cluster_eval ({
+        .empty <- (.last < .first || .last == 0)
+        if (!exists(".local")) {
+            .local <- .master
+        }
+        if (.empty) { return (NULL) }
+        .local$local_subset (.first, .last)
+        NULL
+    })
+    grouped <<- group_partition <<- FALSE
+    update_fields (c("grouped", "group_partition"))
+},
+local_subset = function (first, last) {
+    first <<- first
+    last <<- last
+    bm <<- bigmemory::sub.big.matrix (bm.master, firstRow=first, lastRow=last)
 }
 ))
 

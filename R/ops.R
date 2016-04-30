@@ -34,27 +34,18 @@ define_ <- function (.self, ..., .dots) {
             }
         }
     }
-    .self$update_fields ()
+    .self$update_fields (c("col.names", "type.cols", "factor.cols", "factor.levels"))
+    return (.self)
 }
 
 #' Partition data evenly amongst cluster nodes
-#' @param .data Data frame
-#' @param max.row Partition only these number of rows. NULL (default) or 0
-#'                will partition the entire data set
+#' @param .self Data frame
 #' @export
-partition <- function (.data, max.row = NULL) {
-    if (is.null (max.row) || max.row == 0) {
-        max.row <- nrow(.data[[1]])
-    }
-
-    .data <- .partition_all (.data, max.row = max.row)
-
-    attr (.data, "group_partition") <- FALSE
-    parallel::clusterEvalQ (attr(.data, "cl"), {
-        attr(.local, "group_partition") <- FALSE
-        attr(.master, "group_partition") <- FALSE
-    })
-    return(.data)
+partition_even <- function (.self) {
+    .self$partition_even ()
+    .self$group_partition <- FALSE
+    .self$update_fields ("group_partition")
+    return(.self)
 }
 
 #' @describeIn partition_group

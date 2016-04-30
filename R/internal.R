@@ -138,43 +138,6 @@ ff_mwhich <- function (x, lazyobj) {
 #' @export
 #' @keywords internal
 #' @rdname internal
-.partition_all <- function (.data, max.row = nrow(.data[[1]])) {
-    cl <- attr(.data, "cl")
-    N <- length(cl)
-
-    nr <- distribute (max.row, N)
-    if (max.row < N) {
-        nr[nr != 0] <- 1:max.row
-        for (i in 1:N) {
-            .first <- .last <- nr[i]
-            parallel::clusterExport (cl[i], c(".first", ".last"), envir=environment())
-        }
-    } else {
-        last <- cumsum(nr)
-        first <- c(0, last)[1:N] + 1
-        for (i in 1:N) {
-            .first <- first[i]
-            .last <- last[i]
-            parallel::clusterExport (cl[i], c(".first", ".last"), envir=environment())
-        }
-    }
-    parallel::clusterEvalQ (cl, {
-        .empty <- (.last < .first || .last == 0)
-        if (!exists(".local")) {
-            .local <- .master
-        }
-        if (.empty) { return (NULL) }
-        .local[[1]] <- sub.big.matrix(.master[[1]],
-                                      firstRow=.first,
-                                      lastRow=.last)
-        NULL
-    })
-    return(.data)
-}
-
-#' @export
-#' @keywords internal
-#' @rdname internal
 no.strings.attached <- function (x) {
     attr(x, "nsa") <- TRUE
     x

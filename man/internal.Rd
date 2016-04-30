@@ -7,7 +7,6 @@
 \alias{.filter_rows}
 \alias{.filter_vector}
 \alias{.p}
-\alias{.partition_all}
 \alias{.rebuild_grouped}
 \alias{ff_eq}
 \alias{ff_expr}
@@ -42,8 +41,6 @@ ff_neq(cmp, expr)
 ff_eq(cmp, expr)
 
 ff_mwhich(x, lazyobj)
-
-.partition_all(.data, max.row = nrow(.data[[1]]))
 
 no.strings.attached(x)
 
