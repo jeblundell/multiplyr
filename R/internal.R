@@ -16,8 +16,10 @@ NULL
 .dots2names <- function (dots) {
     nm <- names (dots)
     exprs <- nm == ""
-    nm[exprs] <- as.vector (sapply (dots[exprs], function (x) { as.character (x$expr) }))
-    nm
+    if (any(exprs)) {
+        nm[exprs] <- as.vector (sapply (dots[[exprs]], function (x) { as.character (x$expr) }))
+    }
+    return (nm)
 }
 
 #' @export

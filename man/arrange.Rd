@@ -5,16 +5,16 @@
 \alias{arrange_}
 \title{Sort data frame}
 \usage{
-arrange(.data, ...)
+arrange(.self, ...)
 
-arrange_(.data, ..., .dots)
+arrange_(.self, ..., .dots)
 }
 \arguments{
-\item{.data}{Data frame}
-
 \item{...}{Variables to sort by}
 
 \item{.dots}{Workaround for non-standard evaluation}
+
+\item{.data}{Data frame}
 }
 \description{
 Sort data frame

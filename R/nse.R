@@ -15,9 +15,9 @@ arrange <- function (.self, ...) {
 #' @param ... Names of new variables
 #' @param .dots Workaround for non-standard evaluation
 #' @export
-define <- function (.data, ...) {
+define <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots (...)
-    define_ (.data, .dots=.dots)
+    define_ (.self, .dots=.dots)
 }
 
 #' Select unique rows or unique combinations of variables

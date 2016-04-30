@@ -91,6 +91,7 @@ initialize = function (..., alloc=1, cl=NULL) {
     cluster_export (".master")
     cluster_eval ({
         .master$reattach()
+        .local <- .master
         NULL
     })
 #     return (.master %>% partition())
@@ -320,6 +321,17 @@ free_col = function (col) {
     col.names[col] <<- NA
     type.cols[col] <<- 0
     order.cols[col] <<- 0
+},
+update_fields = function () {
+    for (.fieldname in c("col.names", "type.cols", "factor.cols", "factor.levels")) {
+        .fieldval <- .self$field(name=.fieldname)
+        cluster_export (c(".fieldname", ".fieldval"))
+        cluster_eval({
+            .local$field (name = .fieldname, value = .fieldval)
+            #FIXME: grouped
+            NULL
+        })
+    }
 }
 ))
 

@@ -5,16 +5,16 @@
 \alias{define_}
 \title{Define new variables}
 \usage{
-define(.data, ...)
+define(.self, ...)
 
-define_(.data, ..., .dots)
+define_(.self, ..., .dots)
 }
 \arguments{
-\item{.data}{Data frame}
-
 \item{...}{Names of new variables}
 
 \item{.dots}{Workaround for non-standard evaluation}
+
+\item{.data}{Data frame}
 }
 \description{
 Define new variables

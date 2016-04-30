@@ -9,6 +9,34 @@ arrange_ <- function (.self, ..., .dots) {
     .self$sort(decreasing=FALSE, .dots)
 }
 
+#' @describeIn define
+#' @export
+define_ <- function (.self, ..., .dots) {
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    nm <- names(.dots)
+    vars <- .dots2names (.dots)
+    for (i in 1:length(.dots)) {
+        if (nm[i] == "") { #x
+            .self$alloc_col (vars[i])
+        } else {           #x=y
+            col <- .self$alloc_col (vars[i])
+            #Set type based on template
+            tpl <- as.character(.dots[[i]]$expr)
+            tcol <- match (tpl, .self$col.names)
+            .self$type.cols[col] <- .self$type.cols[tcol]
+
+            #Copy levels from template
+            if (.self$type.cols[tcol] > 0) {
+                f <- match (tcol, .self$factor.cols)
+                .self$factor.cols <- c(.self$factor.cols, col)
+                .self$factor.levels <- append(.self$factor.levels,
+                                              list(.self$factor.levels[[f]]))
+            }
+        }
+    }
+    .self$update_fields ()
+}
+
 #' Partition data evenly amongst cluster nodes
 #' @param .data Data frame
 #' @param max.row Partition only these number of rows. NULL (default) or 0
@@ -596,48 +624,6 @@ transmute_ <- function (.data, ..., .dots) {
     .data <- free_col (.data, dropcols)
 
     attr(.data, "colnames")[.rescols] <- .resnames
-    .data
-}
-
-#' @describeIn define
-#' @export
-define_ <- function (.data, ..., .dots) {
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
-    nm <- names(.dots)
-    for (i in 1:length(.dots)) {
-        if (nm[i] == "") {
-            var <- as.character(.dots[[i]]$expr)
-            .data <- alloc_col (.data, var)
-        } else {
-            var <- nm[i]
-            .data <- alloc_col (.data, nm[i])
-            col <- match (var, attr(.data, "colnames"))
-
-            tpl <- as.character(.dots[[i]]$expr)
-            tcol <- match (tpl, attr(.data, "colnames"))
-            attr(.data, "type.cols")[col] <- attr(.data, "type.cols")[tcol]
-            if (attr(.data, "type.cols")[tcol] > 0) {
-                f <- match (tcol, attr(.data, "factor.cols"))
-                attr(.data, "factor.cols") <- c(attr(.data, "factor.cols"), col)
-                attr(.data, "factor.levels") <- append(attr(.data, "factor.levels"), list(
-                                                       attr(.data, "factor.levels")[[f]]))
-            }
-        }
-    }
-    #FIXME: make this a generic function
-    .attr <- attributes(.data)
-    parallel::clusterExport (attr(.data, "cl"), ".attr", envir = environment())
-    parallel::clusterEvalQ (attr(.data, "cl"), {
-        for (.at in c("colnames", "type.cols", "factor.cols", "factor.levels")) {
-            attr(.local, .at) <- .attr[[.at]]
-            if (attr(.local, "grouped")) {
-                for (.i in 1:length(.grouped)) {
-                    attr(.grouped[[.i]], .at) <- .attr[[.at]]
-                }
-            }
-        }
-        NULL
-    })
     .data
 }
 

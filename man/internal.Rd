@@ -9,7 +9,6 @@
 \alias{.p}
 \alias{.partition_all}
 \alias{.rebuild_grouped}
-\alias{alloc_col}
 \alias{ff_eq}
 \alias{ff_expr}
 \alias{ff_ge}
@@ -18,7 +17,6 @@
 \alias{ff_lt}
 \alias{ff_mwhich}
 \alias{ff_neq}
-\alias{free_col}
 \alias{internal}
 \alias{no.strings.attached}
 \title{Internal functions}
@@ -44,10 +42,6 @@ ff_neq(cmp, expr)
 ff_eq(cmp, expr)
 
 ff_mwhich(x, lazyobj)
-
-alloc_col(x, name = ".tmp")
-
-free_col(x, col)
 
 .partition_all(.data, max.row = nrow(.data[[1]]))
 
