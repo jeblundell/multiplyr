@@ -304,6 +304,22 @@ sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=FALSE) {
         cols <- c(Gcol, cols)
     }
     bigmemory::mpermute (bm, cols=cols)
+},
+alloc_col = function (name=".tmp") {
+    res <- which (is.na (col.names))
+    if (length(res) == 0) {
+        stop ("No free columns available")
+    } else {
+        col.names[res[1]] <<- name
+        type.cols[res[1]] <<- 0
+        order.cols[res[1]] <<- max(order.cols)+1
+    }
+    return (res[1])
+},
+free_col = function (col) {
+    col.names[col] <<- NA
+    type.cols[col] <<- 0
+    order.cols[col] <<- 0
 }
 ))
 

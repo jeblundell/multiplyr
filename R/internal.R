@@ -133,32 +133,6 @@ ff_mwhich <- function (x, lazyobj) {
                        op = "AND")
 }
 
-
-#' @export
-#' @keywords internal
-#' @rdname internal
-alloc_col <- function (x, name=".tmp") {
-    res <- which (is.na (attr(x, "colnames")))
-    if (length(res) == 0) {
-        stop ("No free columns available")
-    } else {
-        attr(x, "colnames")[res[1]] <- name
-        attr(x, "type.cols")[res[1]] <- 0
-        attr(x, "order.cols")[res[1]] <- max(attr(x, "order.cols"))+1
-        return (x)
-    }
-}
-
-#' @export
-#' @keywords internal
-#' @rdname internal
-free_col <- function (x, col) {
-    attr(x, "colnames")[col] <- NA
-    attr(x, "type.cols")[col] <- 0
-    attr(x, "order.cols")[col] <- 0
-    return (x)
-}
-
 #' @export
 #' @keywords internal
 #' @rdname internal
