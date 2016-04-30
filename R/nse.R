@@ -71,12 +71,12 @@ mutate <- function (.data, ...) {
 }
 
 #' Partition data so that each group is wholly on a node
-#' @param .data Data frame
+#' @param .self Data frame
 #' @param ... Names of grouping variables
 #' @export
-partition_group <- function (.data, ...) {
+partition_group <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots (...)
-    partition_group_ (.data, .dots=.dots)
+    partition_group_ (.self, .dots=.dots)
 }
 
 #' Rename variables

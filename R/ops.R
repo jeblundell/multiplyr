@@ -213,19 +213,18 @@ partition_even <- function (.self) {
 
 #' @describeIn partition_group
 #' @export
-partition_group_ <- function (.data, ..., .dots) {
+partition_group_ <- function (.self, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
 
     if (length(.dots) > 0) {
-        attr (.data, "group_partition") <- TRUE
-        return (group_by_ (.data, .dots=.dots))
+        .self$group_partition <- TRUE
+        return (group_by_ (.self, .dots=.dots))
         #group_by_ calls partition_group() on its return
     }
 
-    cl <- attr(.data, "cl")
-    N <- length(cl)
+    N <- length(.self$cls)
 
-    G <- attr(.data, "group_sizes")
+    G <- .self$group_sizes
     if (length(G) == 1) {
         Gi <- distribute (1, N)
         Gi[Gi == 0] <- NA
@@ -233,23 +232,23 @@ partition_group_ <- function (.data, ..., .dots) {
         Gi <- distribute (G, N)
     }
 
-    for (i in 1:N) {
-        .groups <- Gi[[i]]
-        parallel::clusterExport (cl[i], ".groups", envir=environment())
-    }
+    .self$cluster_export_each ("Gi", ".groups")
 
-    parallel::clusterEvalQ (cl, {
+    .self$cluster_eval ({
         if (NA %in% .groups) {
             .empty <- TRUE
             return (NULL)
         }
 
-        .local[[1]] <- .master[[1]]
-        attr(.local, "group_partition") <- TRUE
+        .local <- .master$copy(shallow=TRUE)
+
         NULL
     })
 
-    return (.rebuild_grouped (.data))
+    .self$rebuild_grouped ()
+    .self$update_fields ("group_partition")
+
+    return (.self)
 }
 
 #' @describeIn fast_filter

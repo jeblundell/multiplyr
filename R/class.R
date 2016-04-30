@@ -148,7 +148,7 @@ cluster_export_each = function (var, var.as=var, envir=parent.frame()) {
     tmp <- new.env()
     for (i in 1:length(var)) {
         for (j in 1:length(cls)) {
-            assign (var.as[i], get(var[i], envir=envir)[j], envir=tmp)
+            assign (var.as[i], get(var[i], envir=envir)[[j]], envir=tmp)
             parallel::clusterExport (cls[j], var.as[i], envir=tmp)
         }
     }
@@ -378,8 +378,14 @@ update_fields = function (fieldnames) {
         .fieldval <- .self$field(name=.fieldname)
         cluster_export (c(".fieldname", ".fieldval"))
         cluster_eval({
+            .master$field (name = .fieldname, value = .fieldval)
+            if (.empty) { return (NULL) }
             .local$field (name = .fieldname, value = .fieldval)
-            #FIXME: grouped
+            if (.local$group_partition) {
+                for (.g in 1:length(.grouped)) {
+                    .grouped[[.g]]$field (name = .fieldname, value = .fieldval)
+                }
+            }
             NULL
         })
     }

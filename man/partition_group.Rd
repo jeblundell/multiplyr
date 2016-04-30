@@ -5,12 +5,12 @@
 \alias{partition_group_}
 \title{Partition data so that each group is wholly on a node}
 \usage{
-partition_group(.data, ...)
+partition_group(.self, ...)
 
-partition_group_(.data, ..., .dots)
+partition_group_(.self, ..., .dots)
 }
 \arguments{
-\item{.data}{Data frame}
+\item{.self}{Data frame}
 
 \item{...}{Names of grouping variables}
 }
