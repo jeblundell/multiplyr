@@ -177,7 +177,7 @@ show = function (max.row=10) {
     }
     cat ("\n")
 },
-get = function (i=NULL, j=NULL, nsa=FALSE) {
+get_data = function (i=NULL, j=NULL, nsa=FALSE) {
     if (is.null(i)) {
         rowslice <- NULL
     } else {
@@ -226,7 +226,7 @@ get = function (i=NULL, j=NULL, nsa=FALSE) {
     }
     return (out)
 },
-set = function (i=NULL, j=NULL, value, nsa=FALSE) {
+set_data = function (i=NULL, j=NULL, value, nsa=FALSE) {
     len <- length(value)
 
     if (!is.null(j)) {
@@ -299,9 +299,9 @@ envir = function (nsa=FALSE) {
             .nsa<-nsa
             function (x) {
                 if (missing(x)) {
-                    .dat$get(NULL, .var, .nsa)
+                    .dat$get_data(NULL, .var, .nsa)
                 } else {
-                    .dat$set(NULL, .var, x, .nsa)
+                    .dat$set_data(NULL, .var, x, .nsa)
                 }
             }
         })
