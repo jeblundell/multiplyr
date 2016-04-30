@@ -51,13 +51,13 @@ filter <- function (.data, ...) {
 }
 
 #' Group data
-#' @param .data Data frame
+#' @param .self Data frame
 #' @param ... Variables to sort by
 #' @param .dots Workaround for non-standard evaluation
 #' @export
-group_by <- function (.data, ...) {
+group_by <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots (...)
-    group_by_ (.data, .dots=.dots)
+    group_by_ (.self, .dots=.dots)
 }
 
 #' Change values of existing variables (and create new ones)

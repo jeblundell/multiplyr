@@ -38,6 +38,169 @@ define_ <- function (.self, ..., .dots) {
     return (.self)
 }
 
+#' @describeIn group_by
+#' @export
+group_by_ <- function (.self, ..., .dots) {
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    namelist <- .dots2names (.dots)
+
+    .cols <- match(namelist, .self$col.names)
+    .Gcol <- match(".group", .self$col.names)
+    N <- length(.self$cls)
+
+    .self$sort (decreasing=FALSE, dots=.dots)
+
+    .self$grouped <- TRUE
+    .self$update_fields ("grouped")
+
+    .self$group.cols <- .cols
+
+    if (nrow(.self$bm) == 1) {
+        .self$bm[, .Gcol] <- 1
+        .self$group_sizes <- 1
+        .self$group_max <- 1
+        return (.self)
+    }
+
+    if (N == 1) {
+        if (nrow(.self$bm) == 2) {
+            i <- ifelse (all(.self$bm[1, .cols] ==
+                                 .self$bm[2, .cols]), 1, 2)
+            .self$bm[, .Gcol] <- 1:i
+            .self$group_sizes <- rep(1, i)
+            .self$group_max <- i
+            return (.self)
+        }
+        sm1 <- bigmemory::sub.big.matrix (.self$bm, firstRow=1, lastRow=nrow(.self$bm)-1)
+        sm2 <- bigmemory::sub.big.matrix (.self$bm, firstRow=2, lastRow=nrow(.self$bm))
+        if (length(.cols) == 1) {
+            breaks <- which (sm1[,.cols] != sm2[,.cols])
+        } else {
+            breaks <- which (!apply (sm1[,.cols] == sm2[,.cols], 1, all))
+        }
+        sizes <- c(breaks, 100) - c(0, breaks)
+        breaks <- c(0, breaks) + 1
+        last <- 0
+        for (i in 1:length(breaks)) {
+            .self$bm[(last+1):breaks[i], .Gcol] <- i
+            last <- breaks[i]
+        }
+        .self$group_sizes <- sizes
+        .self$group_max <- length(sizes)
+        return (.self)
+    }
+
+    # (0) If partitioned by group, temporarily repartition evenly
+    regroup_partition <- .self$group_partition
+    if (.self$group_partition) {
+        .self$partition_even()
+    }
+
+    # (1) determine local groupings
+    .self$cluster_export (c(".cols", ".Gcol"))
+    trans <- .self$cluster_eval ({
+        if (nrow(.local$bm) == 1) {
+            .breaks <- 1
+            return (1)
+        } else if (nrow(.local$bm) == 2) {
+            i <- ifelse (all(.local$bm[1, .cols] ==
+                                 .local$bm[2, .cols]), 1, 2)
+            .local$bm[, .Gcol] <- 1:i
+            .breaks <- 1:i
+            .local$group_sizes <- rep(1, i)
+            .local$group_max <- i
+            return (i)
+        }
+        .sm1 <- bigmemory::sub.big.matrix (.local$bm, firstRow=1, lastRow=nrow(.local$bm)-1)
+        .sm2 <- bigmemory::sub.big.matrix (.local$bm, firstRow=2, lastRow=nrow(.local$bm))
+        if (length(.cols) == 1) {
+            .breaks <- which (.sm1[,.cols] != .sm2[,.cols])
+        } else {
+            .breaks <- which (!apply (.sm1[,.cols] == .sm2[,.cols], 1, all))
+        }
+        rm (.sm1, .sm2)
+
+        .breaks <- c(.breaks, nrow(.local$bm))
+        .prev <- 0
+        for (.i in 1:length(.breaks)) {
+            .local$bm[(.prev+1):.breaks[.i],.Gcol] <- .i
+            .prev <- .breaks[.i]
+        }
+
+        .last
+    })
+
+    # (2) work out if there's a group change between local[1] and local[2] etc.
+    trans <- do.call (c, trans)
+    trans <- trans[-length(trans)]
+
+    sm1 <- bigmemory::sub.big.matrix (.self$bm, firstRow=1, lastRow=nrow(.self$bm)-1)
+    sm2 <- bigmemory::sub.big.matrix (.self$bm, firstRow=2, lastRow=nrow(.self$bm))
+    if (length(.cols) == 1) {
+        tg <- sm1[trans, .cols] != sm2[trans, .cols]
+    } else {
+        if (length(trans) == 1) {
+            tg <- !all (sm1[trans, .cols] == sm2[trans, .cols])
+        } else {
+            tg <- !apply (sm1[trans, .cols] == sm2[trans, .cols], 1, all)
+        }
+    }
+    rm (sm1, sm2)
+
+    # (3) add group base to each local
+    Gcount <- do.call (c, .self$cluster_eval ({
+        .local$bm[nrow(.local$bm), .Gcol]
+    }))
+    Gcount <- Gcount[-length(Gcount)]
+
+    Gtr <- rep(1, length(Gcount))
+    Gtr[tg] <- 0
+    Gbase <- cumsum(c(0, Gcount-Gtr))
+    .self$cluster_export_each ("Gbase", ".Gbase")
+    .self$cluster_eval ({
+        .local$bm[, .Gcol] <- .local$bm[, .Gcol] + .Gbase
+        .groups <- unique (.local$bm[, .Gcol]) #FIXME
+        NULL
+    })
+
+    # (4) figure out group sizes
+    res <- .self$cluster_eval (.breaks)
+    for (i in 1:length(res)) {
+        if (length(res[[i]]) > 1) {
+            for (j in 2:length(res[[i]])) {
+                res[[i]][j] <- res[[i]][j] - res[[i]][j-1]
+            }
+        }
+    }
+    sizes <- res[[1]]
+    for (i in 2:length(res)) {
+        if (!tg[i-1]) {
+            sizes[length(sizes)] <- sizes[length(sizes)] +
+                res[[i]][1]
+            sizes <- c(sizes, res[[i]][-1])
+        } else {
+            sizes <- c(sizes, res[[i]])
+        }
+    }
+
+    .self$group_sizes <- sizes
+    .self$group_max <- length(sizes)
+
+    # Input      Gcount   tg      Gbase  Output
+    # 1: G=1,2   2        FALSE   0      G=1,2
+    # 2: G=1,2   2        TRUE    1      G=2,3
+    # --transition between 2->3--
+    # 3: G=1,2                           G=4,5
+
+    # Repartition by group if appropriate
+    if (regroup_partition) {
+        return (.self %>% partition_group())
+    } else {
+        .self$rebuild_grouped()
+        return (.self)
+    }
+}
+
 #' Partition data evenly amongst cluster nodes
 #' @param .self Data frame
 #' @export
@@ -111,167 +274,6 @@ fast_filter_ <- function (.data, ..., .dots) {
         NULL
     })
     return (.data)
-}
-
-#' @describeIn group_by
-#' @export
-group_by_ <- function (.data, ..., .dots) {
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
-    namelist <- .dots2names (.data, .dots)
-    .cols <- match(namelist, attr(.data, "colnames"))
-    .Gcol <- match(".group", attr(.data, "colnames"))
-    N <- length(attr(.data, "cl"))
-
-    .sort.fastdf (.data, decreasing=FALSE, .dots)
-
-    attr (.data, "grouped") <- TRUE
-    parallel::clusterEvalQ (attr(.data, "cl"), attr(.local, "grouped") <- TRUE)
-
-    attr (.data, "group_cols") <- .cols
-
-    if (nrow(.data[[1]]) == 1) {
-        .data[[1]][, .Gcol] <- 1
-        attr(.data, "group_sizes") <- 1
-        attr(.data, "group_max") <- 1
-        return (.data)
-    }
-
-    if (N == 1) {
-        if (nrow(.data[[1]]) == 2) {
-            i <- ifelse (all(.data[[1]][1, .cols] ==
-                                 .data[[1]][2, .cols]), 1, 2)
-            .data[[1]][, .Gcol] <- 1:i
-            attr(.data, "group_sizes") <- rep(1, i)
-            attr(.data, "group_max") <- i
-            return (.data)
-        }
-        sm1 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=1, lastRow=nrow(.data[[1]])-1)
-        sm2 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=2, lastRow=nrow(.data[[1]]))
-        if (length(.cols) == 1) {
-            breaks <- which (sm1[,.cols] != sm2[,.cols])
-        } else {
-            breaks <- which (!apply (sm1[,.cols] == sm2[,.cols], 1, all))
-        }
-        sizes <- c(breaks, 100) - c(0, breaks)
-        breaks <- c(0, breaks) + 1
-        last <- 0
-        for (i in 1:length(breaks)) {
-            .data[[1]][(last+1):breaks[i],.Gcol] <- i
-            last <- breaks[i]
-        }
-        attr (.data, "group_sizes") <- sizes
-        attr (.data, "group_max") <- length(sizes)
-        return (.data)
-    }
-
-    # (0) If partitioned by group, temporarily repartition evenly
-    if (attr(.data, "group_partition")) {
-        .data <- .partition_all (.data)
-    }
-
-    # (1) determine local groupings
-    parallel::clusterExport (attr(.data, "cl"), c(".cols", ".Gcol"), envir=environment())
-    trans <- parallel::clusterEvalQ (attr(.data, "cl"), {
-        if (nrow(.local[[1]]) == 1) {
-            .breaks <- 1
-            return (1)
-        } else if (nrow(.local[[1]]) == 2) {
-            i <- ifelse (all(.local[[1]][1, .cols] ==
-                                 .local[[1]][2, .cols]), 1, 2)
-            .local[[1]][, .Gcol] <- 1:i
-            .breaks <- 1:i
-            attr(.local, "group_sizes") <- rep(1, i)
-            attr(.local, "group_max") <- i
-            return (i)
-        }
-        .sm1 <- bigmemory::sub.big.matrix (.local[[1]], firstRow=1, lastRow=nrow(.local[[1]])-1)
-        .sm2 <- bigmemory::sub.big.matrix (.local[[1]], firstRow=2, lastRow=nrow(.local[[1]]))
-        if (length(.cols) == 1) {
-            .breaks <- which (.sm1[,.cols] != .sm2[,.cols])
-        } else {
-            .breaks <- which (!apply (.sm1[,.cols] == .sm2[,.cols], 1, all))
-        }
-        rm (.sm1, .sm2)
-
-        .breaks <- c(.breaks, nrow(.local[[1]]))
-        .prev <- 0
-        for (.i in 1:length(.breaks)) {
-            .local[[1]][(.prev+1):.breaks[.i],.Gcol] <- .i
-            .prev <- .breaks[.i]
-        }
-
-        .last
-    })
-
-    # (2) work out if there's a group change between local[1] and local[2] etc.
-    trans <- do.call (c, trans)
-    trans <- trans[-length(trans)]
-
-    sm1 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=1, lastRow=nrow(.data[[1]])-1)
-    sm2 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=2, lastRow=nrow(.data[[1]]))
-    if (length(.cols) == 1) {
-        tg <- sm1[trans, .cols] != sm2[trans, .cols]
-    } else {
-        if (length(trans) == 1) {
-            tg <- !all (sm1[trans, .cols] == sm2[trans, .cols])
-        } else {
-            tg <- !apply (sm1[trans, .cols] == sm2[trans, .cols], 1, all)
-        }
-    }
-    rm (sm1, sm2)
-
-    # (3) add group base to each local
-    Gcount <- do.call (c, parallel::clusterEvalQ (attr(.data, "cl"), .local[[1]][nrow(.local[[1]]), .Gcol]))
-    Gcount <- Gcount[-length(Gcount)]
-
-    Gtr <- rep(1, length(Gcount))
-    Gtr[tg] <- 0
-    Gbase <- cumsum(c(0, Gcount-Gtr))
-    for (i in 1:N) {
-        .Gbase <- Gbase[i]
-        parallel::clusterExport(attr(.data, "cl")[i], ".Gbase", envir=environment())
-    }
-    parallel::clusterEvalQ (attr(.data, "cl"), {
-        .local[[1]][, .Gcol] <- .local[[1]][, .Gcol] + .Gbase
-        .groups <- unique (.local[[1]][, .Gcol]) #FIXME
-        NULL
-    })
-
-    # (4) figure out group sizes
-    res <- parallel::clusterEvalQ(attr(.data, "cl"), .breaks)
-    for (i in 1:length(res)) {
-        if (length(res[[i]]) > 1) {
-            for (j in 2:length(res[[i]])) {
-                res[[i]][j] <- res[[i]][j] - res[[i]][j-1]
-            }
-        }
-    }
-    sizes <- res[[1]]
-    for (i in 2:length(res)) {
-        if (!tg[i-1]) {
-            sizes[length(sizes)] <- sizes[length(sizes)] +
-                res[[i]][1]
-            sizes <- c(sizes, res[[i]][-1])
-        } else {
-            sizes <- c(sizes, res[[i]])
-        }
-    }
-
-    attr(.data, "group_sizes") <- sizes
-    attr(.data, "group_max") <- length(sizes)
-
-    # Input      Gcount   tg      Gbase  Output
-    # 1: G=1,2   2        FALSE   0      G=1,2
-    # 2: G=1,2   2        TRUE    1      G=2,3
-    # --transition between 2->3--
-    # 3: G=1,2                           G=4,5
-
-    # Repartition by group if appropriate
-    if (attr(.data, "group_partition")) {
-        return (.data %>% partition_group())
-    } else {
-        return (.rebuild_grouped (.data))
-    }
 }
 
 #' Return size of groups

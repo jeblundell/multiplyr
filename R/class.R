@@ -17,11 +17,14 @@ Multiplyr <- setRefClass("Multiplyr",
                 type.cols       = "numeric",
                 order.cols      = "numeric",
                 pad             = "numeric",
-                col.names        = "character",
+                col.names       = "character",
                 nsa             = "logical",
                 grouped         = "logical",
                 group           = "numeric",
                 group_partition = "logical",
+                group.cols      = "numeric",
+                group_sizes     = "numeric",
+                group_max       = "numeric",
                 bindenv         = "environment",
                 first           = "numeric",
                 last            = "numeric"
@@ -30,7 +33,11 @@ Multiplyr <- setRefClass("Multiplyr",
 initialize = function (..., alloc=1, cl=NULL) {
     vars <- list(...)
 
-    if (length(vars) == 1) {
+    if (length(vars) == 0) {
+        #Occurs when $copy() used
+        #FIXME: how to manage when user calls
+        return()
+    } else if (length(vars) == 1) {
         if (is.data.frame(vars[[1]])) {
             vars <- unclass(vars[[1]])
         }
@@ -100,6 +107,27 @@ initialize = function (..., alloc=1, cl=NULL) {
         NULL
     })
     partition_even()
+},
+copy = function (shallow = FALSE) {
+    if (!shallow) {
+        stop ("Non-shallow copy not implemented safely yet")
+    }
+    callSuper (shallow)
+},
+group_restrict = function (group) {
+    if (group <= 0) { return (.self) }
+    grp <- .self$copy (shallow=TRUE)
+    grp$group <- group
+
+    #presumes that dat is sorted by grouping column first
+    Gcol <- match (".group", grp$col.names)
+    lims <- range(which (grp$bm[, Gcol] == grp$group))
+    grp$bm <- bigmemory::sub.big.matrix(grp$bm,
+                                          firstRow=lims[1],
+                                          lastRow=lims[2])
+    grp$first <- lims[1]
+    grp$last <- lims[2]
+    return (grp)
 },
 reattach = function (descriptor = desc) {
     bm <<- bigmemory::attach.big.matrix(descriptor)
@@ -374,7 +402,7 @@ partition_even = function (max.row = nrow(bm)) {
     cluster_eval ({
         .empty <- (.last < .first || .last == 0)
         if (!exists(".local")) {
-            .local <- .master
+            .local <- .master$copy (shallow=TRUE)
         }
         if (.empty) { return (NULL) }
         .local$local_subset (.first, .last)
@@ -387,6 +415,20 @@ local_subset = function (first, last) {
     first <<- first
     last <<- last
     bm <<- bigmemory::sub.big.matrix (bm.master, firstRow=first, lastRow=last)
+},
+rebuild_grouped = function () {
+    cluster_eval ({
+        if (.empty) { return(NULL) }
+        if (length(.groups) == 0) { return(NULL) }
+
+        .grouped <- list()
+        for (.g in 1:length(.groups)) {
+            .grp <- .local$group_restrict(.groups[.g])
+            .grouped <- append(.grouped, list(.grp))
+        }
+
+        NULL
+    })
 }
 ))
 

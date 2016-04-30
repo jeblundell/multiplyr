@@ -5,12 +5,12 @@
 \alias{group_by_}
 \title{Group data}
 \usage{
-group_by(.data, ...)
+group_by(.self, ...)
 
-group_by_(.data, ..., .dots)
+group_by_(.self, ..., .dots)
 }
 \arguments{
-\item{.data}{Data frame}
+\item{.self}{Data frame}
 
 \item{...}{Variables to sort by}
 

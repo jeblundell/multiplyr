@@ -7,7 +7,6 @@
 \alias{.filter_rows}
 \alias{.filter_vector}
 \alias{.p}
-\alias{.rebuild_grouped}
 \alias{ff_eq}
 \alias{ff_expr}
 \alias{ff_ge}
@@ -43,8 +42,6 @@ ff_eq(cmp, expr)
 ff_mwhich(x, lazyobj)
 
 no.strings.attached(x)
-
-.rebuild_grouped(.data)
 
 .filter_rows(x, tmpcol, filtercol, rows)
 

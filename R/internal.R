@@ -146,26 +146,6 @@ no.strings.attached <- function (x) {
 #' @export
 #' @keywords internal
 #' @rdname internal
-.rebuild_grouped <- function (.data) {
-    parallel::clusterEvalQ (attr(.data, "cl"), {
-        if (.empty) { return(NULL) }
-        if (length(.groups) == 0) { return(NULL) }
-
-        .grouped <- list()
-        for (.g in 1:length(.groups)) {
-            .grp <- group_restrict(.local, .groups[.g])
-            attr(.grp, "bindenv") <- as.environment (.grp)
-            .grouped <- append(.grouped, list(.grp))
-        }
-
-        NULL
-    })
-    .data
-}
-
-#' @export
-#' @keywords internal
-#' @rdname internal
 .filter_rows <- function (x, tmpcol, filtercol, rows) {
     x[[1]][, tmpcol] <- 0
     x[[1]][rows, tmpcol] <- 1
