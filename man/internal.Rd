@@ -3,17 +3,8 @@
 \name{internal}
 \alias{.dots2names}
 \alias{.filter_range}
-\alias{.filter_rewrite}
 \alias{.filter_vector}
 \alias{.p}
-\alias{ff_eq}
-\alias{ff_expr}
-\alias{ff_ge}
-\alias{ff_gt}
-\alias{ff_le}
-\alias{ff_lt}
-\alias{ff_mwhich}
-\alias{ff_neq}
 \alias{internal}
 \alias{no.strings.attached}
 \title{Internal functions}
@@ -22,27 +13,7 @@
 
 .dots2names(dots)
 
-.filter_rewrite(lazyobj)
-
-ff_expr(var, expr)
-
-ff_lt(cmp, expr)
-
-ff_le(cmp, expr)
-
-ff_gt(cmp, expr)
-
-ff_ge(cmp, expr)
-
-ff_neq(cmp, expr)
-
-ff_eq(cmp, expr)
-
-ff_mwhich(x, lazyobj)
-
 no.strings.attached(x)
-
-.filter_vector(x, filtercol, rows)
 
 .filter_range(x, filtercol, start, end)
 }

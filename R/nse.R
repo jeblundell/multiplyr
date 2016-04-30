@@ -30,16 +30,6 @@ distinct <- function (.self, ...) {
     distinct_ (.self, .dots=.dots)
 }
 
-#' Faster form of usual filter function, but has restrictions
-#' @param .data Data frame
-#' @param ... Filtering expressions
-#' @param .dots Workaround for non-standard evaluation
-#' @export
-fast_filter <- function (.data, ...) {
-    .dots <- lazyeval::lazy_dots (...)
-    fast_filter_ (.data, .dots=.dots)
-}
-
 #' Filter data
 #' @param .data Data frame
 #' @param ... Additional parameters

@@ -376,30 +376,6 @@ partition_group_ <- function (.self, ..., .dots) {
     return (.self)
 }
 
-#' @describeIn fast_filter
-#' @export
-fast_filter_ <- function (.data, ..., .dots) {
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
-    parallel::clusterExport (attr(.data, "cl"), ".dots", envir=environment())
-
-    parallel::clusterEvalQ (attr(.data, "cl"), {
-        if (.empty) { return (NULL) }
-        filtercol <- match (".filter", attr(.local, "colnames"))
-        .local <- alloc_col (.local)
-        .tmpcol <- match (".tmp", attr(.local, "colnames"))
-        res <- ff_mwhich(.local, .dots)
-
-        if (length(res) == 0) {
-            .local[[1]][, filtercol] <- 0
-        } else {
-            .filter_rows (.local, .tmpcol, filtercol, res)
-        }
-        .local <- free_col (.local, .tmpcol)
-        NULL
-    })
-    return (.data)
-}
-
 #' Return size of groups
 #' @param .data Data frame
 #' @export
