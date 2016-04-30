@@ -2,7 +2,6 @@
 
 export(.dots2names)
 export(.filter_range)
-export(.filter_vector)
 export(.p)
 export(Multiplyr)
 export(arrange)

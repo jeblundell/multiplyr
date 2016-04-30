@@ -5,16 +5,16 @@
 \alias{filter_}
 \title{Filter data}
 \usage{
-filter(.data, ...)
+filter(.self, ...)
 
-filter_(.data, ..., .dots)
+filter_(.self, ..., .dots)
 }
 \arguments{
-\item{.data}{Data frame}
-
 \item{...}{Additional parameters}
 
 \item{.dots}{Workaround for non-standard evaluation}
+
+\item{.data}{Data frame}
 }
 \description{
 Filter data

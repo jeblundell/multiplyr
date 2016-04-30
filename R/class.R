@@ -27,7 +27,9 @@ Multiplyr <- setRefClass("Multiplyr",
                 group_max       = "numeric",
                 bindenv         = "environment",
                 first           = "numeric",
-                last            = "numeric"
+                last            = "numeric",
+                filtercol       = "numeric",
+                groupcol        = "numeric"
                 ),
     methods=list(
 initialize = function (..., alloc=1, cl=NULL) {
@@ -63,10 +65,14 @@ initialize = function (..., alloc=1, cl=NULL) {
     col.names <<- c(names(vars), rep(NA, alloc), special)
     order.cols <<- c(seq_len(length(vars)), rep(0, alloc), rep(0, length(special)))
     Rdsm::mgrmakevar(cls, ".bm", nr=nrows, nc=ncols)
+
     bm <<- .bm
     bm.master <<- .bm
+
     first <<- 1
     last <<- nrows
+    filtercol <<- match (".filter", col.names)
+    groupcol <<- match (".group", col.names)
 
     bm[,match(".filter", col.names)] <<- 1
 
@@ -225,7 +231,6 @@ get_data = function (i=NULL, j=NULL, nsa=FALSE) {
     }
 
     m <- match (cols, col.names)
-    filtercol <- match (".filter", col.names)
     filtered <- bm[, filtercol] == 1
     if (!is.null(rowslice)) {
         filtered[-rowslice] <- FALSE
@@ -441,6 +446,9 @@ filter_rows = function (tmpcol, filtercol, rows) {
     bm[rows, tmpcol] <<- 1
 
     bm[, filtercol] <<- bm[, filtercol] * bm[, tmpcol]
+},
+filter_vector = function (rows) {
+    bm[, filtercol] <<- bm[, filtercol] * rows
 }
 ))
 

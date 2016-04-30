@@ -3,7 +3,6 @@
 \name{internal}
 \alias{.dots2names}
 \alias{.filter_range}
-\alias{.filter_vector}
 \alias{.p}
 \alias{internal}
 \alias{no.strings.attached}

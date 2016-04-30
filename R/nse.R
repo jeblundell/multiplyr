@@ -35,9 +35,9 @@ distinct <- function (.self, ...) {
 #' @param ... Additional parameters
 #' @param .dots Workaround for non-standard evaluation
 #' @export
-filter <- function (.data, ...) {
+filter <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots (...)
-    filter_ (.data, .dots=.dots)
+    filter_ (.self, .dots=.dots)
 }
 
 #' Group data

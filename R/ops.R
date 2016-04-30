@@ -163,6 +163,33 @@ distinct_ <- function (.self, ..., .dots) {
     return(.self)
 }
 
+#' @describeIn filter
+#' @export
+filter_ <- function (.self, ..., .dots) {
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+
+    .self$cluster_export (c(".dots"))
+    .self$cluster_eval ({
+        if (.empty) { return (NULL) }
+        if (.local$grouped) {
+            for (.g in 1:length(.groups)) {
+                for (.i in 1:length(.dots)) {
+                    .res <- lazyeval::lazy_eval (.dots[.i], .grouped[[.g]]$envir())
+                    .grouped[[.g]]$filter_vector (.res[[1]])
+                }
+            }
+        } else {
+            for (.i in 1:length(.dots)) {
+                .res <- lazyeval::lazy_eval (.dots[.i], .local$envir())
+                .local$filter_vector (.res[[1]])
+            }
+        }
+        NULL
+    })
+
+    return (.self)
+}
+
 #' @describeIn group_by
 #' @export
 group_by_ <- function (.self, ..., .dots) {
@@ -479,36 +506,6 @@ slice <- function (.data, rows=NULL, start=NULL, end=NULL) {
         .data[[1]][, filtercol] <- 0
         .data[[1]][rows, filtercol] <- 1
     }
-
-    .data
-}
-
-#' @describeIn filter
-#' @export
-filter_ <- function (.data, ..., .dots) {
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
-    .filtercol <- match(".filter", attr(.data, "colnames"))
-
-    cl <- attr (.data, "cl")
-    parallel::clusterExport (cl, c(".filtercol",
-                                   ".dots"), envir=environment())
-    parallel::clusterEvalQ (cl, {
-        if (.empty) { return (NULL) }
-        if (attr(.local, "grouped")) {
-            for (.g in 1:length(.groups)) {
-                for (.i in 1:length(.dots)) {
-                    .res <- lazyeval::lazy_eval (.dots[.i], as.environment(.grouped[[.g]]))
-                    .filter_vector (.grouped[[.g]], .filtercol, .res[[1]])
-                }
-            }
-        } else {
-            for (.i in 1:length(.dots)) {
-                .res <- lazyeval::lazy_eval (.dots[.i], as.environment(.local))
-                .filter_vector (.local, .filtercol, .res[[1]])
-            }
-        }
-        NULL
-    })
 
     .data
 }
