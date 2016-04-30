@@ -70,22 +70,6 @@ partition_group_ <- function (.data, ..., .dots) {
     return (.rebuild_grouped (.data))
 }
 
-#' @export
-cldo <- function (.data, ...) {
-    parallel::clusterEvalQ (attr(.data, "cl"), ...)
-}
-
-#' @export
-clget_ <- function (.data, ..., .dots) {
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
-    parallel::clusterExport (attr(.data, "cl"), ".dots", envir=environment())
-    parallel::clusterEvalQ (attr(.data, "cl"), {
-        if (.empty) { return (NULL) }
-        lazy_eval (.dots, as.environment(.local))
-    })
-}
-
-
 #' @describeIn fast_filter
 #' @export
 fast_filter_ <- function (.data, ..., .dots) {

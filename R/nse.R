@@ -10,12 +10,6 @@ arrange <- function (.self, ...) {
     arrange_ (.self, .dots=.dots)
 }
 
-#' @export
-clget <- function (.data, ...) {
-    dots <- lazyeval::lazy_dots(...)
-    return (clget_ (.data, .dots=dots))
-}
-
 #' Define new variables
 #' @param .data Data frame
 #' @param ... Names of new variables
