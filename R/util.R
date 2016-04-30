@@ -35,57 +35,6 @@ distribute <- function (x, N) {
     }
 }
 
-#' Bind parallel data frame variables to an environment
-#' @param dat Data frame
-#' @param envir Environment
-#' @export
-bind_variables <- function (dat, envir) {
-     vars.active <- names (which (vapply (ls(envir=envir),
-                                          bindingIsActive,
-                                          FALSE, envir)))
-     if (length(vars.active) > 0) {
-         rm (list=vars.active, envir=envir)
-     }
-
-    makeActiveBinding (".", local({
-        .dat <- dat
-        function (x) {
-            .dat
-        }
-    }), env=envir)
-
-    for (var in names(dat)) {
-        if (!attr(dat, "nsa")) {
-            f <- local ({
-                .var<-var
-                .dat<-dat
-                function (x) {
-                    if (missing(x)) {
-                        .dat[.var]
-                    } else {
-                        .dat[.var] <- x
-                    }
-                }
-            })
-        } else {
-            f <- local ({
-                .var<-var
-                .dat<-dat
-                function (x) {
-                    .col <- match(.var, attr(.dat, "colnames"))
-                    if (missing(x)) {
-                        .dat[[1]][, .col]
-                    } else {
-                        .dat[[1]][, .col] <- x
-                    }
-                }
-            })
-        }
-        makeActiveBinding(var, f, env=envir)
-    }
-    return (envir)
-}
-
 #' Return a parallel data frame mapped to a particular group
 #' @param dat Data frame
 #' @param group Group ID
@@ -114,20 +63,4 @@ warn.suboptimal <- function (expr, warn) {
             warning (warn, call.=FALSE)
         }
     }
-}
-
-#' @export
-factor_map <- function (x, var, vals) {
-    if (is.numeric(var)) {
-        col <- var
-    } else {
-        col <- match (var, attr(x, "colnames"))
-    }
-
-    if (attr(x, "type.cols")[col] == 0) {
-        return (vals)
-    }
-
-    f <- match (col, attr(x, "factor.cols"))
-    match (vals, attr(x, "factor.levels")[[f]])
 }

@@ -20,7 +20,8 @@ Multiplyr <- setRefClass("Multiplyr",
                 nsa             = "logical",
                 grouped         = "logical",
                 group           = "numeric",
-                group_partition = "logical"
+                group_partition = "logical",
+                bindenv         = "environment"
                 ),
     methods=list(
 initialize = function (..., alloc=1, cl=NULL) {
@@ -158,7 +159,7 @@ show = function (max.row=10) {
     }
     cat ("\n")
 },
-get = function (i=NULL, j=NULL) {
+get = function (i=NULL, j=NULL, nsa=FALSE) {
     if (is.null(i)) {
         rowslice <- NULL
     } else {
@@ -177,6 +178,10 @@ get = function (i=NULL, j=NULL) {
     if (!is.null(rowslice)) {
         filtered[-rowslice] <- FALSE
     }
+    if (nsa) {
+        return (bm[filtered, cols])
+    }
+
     out <- NULL
     for (i in m) {
         itype <- type.cols[i]
@@ -202,111 +207,91 @@ get = function (i=NULL, j=NULL) {
         names (out) <- col.names[m]
     }
     return (out)
-}
-))
-
-#' @export
-as.fastdf <- function (x, cl=NULL) {
-    UseMethod ("as.fastdf")
-}
-
-#' @export
-as.fastdf.data.frame <- function (x, cl=NULL) {
-    return (fastdf (x))
-}
-
-#' @export
-as.data.frame.fastdf <- function (x) {
-    ncols <- ncol(x[[1]])
-    nrows <- nrow(x[[1]])
-    value <- vector("list", ncols)
-
-    for (i in seq_len(ncols)[attr(x, "type.cols") == 0]) { #numeric
-        value[[i]] <- x[[1]][,i]
-    }
-    for (i in seq_len(ncols)[attr(x, "type.cols") == 1]) { #factor
-        f <- match(i, attr(x, "factor.cols"))
-        value[[i]] <- factor(x[[1]][,i],
-                             levels=seq_len(length(attr(x, "factor.levels")[[f]])),
-                             labels=attr(x, "factor.levels")[[f]])
-    }
-    for (i in seq_len(ncols)[attr(x, "type.cols") == 2]) { #character
-        f <- match(i, attr(x, "factor.cols"))
-        value[[i]] <- attr(x, "factor.levels")[[f]][x[[1]][,i]]
-    }
-
-    names(value) <- attr(x, "colnames")
-    attr(value, "row.names") <- .set_row_names(nrows)
-    attr(value, "class") <- "data.frame"
-    value
-}
-
-#' @export
-`$<-.fastdf` <- function (x, var, value) {
-    x[, var] <- value
-    return (x)
-}
-
-#' @export
-`[<-.fastdf` <- function (x, i, j, value) {
-    if (nargs() == 4) {
-        missing.i <- missing(i)
-        missing.j <- missing(j)
-    } else {
-        j <- i
-        missing.i <- TRUE
-    }
+},
+set = function (i=NULL, j=NULL, value, nsa=FALSE) {
     len <- length(value)
 
-    if (!is.numeric(j)) {
-        j <- match (j, attr(x, "colnames"))
+    if (!is.null(j)) {
+        if (!is.numeric(j)) {
+            j <- match (j, col.names)
+        }
     }
 
-    if (missing.i) {
+    if (is.null(i)) {
         # [, j] <-
         # [j] <-
-        if (len == 1 || len == nrow(x[[1]])) {
-            x[[1]][, j] <- factor_map (x, j, value)
+        if (len == 1 || len == nrow(bm)) {
+            if (nsa) {
+                bm[, j] <<- value
+            } else {
+                bm[, j] <<- factor_map (j, value)
+            }
         } else {
-            stop (sprintf("replacement data has %d rows to replace %d", len, nrow(x[[1]])))
+            stop (sprintf("replacement data has %d rows to replace %d", len, nrow(bm)))
         }
-    } else if (missing.j) {
+    } else if (is.null(j)) {
         # [i, ] <-
         stop ("FIXME: row replace")
     } else {
         # [i, j] <-
         stop ("FIXME: row/col replace")
     }
-    x
-}
-
-#' @export
-`names<-.fastdf` <- function (x, value) {
-    attr(x, "colnames") <- value
-}
-
-#' @export
-names.fastdf <- function (x) {
-    attr(x, "colnames")
-}
-
-#' @export
-with.fastdf <- function (data, expr, ...) {
-    eval (substitute(expr), as.environment.fastdf(data), enclos = parent.frame())
-}
-
-#' @export
-as.environment.fastdf <- function (x) {
-    # Intended use: attr(dat, "bindenv") <- as.environment(dat)
-    if (!"bindenv" %in% names(attributes(x))) {
-        bindenv <- new.env()
+    invisible (value)
+},
+factor_map = function (var, vals) {
+    if (is.numeric(var)) {
+        col <- var
     } else {
-        bindenv <- attr(x, "bindenv")
+        col <- match (var, col.names)
     }
-    bindenv <- bind_variables (x, bindenv)
 
+    if (type.cols[col] == 0) {
+        return (vals)
+    }
+
+    f <- match (col, factor.cols)
+    return (match (vals, factor.levels[[f]]))
+},
+envir = function (nsa=FALSE) {
+    if (is.null(bindenv)) {
+        bindenv <<- new.env()
+    }
+
+    #Remove existing active bindings
+    vars.active <- names (which (vapply (ls(envir=bindenv),
+                                         bindingIsActive,
+                                         FALSE, bindenv)))
+    if (length(vars.active) > 0) {
+        rm (list=vars.active, envir=bindenv)
+    }
+
+    #Allow . to refer to data frame
+    makeActiveBinding (".", local({
+        .dat <- .self
+        function (x) {
+            .dat
+        }
+    }), env=bindenv)
+
+    #Set bindings for remainder of vars
+    for (var in col.names) {
+        f <- local ({
+            .var<-var
+            .dat<-.self
+            .nsa<-nsa
+            function (x) {
+                if (missing(x)) {
+                    .dat$get(NULL, .var, .nsa)
+                } else {
+                    .dat$set(NULL, .var, x, .nsa)
+                }
+            }
+        })
+        makeActiveBinding(var, f, env=bindenv)
+    }
     return (bindenv)
 }
+))
 
 #' @export
 sort.fastdf <- function (x, decreasing = FALSE, ...) {
