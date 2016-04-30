@@ -14,7 +14,10 @@ NULL
 #' @keywords internal
 #' @rdname internal
 .dots2names <- function (dots) {
-    as.vector (sapply (dots, function (x) { as.character (x$expr) }))
+    nm <- names (dots)
+    exprs <- nm == ""
+    nm[exprs] <- as.vector (sapply (dots[exprs], function (x) { as.character (x$expr) }))
+    nm
 }
 
 #' @export
