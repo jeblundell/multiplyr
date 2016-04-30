@@ -38,6 +38,131 @@ define_ <- function (.self, ..., .dots) {
     return (.self)
 }
 
+#' @describeIn distinct
+#' @export
+distinct_ <- function (.self, ..., .dots) {
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    .filtercol <- match(".filter", .self$col.names)
+
+    .tmpcol <- .self$alloc_col()
+    N <- length (.self$cls)
+
+    if (length(.dots) > 0) {
+        namelist <- .dots2names (.dots)
+        .cols <- match(namelist, .self$col.names)
+        .self$sort (decreasing=FALSE, dots=.dots)
+    } else {
+        .cols <- .self$order.cols > 0
+        .cols <- (1:length(.cols))[.cols]
+        .self$sort (decreasing=FALSE, cols=.cols)
+    }
+
+    if (.self$grouped) {
+        Gcol <- match (".group", .self$col.names)
+        .cols <- c(Gcol, .cols)
+    }
+
+    if (nrow(.self$bm) == 1) {
+        return (.self)
+    }
+
+    .self$sort (decreasing=FALSE, cols=.cols)
+    if (N == 1) {
+        if (nrow(.self$bm) == 2) {
+            .self$bm[2, .filtercol] <- ifelse (
+                all(.self$bm[1, .cols] == .self$bm[2, .cols]), 0, 1)
+            return (.self)
+        }
+        sm1 <- bigmemory::sub.big.matrix (.self$bm, firstRow=1, lastRow=nrow(.self$bm)-1)
+        sm2 <- bigmemory::sub.big.matrix (.self$bm, firstRow=2, lastRow=nrow(.self$bm))
+        if (length(.cols) == 1) {
+            breaks <- which (sm1[,.cols] != sm2[,.cols])
+        } else {
+            breaks <- which (!apply (sm1[,.cols] == sm2[,.cols], 1, all))
+        }
+        breaks <- c(0, breaks) + 1
+
+        .self$filter_rows (.tmpcol, .filtercol, breaks)
+
+        .self$free_col (.tmpcol)
+        return (.self)
+    }
+
+    .self$cluster_export (c(".cols", ".filtercol", ".tmpcol"))
+
+    # (0) If partitioned by group, temporarily repartition evenly
+    regroup_partition <- .self$group_partition
+    if (.self$group_partition) {
+        .self$partition_even()
+    }
+
+    # (1) determine local distinct rows
+    trans <- .self$cluster_eval ({
+        if (nrow(.local$bm) == 1) {
+            .breaks <- 1
+            return (1)
+        } else if (nrow(.local$bm) == 2) {
+            i <- ifelse (all(.local$bm[1, .cols] ==
+                                 .local$bm[2, .cols]), 1, 2)
+            .breaks <- 1:i
+            return (i)
+        }
+        .sm1 <- bigmemory::sub.big.matrix (.local$bm, firstRow=1, lastRow=nrow(.local$bm)-1)
+        .sm2 <- bigmemory::sub.big.matrix (.local$bm, firstRow=2, lastRow=nrow(.local$bm))
+        if (length(.cols) == 1) {
+            .breaks <- which (.sm1[,.cols] != .sm2[,.cols])
+        } else {
+            .breaks <- which (!apply (.sm1[,.cols] == .sm2[,.cols], 1, all))
+        }
+        rm (.sm1, .sm2)
+        .breaks <- .breaks + 1
+
+        .last
+    })
+
+    # (2) work out if there's a group change between local[1] and local[2] etc.
+    trans <- do.call (c, trans)
+    trans <- trans[-length(trans)]
+
+    sm1 <- bigmemory::sub.big.matrix (.self$bm, firstRow=1, lastRow=nrow(.self$bm)-1)
+    sm2 <- bigmemory::sub.big.matrix (.self$bm, firstRow=2, lastRow=nrow(.self$bm))
+    if (length(.cols) == 1 || length(trans) == 1) {
+        tg <- all(sm1[trans, .cols] != sm2[trans, .cols])
+    } else {
+        tg <- !apply (sm1[trans, .cols] == sm2[trans, .cols], 1, all)
+    }
+    rm (sm1, sm2)
+
+    # (3) set breaks=1 for all where there's a transition
+    tg <- c(TRUE, tg)
+    .self$cluster_export_each ("tg", ".tg")
+    .self$cluster_eval ({
+        if (.tg) {
+            .breaks <- c(1, .breaks)
+        }
+    })
+
+    # (4) filter at breaks
+    .self$cluster_eval ({
+        .local$filter_rows (.tmpcol, .filtercol, .breaks)
+        NULL
+    })
+
+    .self$free_col (.tmpcol)
+
+    # Repartition by group if appropriate
+    if (regroup_partition) {
+        return (.self %>% partition_group())
+    } else {
+        if (.self$grouped) {
+            .self$rebuild_grouped()
+        }
+        return (.self)
+    }
+
+    return(.self)
+}
+
 #' @describeIn group_by
 #' @export
 group_by_ <- function (.self, ..., .dots) {
@@ -280,131 +405,6 @@ fast_filter_ <- function (.data, ..., .dots) {
 #' @export
 group_sizes <- function (.data) {
     attr(.data, "group_sizes")
-}
-
-#' @describeIn distinct
-#' @export
-distinct_ <- function (.data, ..., .dots) {
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
-    .filtercol <- match(".filter", attr(.data, "colnames"))
-    .data <- alloc_col (.data)
-    .tmpcol <- match (".tmp", attr(.data, "colnames"))
-    N <- length (attr(.data, "cl"))
-
-    if (length(.dots) > 0) {
-        namelist <- .dots2names (.data, .dots)
-        .cols <- match(namelist, attr(.data, "colnames"))
-        .sort.fastdf (.data, decreasing=FALSE, dots=.dots)
-    } else {
-        .cols <- attr(.data, "order.cols") > 0
-        .cols <- (1:length(.cols))[.cols]
-        .sort.fastdf (.data, decreasing=FALSE, cols=.cols)
-    }
-
-    if (attr(.data, "grouped")) {
-        Gcol <- match (".group", attr(.data, "colnames"))
-        .cols <- c(Gcol, .cols)
-    }
-
-    if (nrow(.data[[1]]) == 1) {
-        return (.data)
-    }
-
-    .sort.fastdf (.data, decreasing=FALSE, cols=.cols)
-    if (N == 1) {
-        if (nrow(.data[[1]]) == 2) {
-            .data[[1]][2, .filtercol] <- ifelse (
-                all(.data[[1]][1, .cols] == .data[[1]][2, .cols]), 0, 1)
-            return (.data)
-        }
-        sm1 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=1, lastRow=nrow(.data[[1]])-1)
-        sm2 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=2, lastRow=nrow(.data[[1]]))
-        if (length(.cols) == 1) {
-            breaks <- which (sm1[,.cols] != sm2[,.cols])
-        } else {
-            breaks <- which (!apply (sm1[,.cols] == sm2[,.cols], 1, all))
-        }
-        breaks <- c(0, breaks) + 1
-
-        .filter_rows (.data, .tmpcol, .filtercol, breaks)
-
-        .data <- free_col (.data, .tmpcol)
-        return (.data)
-    }
-
-    parallel::clusterExport (attr(.data, "cl"), c(".cols",
-                                                  ".filtercol",
-                                                  ".tmpcol"),
-                             envir=environment())
-
-
-    # (0) If partitioned by group, temporarily repartition evenly
-    if (attr(.data, "group_partition")) {
-        .data <- .partition_all (.data)
-    }
-
-    # (1) determine local distinct rows
-    trans <- parallel::clusterEvalQ (attr(.data, "cl"), {
-        if (nrow(.local[[1]]) == 1) {
-            .breaks <- 1
-            return (1)
-        } else if (nrow(.local[[1]]) == 2) {
-            i <- ifelse (all(.local[[1]][1, .cols] ==
-                                 .local[[1]][2, .cols]), 1, 2)
-            .breaks <- 1:i
-            return (i)
-        }
-        .sm1 <- bigmemory::sub.big.matrix (.local[[1]], firstRow=1, lastRow=nrow(.local[[1]])-1)
-        .sm2 <- bigmemory::sub.big.matrix (.local[[1]], firstRow=2, lastRow=nrow(.local[[1]]))
-        if (length(.cols) == 1) {
-            .breaks <- which (.sm1[,.cols] != .sm2[,.cols])
-        } else {
-            .breaks <- which (!apply (.sm1[,.cols] == .sm2[,.cols], 1, all))
-        }
-        rm (.sm1, .sm2)
-        .breaks <- .breaks + 1
-
-        .last
-    })
-
-    # (2) work out if there's a group change between local[1] and local[2] etc.
-    trans <- do.call (c, trans)
-    trans <- trans[-length(trans)]
-
-    sm1 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=1, lastRow=nrow(.data[[1]])-1)
-    sm2 <- bigmemory::sub.big.matrix (.data[[1]], firstRow=2, lastRow=nrow(.data[[1]]))
-    if (length(.cols) == 1 || length(trans) == 1) {
-        tg <- all(sm1[trans, .cols] != sm2[trans, .cols])
-    } else {
-        tg <- !apply (sm1[trans, .cols] == sm2[trans, .cols], 1, all)
-    }
-    rm (sm1, sm2)
-
-    # (3) set breaks=1 for all where there's a transition
-    tg <- c(TRUE, tg)
-    for (i in 1:N) {
-        if (tg[i]) {
-            parallel::clusterEvalQ (attr(.data, "cl")[i], {
-                .breaks <- c(1, .breaks)
-                NULL
-            })
-        }
-    }
-
-    # (4) filter at breaks
-    parallel::clusterEvalQ (attr(.data, "cl"), {
-        .filter_rows (.local, .tmpcol, .filtercol, .breaks)
-        NULL
-    })
-
-    .data <- free_col (.data, .tmpcol)
-
-    # Repartition by group if appropriate
-    if (attr(.data, "group_partition")) {
-        return (.data %>% partition_group())
-    }
-
-    return(.data)
 }
 
 #' @describeIn rename

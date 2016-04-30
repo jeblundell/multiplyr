@@ -4,7 +4,6 @@
 \alias{.dots2names}
 \alias{.filter_range}
 \alias{.filter_rewrite}
-\alias{.filter_rows}
 \alias{.filter_vector}
 \alias{.p}
 \alias{ff_eq}
@@ -42,8 +41,6 @@ ff_eq(cmp, expr)
 ff_mwhich(x, lazyobj)
 
 no.strings.attached(x)
-
-.filter_rows(x, tmpcol, filtercol, rows)
 
 .filter_vector(x, filtercol, rows)
 

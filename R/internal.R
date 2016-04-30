@@ -146,17 +146,6 @@ no.strings.attached <- function (x) {
 #' @export
 #' @keywords internal
 #' @rdname internal
-.filter_rows <- function (x, tmpcol, filtercol, rows) {
-    x[[1]][, tmpcol] <- 0
-    x[[1]][rows, tmpcol] <- 1
-
-    x[[1]][, filtercol] <- x[[1]][, filtercol] *
-        x[[1]][, tmpcol]
-}
-
-#' @export
-#' @keywords internal
-#' @rdname internal
 .filter_vector <- function (x, filtercol, rows) {
     x[[1]][, filtercol] <- x[[1]][, filtercol] * rows
 }

@@ -435,6 +435,12 @@ rebuild_grouped = function () {
 
         NULL
     })
+},
+filter_rows = function (tmpcol, filtercol, rows) {
+    bm[, tmpcol] <<- 0
+    bm[rows, tmpcol] <<- 1
+
+    bm[, filtercol] <<- bm[, filtercol] * bm[, tmpcol]
 }
 ))
 

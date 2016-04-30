@@ -25,9 +25,9 @@ define <- function (.self, ...) {
 #' @param ... Additional parameters
 #' @param .dots Workaround for non-standard evaluation
 #' @export
-distinct <- function (.data, ...) {
+distinct <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots (...)
-    distinct_ (.data, .dots=.dots)
+    distinct_ (.self, .dots=.dots)
 }
 
 #' Faster form of usual filter function, but has restrictions
