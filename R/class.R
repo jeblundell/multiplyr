@@ -296,7 +296,7 @@ sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=FALSE) {
         namelist <- .dots2names (dots)
         cols <- match(namelist, col.names)
     }
-    if (with.group) {
+    if (grouped) {
         Gcol <- match(".group", col.names)
         if (Gcol %in% cols) {
             cols <- cols[cols != Gcol]

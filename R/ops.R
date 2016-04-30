@@ -1,4 +1,13 @@
-# Operations on fastdf objects
+# Operations on Multiplyr objects
+
+#' @describeIn arrange
+#' @export
+arrange_ <- function (.self, ..., .dots) {
+    #This works on the presumption that factors have levels
+    #sorted already
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    .self$sort(decreasing=FALSE, .dots)
+}
 
 #' Partition data evenly amongst cluster nodes
 #' @param .data Data frame
@@ -76,14 +85,6 @@ clget_ <- function (.data, ..., .dots) {
     })
 }
 
-#' @describeIn arrange
-#' @export
-arrange_ <- function (.data, ..., .dots) {
-    #This works on the presumption that factors have levels
-    #sorted already
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
-    .sort.fastdf(.data, decreasing=FALSE, .dots, with.group = attr(.data, "grouped"))
-}
 
 #' @describeIn fast_filter
 #' @export

@@ -5,9 +5,9 @@
 #' @param ... Variables to sort by
 #' @param .dots Workaround for non-standard evaluation
 #' @export
-arrange <- function (.data, ...) {
+arrange <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots(...)
-    arrange_ (.data, .dots=.dots)
+    arrange_ (.self, .dots=.dots)
 }
 
 #' @export
