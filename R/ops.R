@@ -363,6 +363,38 @@ group_by_ <- function (.self, ..., .dots) {
     }
 }
 
+#' @describeIn mutate
+#' @export
+mutate_ <- function (.self, ..., .dots) {
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    .resnames <- names(.dots)
+    .rescols <- match (.resnames, .self$col.names)
+    needalloc <- which (is.na(.rescols))
+    for (i in needalloc) {
+        .rescols[i] <- .self$alloc_col (.resnames[i])
+    }
+
+    .self$cluster_export (c(".resnames", ".rescols", ".dots"))
+    .self$cluster_eval ({
+        if (.local$empty) { return (NULL) }
+        if (.local$grouped) {
+            for (.g in 1:length(.groups)) {
+                for (.i in 1:length(.dots)) {
+                    .res <- lazyeval::lazy_eval (.dots[.i], .grouped[[.g]]$envir())
+                    .grouped[[.g]]$bm[, .rescols[.i]] <- .grouped[[.g]]$factor_map (.rescols[.i], .res[[1]])
+                }
+            }
+        } else {
+            for (.i in 1:length(.dots)) {
+                .res <- lazyeval::lazy_eval (.dots[.i], .local$envir())
+                .local$bm[, .rescols[.i]] <- .local$factor_map (.rescols[.i], .res[[1]])
+            }
+        }
+        NULL
+    })
+    return (.self)
+}
+
 #' Partition data evenly amongst cluster nodes
 #' @param .self Data frame
 #' @export
@@ -517,42 +549,6 @@ slice <- function (.data, rows=NULL, start=NULL, end=NULL) {
         .data[[1]][rows, filtercol] <- 1
     }
 
-    .data
-}
-
-#' @describeIn mutate
-#' @export
-mutate_ <- function (.data, ..., .dots) {
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
-    .resnames <- names(.dots)
-    .rescols <- match (.resnames, attr(.data, "colnames"))
-    needalloc <- which (is.na(.rescols))
-    for (i in needalloc) {
-        .data <- alloc_col (.data, .resnames[i])
-        .rescols[i] <- match (.resnames[i], attr(.data, "colnames"))
-    }
-
-    cl <- attr (.data, "cl")
-    parallel::clusterExport (cl, c(".resnames",
-                                   ".rescols",
-                                   ".dots"), envir=environment())
-    parallel::clusterEvalQ (cl, {
-        if (.empty) { return (NULL) }
-        if (attr(.local, "grouped")) {
-            for (.g in 1:length(.groups)) {
-                for (.i in 1:length(.dots)) {
-                    .res <- lazyeval::lazy_eval (.dots[.i], as.environment(no.strings.attached(.grouped[[.g]])))
-                    .grouped[[.g]][[1]][, .rescols[.i]] <- factor_map (.grouped[[.g]], .rescols[.i], .res[[1]])
-                }
-            }
-        } else {
-            for (.i in 1:length(.dots)) {
-                .res <- lazyeval::lazy_eval (.dots[.i], as.environment(no.strings.attached(.local)))
-                .local[[1]][, .rescols[.i]] <- factor_map (.local, .rescols[.i], .res[[1]])
-            }
-        }
-        NULL
-    })
     .data
 }
 

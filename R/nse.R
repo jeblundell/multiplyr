@@ -55,9 +55,9 @@ group_by <- function (.self, ...) {
 #' @param ... Additional parameters
 #' @param .dots Workaround for non-standard evaluation
 #' @export
-mutate <- function (.data, ...) {
+mutate <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots (...)
-    mutate_ (.data, .dots=.dots)
+    mutate_ (.self, .dots=.dots)
 }
 
 #' Partition data so that each group is wholly on a node
