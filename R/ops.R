@@ -213,9 +213,6 @@ group_by_ <- function (.self, ..., .dots) {
 
     .self$sort (decreasing=FALSE, dots=.dots)
 
-    .self$grouped <- TRUE
-    .self$update_fields ("grouped")
-
     .self$group.cols <- .cols
 
     if (nrow(.self$bm) == 1) {
@@ -350,6 +347,8 @@ group_by_ <- function (.self, ..., .dots) {
     .self$group_sizes <- sizes
     .self$group_max <- length(sizes)
 
+    .self$grouped <- TRUE
+
     # Input      Gcount   tg      Gbase  Output
     # 1: G=1,2   2        FALSE   0      G=1,2
     # 2: G=1,2   2        TRUE    1      G=2,3
@@ -361,6 +360,7 @@ group_by_ <- function (.self, ..., .dots) {
         return (.self %>% partition_group())
     } else {
         .self$rebuild_grouped()
+        .self$cluster_eval ({.master$grouped <- .local$grouped <- TRUE})
         return (.self)
     }
 }
@@ -447,7 +447,11 @@ partition_group_ <- function (.self, ..., .dots) {
     })
 
     .self$rebuild_grouped ()
-    .self$update_fields ("group_partition")
+    #update_fields gets a bit confused, so doing this manually
+    .self$cluster_eval ({
+        .master$group_partition <- .master$group_partition <- TRUE
+        .local$grouped <- .local$group_partition <- TRUE
+    })
 
     return (.self)
 }
