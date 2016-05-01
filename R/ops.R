@@ -179,7 +179,7 @@ filter_ <- function (.self, ..., .dots) {
     .self$cluster_export (c(".dots"))
     .self$cluster_eval ({
         if (.local$empty) { return (NULL) }
-        if (.local$grouped) {
+        if (.local$group_partition) {
             for (.g in 1:length(.groups)) {
                 for (.i in 1:length(.dots)) {
                     if (.grouped[[.g]]$empty) { next }
@@ -187,6 +187,8 @@ filter_ <- function (.self, ..., .dots) {
                     .grouped[[.g]]$filter_vector (.res[[1]])
                 }
             }
+        } else if (.local$grouped) {
+            stop ("FIXME")
         } else {
             for (.i in 1:length(.dots)) {
                 .res <- lazyeval::lazy_eval (.dots[.i], .local$envir())
@@ -380,13 +382,15 @@ mutate_ <- function (.self, ..., .dots) {
     .self$cluster_export (c(".resnames", ".rescols", ".dots"))
     .self$cluster_eval ({
         if (.local$empty) { return (NULL) }
-        if (.local$grouped) {
+        if (.local$group_partition) {
             for (.g in 1:length(.groups)) {
                 for (.i in 1:length(.dots)) {
                     .res <- lazyeval::lazy_eval (.dots[.i], .grouped[[.g]]$envir())
                     .grouped[[.g]]$bm[, .rescols[.i]] <- .grouped[[.g]]$factor_map (.rescols[.i], .res[[1]])
                 }
             }
+        } else if (.local$grouped) {
+            stop ("FIXME")
         } else {
             for (.i in 1:length(.dots)) {
                 .res <- lazyeval::lazy_eval (.dots[.i], .local$envir())

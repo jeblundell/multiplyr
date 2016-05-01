@@ -423,10 +423,12 @@ update_fields = function (fieldnames) {
         cluster_eval({
             .master$field (name = .fieldname, value = .fieldval)
             .local$field (name = .fieldname, value = .fieldval)
-            if (.local$grouped) {
+            if (.local$group_partition) {
                 for (.g in 1:length(.grouped)) {
                     .grouped[[.g]]$field (name = .fieldname, value = .fieldval)
                 }
+            } else if (.local$grouped) {
+                stop ("FIXME")
             }
             NULL
         })
