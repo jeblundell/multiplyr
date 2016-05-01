@@ -80,13 +80,13 @@ rename <- function (.self, ...) {
 }
 
 #' Retain only specified variables
-#' @param .data Data frame
+#' @param .self Data frame
 #' @param ... Additional parameters
 #' @param .dots Workaround for non-standard evaluation
 #' @export
-select <- function (.data, ...) {
+select <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots (...)
-    select_ (.data, .dots=.dots)
+    select_ (.self, .dots=.dots)
 }
 
 #' Summarise data

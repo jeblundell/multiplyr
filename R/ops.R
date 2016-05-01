@@ -463,15 +463,22 @@ rename_ <- function (.self, ..., .dots) {
 
 #' @describeIn select
 #' @export
-select_ <- function (.data, ..., .dots) {
+select_ <- function (.self, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
     coln <- as.vector (vapply (.dots, function (x) { as.character (x$expr) }, ""))
-    cols <- match (coln, attr(.data, "colnames"))
-    attr(.data, "order.cols") <- 0
-    attr(.data, "order.cols")[sort(cols)] <- order(cols)
-    # not propagated to .local on cluster as this is only for
-    # display purposes (currently)
-    .data
+    cols <- match (coln, .self$col.names)
+
+    .self$order.cols[sort(cols)] <- order(cols)
+    #rest set to zero by free_col (del)
+
+    del <- substr(.self$col.names, 1, 1) != "."
+    del[is.na(del)] <- FALSE
+    del[cols] <- FALSE
+
+    del <- which (del)
+    .self$free_col (del, update=TRUE)
+
+    return (.self)
 }
 
 #' @export

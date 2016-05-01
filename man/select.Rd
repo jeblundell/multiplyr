@@ -5,12 +5,12 @@
 \alias{select_}
 \title{Retain only specified variables}
 \usage{
-select(.data, ...)
+select(.self, ...)
 
-select_(.data, ..., .dots)
+select_(.self, ..., .dots)
 }
 \arguments{
-\item{.data}{Data frame}
+\item{.self}{Data frame}
 
 \item{...}{Additional parameters}
 
