@@ -29,7 +29,8 @@ Multiplyr <- setRefClass("Multiplyr",
                 first           = "numeric",
                 last            = "numeric",
                 filtercol       = "numeric",
-                groupcol        = "numeric"
+                groupcol        = "numeric",
+                empty           = "logical"
                 ),
     methods=list(
 initialize = function (..., alloc=1, cl=NULL) {
@@ -127,12 +128,18 @@ group_restrict = function (group) {
 
     #presumes that dat is sorted by grouping column first
     Gcol <- match (".group", grp$col.names)
-    lims <- range(which (grp$bm[, Gcol] == grp$group))
+    rows <- which (grp$bm[, Gcol] == grp$group)
+    if (length(rows) == 0) {
+        grp$empty <- TRUE
+        return (grp)
+    }
+    lims <- range(rows)
     grp$bm <- bigmemory::sub.big.matrix(grp$bm,
                                           firstRow=lims[1],
                                           lastRow=lims[2])
     grp$first <- lims[1]
     grp$last <- lims[2]
+    grp$empty <- FALSE
     return (grp)
 },
 reattach = function (descriptor = desc) {
@@ -388,7 +395,6 @@ update_fields = function (fieldnames) {
         cluster_export (c(".fieldname", ".fieldval"))
         cluster_eval({
             .master$field (name = .fieldname, value = .fieldval)
-            if (.empty) { return (NULL) }
             .local$field (name = .fieldname, value = .fieldval)
             if (.local$group_partition) {
                 for (.g in 1:length(.grouped)) {
@@ -415,11 +421,10 @@ partition_even = function (max.row = nrow(bm)) {
         cluster_export_each (".last")
     }
     cluster_eval ({
-        .empty <- (.last < .first || .last == 0)
         if (!exists(".local")) {
             .local <- .master$copy (shallow=TRUE)
         }
-        if (.empty) { return (NULL) }
+        .local$empty <- (.last < .first || .last == 0)
         .local$local_subset (.first, .last)
         NULL
     })
@@ -433,8 +438,10 @@ local_subset = function (first, last) {
 },
 rebuild_grouped = function () {
     cluster_eval ({
-        if (.empty) { return(NULL) }
-        if (length(.groups) == 0) { return(NULL) }
+        if (length(.groups) == 0) {
+            .local$empty <- TRUE
+            return(NULL)
+        }
 
         .grouped <- list()
         for (.g in 1:length(.groups)) {
@@ -450,9 +457,11 @@ filter_rows = function (tmpcol, filtercol, rows) {
     bm[rows, tmpcol] <<- 1
 
     bm[, filtercol] <<- bm[, filtercol] * bm[, tmpcol]
+    empty <<- sum(bm[, filtercol]) == 0
 },
 filter_vector = function (rows) {
     bm[, filtercol] <<- bm[, filtercol] * rows
+    empty <<- sum(bm[, filtercol]) == 0
 }
 ))
 

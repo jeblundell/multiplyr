@@ -98,6 +98,7 @@ distinct_ <- function (.self, ..., .dots) {
 
     # (1) determine local distinct rows
     trans <- .self$cluster_eval ({
+        if (.local$empty) { return (NA) }
         if (nrow(.local$bm) == 1) {
             .breaks <- 1
             return (1)
@@ -122,28 +123,35 @@ distinct_ <- function (.self, ..., .dots) {
 
     # (2) work out if there's a group change between local[1] and local[2] etc.
     trans <- do.call (c, trans)
-    trans <- trans[-length(trans)]
+    trans <- trans[-length(trans)]   #last row is not actually a transition
+    trans.i <- which (!is.na(trans)) #subsetting gets stroppy with NA
+    trans <- trans[trans.i]
 
     sm1 <- bigmemory::sub.big.matrix (.self$bm, firstRow=1, lastRow=nrow(.self$bm)-1)
     sm2 <- bigmemory::sub.big.matrix (.self$bm, firstRow=2, lastRow=nrow(.self$bm))
     if (length(.cols) == 1 || length(trans) == 1) {
-        tg <- all(sm1[trans, .cols] != sm2[trans, .cols])
+        tg.a <- all(sm1[trans, .cols] != sm2[trans, .cols])
     } else {
-        tg <- !apply (sm1[trans, .cols] == sm2[trans, .cols], 1, all)
+        tg.a <- !apply (sm1[trans, .cols] == sm2[trans, .cols], 1, all)
     }
     rm (sm1, sm2)
 
+    tg <- rep(TRUE, N)
+    tg[trans.i+1] <- tg.a
+
     # (3) set breaks=1 for all where there's a transition
-    tg <- c(TRUE, tg)
     .self$cluster_export_each ("tg", ".tg")
     .self$cluster_eval ({
+        if (.local$empty) { return (NULL) }
         if (.tg) {
             .breaks <- c(1, .breaks)
         }
+        NULL
     })
 
     # (4) filter at breaks
     .self$cluster_eval ({
+        if (.local$empty) { return (NULL) }
         .local$filter_rows (.tmpcol, .filtercol, .breaks)
         NULL
     })
@@ -170,10 +178,11 @@ filter_ <- function (.self, ..., .dots) {
 
     .self$cluster_export (c(".dots"))
     .self$cluster_eval ({
-        if (.empty) { return (NULL) }
+        if (.local$empty) { return (NULL) }
         if (.local$grouped) {
             for (.g in 1:length(.groups)) {
                 for (.i in 1:length(.dots)) {
+                    if (.grouped[[.g]]$empty) { next }
                     .res <- lazyeval::lazy_eval (.dots[.i], .grouped[[.g]]$envir())
                     .grouped[[.g]]$filter_vector (.res[[1]])
                 }
@@ -251,6 +260,7 @@ group_by_ <- function (.self, ..., .dots) {
     # (1) determine local groupings
     .self$cluster_export (c(".cols", ".Gcol"))
     trans <- .self$cluster_eval ({
+        if (.local$empty) { return (NA) }
         if (nrow(.local$bm) == 1) {
             .breaks <- 1
             return (1)
