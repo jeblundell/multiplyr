@@ -90,13 +90,13 @@ select <- function (.self, ...) {
 }
 
 #' Summarise data
-#' @param .data Data frame
+#' @param .self Data frame
 #' @param ... Additional parameters
 #' @param .dots Workaround for non-standard evaluation
 #' @export
-summarise <- function (.data, ...) {
+summarise <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots (...)
-    summarise_ (.data, .dots=.dots)
+    summarise_ (.self, .dots=.dots)
 }
 
 #' Change variables and drop all others

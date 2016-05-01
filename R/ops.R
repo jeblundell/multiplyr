@@ -552,6 +552,60 @@ slice <- function (.data, rows=NULL, start=NULL, end=NULL) {
     .data
 }
 
+#' @describeIn summarise
+#' @export
+summarise_ <- function (.self, ..., .dots) {
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    avail <- which (substr (.self$col.names, 1, 1) != ".")
+    if (.self$grouped) {
+        avail <- avail[-.self$group.cols]
+    }
+    newnames <- names(.dots)
+    if (length(newnames) > length(avail)) {
+        stop ("Insufficient free columns available")
+    }
+    .newcols <- avail[1:length(newnames)]
+    #FIXME: preserve type?
+
+    .self$cluster_export (c(".dots", ".newcols"))
+    .self$cluster_eval ({
+        if (.local$empty) { return (NULL) }
+        if (.local$group_partition) {
+            for (.g in 1:length(.grouped)) {
+                .res <- lazyeval::lazy_eval (.dots, .grouped[[.g]]$envir())
+                .len <- 0
+                for (.i in 1:length(.res)) {
+                    .grouped[[.g]]$bm[, .newcols[.i]] <- .res[[.i]]
+                    if (length(.res[[.i]]) > .len) {
+                        .len <- length(.res[[.i]])
+                    }
+                }
+                .grouped[[.g]]$bm[, .grouped[[.g]]$filtercol] <- 0
+                .grouped[[.g]]$bm[1:.len, .grouped[[.g]]$filtercol] <- 1
+            }
+        } else if (.local$grouped) {
+            stop ("FIXME")
+        } else {
+            .res <- lazyeval::lazy_eval (.dots, .local$envir())
+            .len <- 0
+            for (.i in 1:length(.res)) {
+                .local$bm[, .newcols[.i]] <- .res[[.i]]
+                if (length(.res[[.i]]) > .len) {
+                    .len <- length(.res[[.i]])
+                }
+            }
+            .local$bm[, .local$filtercol] <- 0
+            .local$bm[1:.len, .local$filtercol] <- 1
+        }
+        NULL
+    })
+
+    .self$free_col (avail, update=TRUE)
+    .self$alloc_col (newnames, update=TRUE)
+
+    return (.self)
+}
+
 #' @describeIn transmute
 #' @export
 transmute_ <- function (.data, ..., .dots) {
@@ -686,74 +740,6 @@ rowwise <- ungroup
 #' @describeIn regroup
 #' @export
 groupwise <- regroup
-
-#' @describeIn summarise
-#' @export
-summarise_ <- function (.data, ..., .dots) {
-    #FIXME: non-parallel & inefficient, but functional
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
-
-    if (!attr(.data, "grouped")) {
-        res <- lazyeval::lazy_eval(.dots, as.environment(.data))
-
-        # (1) select special columns
-        keep <- which(substr (attr(.data, "colnames"), 1, 1) == ".")
-        attr(.data, "colnames")[-keep] <- NA
-        attr(.data, "order.cols")[-keep] <- 0
-
-        # (2) alloc new columns
-        rescols <- c()
-        for (i in 1:length(res)) {
-            var <- names(.dots)[i]
-            if (var != "") {
-                .data <- alloc_col (.data, var)
-                rescols <- c(rescols, match(var, attr(.data, "colnames")))
-            } else {
-                stop ("FIXME")
-            }
-        }
-
-        # (3) import
-        for (i in 1:length(res)) {
-            .data[[1]][, rescols[i]] <- res[[i]]
-        }
-        filtercol <- match (".filter", attr(.data, "colnames"))
-        .filter_range (.data, filtercol, 1, length(res[[1]]))
-    } else {
-        for (g in 1:attr(.data, "group_max")) {
-            grouped <- group_restrict (.data, g)
-            res <- lazyeval::lazy_eval(.dots, as.environment(grouped))
-
-            # (1) select special columns
-            keep <- which(substr (attr(grouped, "colnames"), 1, 1) == ".")
-            keep <- unique(c(keep, attr(grouped, "group_cols")))
-            attr(grouped, "colnames")[-keep] <- NA
-            attr(grouped, "order.cols")[-keep] <- 0
-
-            # (2) alloc new columns
-            rescols <- c()
-            for (i in 1:length(res)) {
-                var <- names(.dots)[i]
-                if (var != "") {
-                    grouped <- alloc_col (grouped, var)
-                    rescols <- c(rescols, match(var, attr(grouped, "colnames")))
-                } else {
-                    stop ("FIXME")
-                }
-            }
-
-            # (3) import
-            for (i in 1:length(res)) {
-                grouped[[1]][, rescols[i]] <- res[[i]]
-            }
-            filtercol <- match (".filter", attr(grouped, "colnames"))
-            .filter_range (grouped, filtercol, 1, length(res[[1]]))
-        }
-        attr(.data, "colnames") <- attr(grouped, "colnames")
-        attr(.data, "order.cols") <- attr(grouped, "order.cols")
-    }
-    .data
-}
 
 #' Execute code within a group
 #' @param .data Data frame

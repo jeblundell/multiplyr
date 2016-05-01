@@ -5,12 +5,12 @@
 \alias{summarise_}
 \title{Summarise data}
 \usage{
-summarise(.data, ...)
+summarise(.self, ...)
 
-summarise_(.data, ..., .dots)
+summarise_(.self, ..., .dots)
 }
 \arguments{
-\item{.data}{Data frame}
+\item{.self}{Data frame}
 
 \item{...}{Additional parameters}
 
