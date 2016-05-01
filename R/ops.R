@@ -455,27 +455,14 @@ partition_group_ <- function (.self, ..., .dots) {
 
 #' @describeIn rename
 #' @export
-rename_ <- function (.data, ..., .dots) {
+rename_ <- function (.self, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
-    .newnames <- names(.dots)
-    .oldnames <- as.vector (vapply (.dots, function (x) { as.character (x$expr) }, ""))
-    .match <- match(.oldnames, attr(.data, "colnames"))
-    attr(.data, "colnames")[.match] <- .newnames
-    parallel::clusterExport (attr(.data, "cl"), c(".oldnames",
-                                                  ".newnames",
-                                                  ".match"),
-                             envir=environment())
-    parallel::clusterEvalQ (attr(.data, "cl"), {
-        attr(.master, "colnames")[.match] <- .newnames
-        attr(.local, "colnames")[.match] <- .newnames
-        if (attr(.local, "grouped")) {
-            for (.i in 1:length(.grouped)) {
-                attr(.grouped[[.i]], "colnames")[.match] <- .newnames
-            }
-        }
-        NULL
-    })
-    .data
+    newnames <- names(.dots)
+    oldnames <- as.vector (vapply (.dots, function (x) { as.character (x$expr) }, ""))
+    match <- match(oldnames, .self$col.names)
+    .self$col.names[match] <- newnames
+    .self$update_fields ("col.names")
+    return (.self)
 }
 
 #' @describeIn select

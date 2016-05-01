@@ -74,9 +74,9 @@ partition_group <- function (.self, ...) {
 #' @param ... Additional parameters
 #' @param .dots Workaround for non-standard evaluation
 #' @export
-rename <- function (.data, ...) {
+rename <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots (...)
-    rename_ (.data, .dots=.dots)
+    rename_ (.self, .dots=.dots)
 }
 
 #' Retain only specified variables

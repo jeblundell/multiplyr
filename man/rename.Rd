@@ -5,16 +5,16 @@
 \alias{rename_}
 \title{Rename variables}
 \usage{
-rename(.data, ...)
+rename(.self, ...)
 
-rename_(.data, ..., .dots)
+rename_(.self, ..., .dots)
 }
 \arguments{
-\item{.data}{Data frame}
-
 \item{...}{Additional parameters}
 
 \item{.dots}{Workaround for non-standard evaluation}
+
+\item{.data}{Data frame}
 }
 \description{
 Rename variables
