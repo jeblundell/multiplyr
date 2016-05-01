@@ -223,6 +223,32 @@ show = function (max.row=10) {
                       rows.avail - max.row,
                       rows.avail))
     }
+    if (grouped) {
+        cat (sprintf ("\nGrouped by: %s\n",
+                      paste(col.names[group.cols], collapse=", ")))
+        cat (sprintf ("Groups: %d\nGroup sizes: %s\n", group_max,
+                      paste(group_sizes, collapse=", ")))
+    }
+    if (group_partition) {
+        res <- cluster_eval ({
+            if (.local$empty) { return(0) }
+            return (length(.groups))
+        })
+        res <- do.call (c, res)
+        cat (sprintf ("\nGroup partioned over %d clusters\n", length(cls)))
+        cat (sprintf ("Groups per cluster: %s\n", paste(res, collapse=", ")))
+    } else {
+        res <- cluster_eval ({
+            if (.local$empty) { return(0) }
+            return (nrow(.local$bm))
+        })
+        cat (sprintf ("\nData partitioned over %d clusters\n", length(cls)))
+        if (grouped) {
+            cat ("Warning: You may want to run partition_group() as each cluster has partial groups\n")
+        } else {
+            cat (sprintf ("N per cluster: %s\n", paste(res, collapse=", ")))
+        }
+    }
     cat ("\n")
 },
 get_data = function (i=NULL, j=NULL, nsa=FALSE) {
