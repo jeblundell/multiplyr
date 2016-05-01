@@ -437,11 +437,12 @@ partition_group_ <- function (.self, ..., .dots) {
 
     .self$cluster_eval ({
         if (NA %in% .groups) {
-            .empty <- TRUE
+            .local$empty <- TRUE
             return (NULL)
         }
 
         .local <- .master$copy(shallow=TRUE)
+        .local$empty <- FALSE
 
         NULL
     })

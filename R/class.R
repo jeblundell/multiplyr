@@ -105,6 +105,7 @@ initialize = function (..., alloc=1, cl=NULL) {
     grouped <<- FALSE
     group <<- 0
     group_partition <<- FALSE
+    empty <<- nrows > 0
 
     desc <<- bigmemory.sri::describe (.bm)
     .master <- .self
@@ -423,6 +424,7 @@ update_fields = function (fieldnames) {
         cluster_eval({
             .master$field (name = .fieldname, value = .fieldval)
             .local$field (name = .fieldname, value = .fieldval)
+            if (.local$empty) { return(NULL) }
             if (.local$group_partition) {
                 for (.g in 1:length(.grouped)) {
                     .grouped[[.g]]$field (name = .fieldname, value = .fieldval)
@@ -467,10 +469,7 @@ local_subset = function (first, last) {
 },
 rebuild_grouped = function () {
     cluster_eval ({
-        if (length(.groups) == 0) {
-            .local$empty <- TRUE
-            return(NULL)
-        }
+        if (.local$empty) { return(NULL) }
 
         .grouped <- list()
         for (.g in 1:length(.groups)) {
