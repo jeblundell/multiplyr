@@ -100,13 +100,13 @@ summarise <- function (.self, ...) {
 }
 
 #' Change variables and drop all others
-#' @param .data Data frame
+#' @param .self Data frame
 #' @param ... Additional parameters
 #' @param .dots Workaround for non-standard evaluation
 #' @export
-transmute <- function (.data, ...) {
+transmute <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots (...)
-    transmute_ (.data, .dots=.dots)
+    transmute_ (.self, .dots=.dots)
 }
 
 #' Delete variables

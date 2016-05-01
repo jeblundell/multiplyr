@@ -608,36 +608,29 @@ summarise_ <- function (.self, ..., .dots) {
 
 #' @describeIn transmute
 #' @export
-transmute_ <- function (.data, ..., .dots) {
+transmute_ <- function (.self, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+
     #mutate
     .resnames <- names(.dots)
-    .rescols <- match (.resnames, attr(.data, "colnames"))
-    needalloc <- which (is.na(.rescols))
-    for (i in needalloc) {
-        .data <- alloc_col (.data, .resnames[i])
-        .rescols[i] <- match (.resnames[i], attr(.data, "colnames"))
-    }
+    .rescols <- .self$alloc_col (.resnames, update=FALSE)
 
-    cl <- attr (.data, "cl")
-    parallel::clusterExport (cl, c(".resnames",
-                                   ".rescols",
-                                   ".dots"), envir=environment())
-    parallel::clusterEvalQ (cl, {
-        if (.empty) { return (NULL) }
-        if (attr(.local, "grouped")) {
+    .self$cluster_export (c(".resnames", ".rescols", ".dots"))
+    .self$cluster_eval ({
+        if (.local$empty) { return (NULL) }
+        if (.local$group_partition) {
             for (.g in 1:length(.groups)) {
                 for (.i in 1:length(.dots)) {
-                    .res <- lazyeval::lazy_eval (.dots[.i], as.environment(no.strings.attached(.grouped[[.g]])))
-                    .grouped[[.g]][[1]][, .rescols[.i]] <- factor_map (.grouped[[.g]], .rescols[.i], .res[[1]])
-                    attr(.grouped[[.g]], "colnames")[.rescols[.i]] <- .resnames[.i]
+                    .res <- lazyeval::lazy_eval (.dots[.i], .grouped[[.g]]$envir())
+                    .grouped[[.g]]$bm[, .rescols[.i]] <- .grouped[[.g]]$factor_map (.rescols[.i], .res[[1]])
                 }
             }
+        } else if (.local$grouped) {
+            stop ("FIXME")
         } else {
             for (.i in 1:length(.dots)) {
-                .res <- lazyeval::lazy_eval (.dots[.i], as.environment(no.strings.attached(.local)))
-                .local[[1]][, .rescols[.i]] <- factor_map (.local, .rescols[.i], .res[[1]])
-                attr(.local, "colnames")[.rescols[.i]] <- .resnames[.i]
+                .res <- lazyeval::lazy_eval (.dots[.i], .local$envir())
+                .local$bm[, .rescols[.i]] <- .local$factor_map (.rescols[.i], .res[[1]])
             }
         }
         NULL
@@ -645,11 +638,16 @@ transmute_ <- function (.data, ..., .dots) {
     #/mutate
 
     #FIXME: do on local/grouped
-    dropcols <- setdiff (which(attr(.data, "order.cols") > 0), .rescols)
-    .data <- free_col (.data, dropcols)
+    dropcols <- .self$order.cols > 0
+    dropcols[.rescols] <- FALSE
+    if (.self$grouped) {
+        dropcols[.self$group.cols] <- FALSE
+    }
+    dropcols <- which (dropcols)
 
-    attr(.data, "colnames")[.rescols] <- .resnames
-    .data
+    .self$free_col (dropcols, update=TRUE)
+
+    return (.self)
 }
 
 #' @describeIn undefine

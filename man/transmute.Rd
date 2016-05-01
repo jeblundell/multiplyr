@@ -5,12 +5,12 @@
 \alias{transmute_}
 \title{Change variables and drop all others}
 \usage{
-transmute(.data, ...)
+transmute(.self, ...)
 
-transmute_(.data, ..., .dots)
+transmute_(.self, ..., .dots)
 }
 \arguments{
-\item{.data}{Data frame}
+\item{.self}{Data frame}
 
 \item{...}{Additional parameters}
 
