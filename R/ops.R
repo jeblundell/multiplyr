@@ -375,11 +375,7 @@ group_sizes <- function (.self) {
 mutate_ <- function (.self, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
     .resnames <- names(.dots)
-    .rescols <- match (.resnames, .self$col.names)
-    needalloc <- which (is.na(.rescols))
-    for (i in needalloc) {
-        .rescols[i] <- .self$alloc_col (.resnames[i])
-    }
+    .rescols <- .self$alloc_col (.resnames, update=TRUE)
 
     .self$cluster_export (c(".resnames", ".rescols", ".dots"))
     .self$cluster_eval ({

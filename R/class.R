@@ -369,25 +369,52 @@ sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=FALSE) {
     }
     bigmemory::mpermute (bm, cols=cols)
 },
-alloc_col = function (name=".tmp") {
+alloc_col = function (name=".tmp", update=FALSE) {
     res <- match (name, col.names)
-    if (!is.na(res)) {
+    if (all(!is.na(res))) {
         return (res)
     }
-    res <- which (is.na (col.names))
-    if (length(res) == 0) {
-        stop ("No free columns available")
-    } else {
-        col.names[res[1]] <<- name
-        type.cols[res[1]] <<- 0
-        order.cols[res[1]] <<- max(order.cols)+1
+    needalloc <- which (is.na(res))
+    avail <- which (is.na (col.names))
+    if (length(needalloc) > length(avail)) {
+        stop ("Insufficient free columns available")
     }
-    return (res[1])
+
+    alloced <- avail[1:length(needalloc)]
+    res[needalloc] <- alloced
+
+    col.names[alloced] <<- name[needalloc]
+    type.cols[alloced] <<- 0
+    order.cols[alloced] <<- max(order.cols) + 1:length(alloced)
+
+    if (update) {
+        update_fields (c("col.names", "type.cols", "order.cols"))
+    }
+    return (res)
 },
-free_col = function (col) {
-    col.names[col] <<- NA
-    type.cols[col] <<- 0
-    order.cols[col] <<- 0
+free_col = function (cols, update=FALSE) {
+    fc <- type.cols[cols] > 0
+    if (any(fc)) {
+        fc <- cols[fc]
+        if (length(fc) == 1) {
+            idx <- -match (fc, factor.cols)
+        } else {
+            keep <- setdiff (factor.cols, fc)
+            idx <- match (keep, factor.cols)
+        }
+        factor.cols <<- factor.cols[idx]
+        factor.levels <<- factor.levels[idx]
+        if (update) {
+            #FIXME: do factor.levels drop rather than resend
+            update_fields (c("factor.cols", "factor.levels"))
+        }
+    }
+    col.names[cols] <<- NA
+    type.cols[cols] <<- 0
+    order.cols[cols] <<- 0
+    if (update) {
+        update_fields (c("col.names", "type.cols", "order.cols"))
+    }
 },
 update_fields = function (fieldnames) {
     for (.fieldname in fieldnames) {
