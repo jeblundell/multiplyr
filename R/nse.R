@@ -110,13 +110,13 @@ transmute <- function (.self, ...) {
 }
 
 #' Delete variables
-#' @param .data Data frame
+#' @param .self Data frame
 #' @param ... Additional parameters
 #' @param .dots Workaround for non-standard evaluation
 #' @export
-undefine <- function (.data, ...) {
+undefine <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots (...)
-    undefine_ (.data, .dots=.dots)
+    undefine_ (.self, .dots=.dots)
 }
 
 #' @describeIn undefine

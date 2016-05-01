@@ -7,16 +7,16 @@
 \alias{unselect_}
 \title{Delete variables}
 \usage{
-undefine(.data, ...)
+undefine(.self, ...)
 
-unselect(.data, ...)
+unselect(.self, ...)
 
-undefine_(.data, ..., .dots)
+undefine_(.self, ..., .dots)
 
-unselect_(.data, ..., .dots)
+unselect_(.self, ..., .dots)
 }
 \arguments{
-\item{.data}{Data frame}
+\item{.self}{Data frame}
 
 \item{...}{Additional parameters}
 

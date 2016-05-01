@@ -655,19 +655,12 @@ transmute_ <- function (.self, ..., .dots) {
 
 #' @describeIn undefine
 #' @export
-undefine_ <- function (.data, ..., .dots) {
+undefine_ <- function (.self, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
-    nm <- names(.dots)
-    for (i in 1:length(.dots)) {
-        if (nm[i] == "") {
-            var <- as.character(.dots[[i]]$expr)
-        } else {
-            var <- nm[i]
-        }
-        col <- match (var, attr(.data, "colnames"))
-        .data <- free_col(.data, col)
-    }
-    .data
+    dropnames <- .dots2names (.dots)
+    dropcols <- match (dropnames, .self$col.names)
+    .self$free_col (dropcols, update=TRUE)
+    return (.self)
 }
 
 #' @describeIn undefine
