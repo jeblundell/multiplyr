@@ -4,10 +4,10 @@
 \alias{group_sizes}
 \title{Return size of groups}
 \usage{
-group_sizes(.data)
+group_sizes(.self)
 }
 \arguments{
-\item{.data}{Data frame}
+\item{.self}{Data frame}
 }
 \description{
 Return size of groups

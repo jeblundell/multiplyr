@@ -363,6 +363,13 @@ group_by_ <- function (.self, ..., .dots) {
     }
 }
 
+#' Return size of groups
+#' @param .self Data frame
+#' @export
+group_sizes <- function (.self) {
+    .self$group_sizes
+}
+
 #' @describeIn mutate
 #' @export
 mutate_ <- function (.self, ..., .dots) {
@@ -445,12 +452,6 @@ partition_group_ <- function (.self, ..., .dots) {
     return (.self)
 }
 
-#' Return size of groups
-#' @param .data Data frame
-#' @export
-group_sizes <- function (.data) {
-    attr(.data, "group_sizes")
-}
 
 #' @describeIn rename
 #' @export
