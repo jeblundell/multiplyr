@@ -453,6 +453,7 @@ partition_group_ <- function (.self, ..., .dots) {
         .master$group_partition <- .master$group_partition <- TRUE
         .local$grouped <- .local$group_partition <- TRUE
     })
+    .self$group_partition <- .self$grouped <- TRUE
 
     return (.self)
 }
