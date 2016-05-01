@@ -7,7 +7,7 @@
 \usage{
 group_by(.self, ...)
 
-group_by_(.self, ..., .dots)
+group_by_(.self, ..., .dots, .cols = NULL)
 }
 \arguments{
 \item{.self}{Data frame}

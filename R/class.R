@@ -30,7 +30,8 @@ Multiplyr <- setRefClass("Multiplyr",
                 last            = "numeric",
                 filtercol       = "numeric",
                 groupcol        = "numeric",
-                empty           = "logical"
+                empty           = "logical",
+                filtered        = "logical"
                 ),
     methods=list(
 initialize = function (..., alloc=1, cl=NULL) {
@@ -106,6 +107,7 @@ initialize = function (..., alloc=1, cl=NULL) {
     group <<- 0
     group_partition <<- FALSE
     empty <<- nrows > 0
+    filtered <<- FALSE
 
     desc <<- bigmemory.sri::describe (.bm)
     .master <- .self
@@ -265,12 +267,21 @@ get_data = function (i=NULL, j=NULL, nsa=FALSE) {
     }
 
     m <- match (cols, col.names)
-    filtered <- bm[, filtercol] == 1
-    if (!is.null(rowslice)) {
-        filtered[-rowslice] <- FALSE
-    }
-    if (nsa) {
-        return (bm[filtered, cols])
+    if (filtered) {
+        filtrows <- bm[, filtercol] == 1
+        if (!is.null(rowslice)) {
+            filtrows[-rowslice] <- FALSE
+        }
+        if (nsa) {
+            return (bm[filtrows, cols])
+        }
+    } else if (!is.null(rowslice)) {
+        if (nsa) {
+            return (bm[rowslice, cols])
+        }
+        filtrows <- rowslice
+    } else {
+        filtrows <- NULL
     }
 
     out <- NULL
@@ -287,7 +298,9 @@ get_data = function (i=NULL, j=NULL, nsa=FALSE) {
             f <- match (i, factor.cols)
             o <- factor.levels[[f]][bm[,i]]
         }
-        o <- o[filtered]
+        if (!is.null(filtrows)) {
+            o <- o[filtrows]
+        }
         if (is.null(out)) {
             out <- o
         } else {
@@ -302,23 +315,54 @@ get_data = function (i=NULL, j=NULL, nsa=FALSE) {
 set_data = function (i=NULL, j=NULL, value, nsa=FALSE) {
     len <- length(value)
 
+    if (is.null(i)) {
+        rowslice <- NULL
+    } else {
+        rowslice <- i
+    }
     if (!is.null(j)) {
         if (!is.numeric(j)) {
             j <- match (j, col.names)
         }
     }
 
+    if (filtered) {
+        filtrows <- bm[, filtercol] == 1
+        if (!is.null(rowslice)) {
+            filtrows[-rowslice] <- FALSE
+        }
+        nr <- sum(filtrows)
+    } else if (!is.null(rowslice)) {
+        filtrows <- rowslice
+        if (is.logical(rowslice)) {
+            nr <- sum(rowslice)
+        } else {
+            nr <- length(rowslice)
+        }
+    } else {
+        filtrows <- NULL
+        nr <- last
+    }
+
     if (is.null(i)) {
         # [, j] <-
         # [j] <-
-        if (len == 1 || len == nrow(bm)) {
-            if (nsa) {
-                bm[, j] <<- value
+        if (len == 1 || len == nr) {
+            if (is.null(filtrows)) {
+                if (nsa) {
+                    bm[, j] <<- value
+                } else {
+                    bm[, j] <<- factor_map (j, value)
+                }
             } else {
-                bm[, j] <<- factor_map (j, value)
+                if (nsa) {
+                    bm[filtrows, j] <<- value
+                } else {
+                    bm[filtrows, j] <<- factor_map (j, value)
+                }
             }
         } else {
-            stop (sprintf("replacement data has %d rows to replace %d", len, nrow(bm)))
+            stop (sprintf("replacement data has %d rows to replace %d", len, nr))
         }
     } else if (is.null(j)) {
         # [i, ] <-
@@ -462,7 +506,7 @@ update_fields = function (fieldnames) {
         })
     }
 },
-partition_even = function (max.row = nrow(bm)) {
+partition_even = function (max.row = last) {
     N <- length(cls)
 
     nr <- distribute (max.row, N)
@@ -512,10 +556,67 @@ filter_rows = function (tmpcol, filtercol, rows) {
 
     bm[, filtercol] <<- bm[, filtercol] * bm[, tmpcol]
     empty <<- sum(bm[, filtercol]) == 0
+    filtered <<- TRUE
 },
 filter_vector = function (rows) {
     bm[, filtercol] <<- bm[, filtercol] * rows
     empty <<- sum(bm[, filtercol]) == 0
+    filtered <<- TRUE
+},
+compact = function () {
+    if (!filtered) { return() }
+
+    rg_grouped <- grouped
+    rg_partion <- group_partition
+    rg_cols <- group.cols
+
+    partition_even()
+    N <- cluster_eval ({
+        #(1) Sort by filtercol decreasing
+        bigmemory::mpermute (.local$bm, cols=.local$filtercol, decreasing=TRUE)
+
+        #(2) Find the length of each included block
+        .N <- sum(.local$bm[, .local$filtercol])
+    })
+    N <- do.call (c, N)
+
+    #(3) Assign each node a target range
+    dest <- cumsum(N)
+    last <<- dest[length(dest)]
+    dest <- dest[-length(dest)]
+    dest <- c(0, dest) + 1
+    cluster_export_each ("dest", ".dest")
+
+    #(4) Within each node/group, move data to target range
+    cluster_eval ({
+        if (.N == 0) { return(NULL) }
+        .local$bm.master[.dest:(.dest+.N-1),] <- .local$bm[1:.N,]
+        NULL
+    })
+
+    #(5) Submatrix master, propagate to local
+    filtered <<- FALSE
+    .self$bm <- bigmemory::sub.big.matrix (.self$bm, firstRow=1, lastRow=last)
+    cluster_export ("last", ".last")
+    cluster_eval ({
+        .master$last <- .last
+        .master$filtered <- FALSE
+        .master$bm <- bigmemory::sub.big.matrix (.master$bm, firstRow=1, lastRow=.master$last)
+        rm (.local)
+        NULL
+    })
+
+    #(6) Regroup/partition
+    partition_even()
+
+    grouped <<- rg_grouped
+    group_partition <<- rg_partion
+    group.cols <<- rg_cols
+
+    #(group_by_ will call rebuild_grouped and partition_group)
+    if (grouped) {
+        group_by_ (.self, .cols=rg_cols)
+    }
 }
 ))
 

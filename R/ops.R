@@ -155,6 +155,7 @@ distinct_ <- function (.self, ..., .dots) {
         .local$filter_rows (.tmpcol, .filtercol, .breaks)
         NULL
     })
+    .self$filtered <- TRUE
 
     .self$free_col (.tmpcol)
 
@@ -197,21 +198,24 @@ filter_ <- function (.self, ..., .dots) {
         }
         NULL
     })
+    .self$filtered <- TRUE
 
     return (.self)
 }
 
 #' @describeIn group_by
 #' @export
-group_by_ <- function (.self, ..., .dots) {
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
-    namelist <- .dots2names (.dots)
+group_by_ <- function (.self, ..., .dots, .cols=NULL) {
+    if (is.null(.cols)) {
+        .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+        namelist <- .dots2names (.dots)
 
-    .cols <- match(namelist, .self$col.names)
+        .cols <- match(namelist, .self$col.names)
+    }
     .Gcol <- match(".group", .self$col.names)
     N <- length(.self$cls)
 
-    .self$sort (decreasing=FALSE, dots=.dots)
+    .self$sort (decreasing=FALSE, cols=.cols)
 
     .self$group.cols <- .cols
 
@@ -386,7 +390,7 @@ mutate_ <- function (.self, ..., .dots) {
             for (.g in 1:length(.groups)) {
                 for (.i in 1:length(.dots)) {
                     .res <- lazyeval::lazy_eval (.dots[.i], .grouped[[.g]]$envir())
-                    .grouped[[.g]]$bm[, .rescols[.i]] <- .grouped[[.g]]$factor_map (.rescols[.i], .res[[1]])
+                    .grouped[[.g]]$set_data (, .rescols[.i], .res[[1]])
                 }
             }
         } else if (.local$grouped) {
@@ -394,7 +398,7 @@ mutate_ <- function (.self, ..., .dots) {
         } else {
             for (.i in 1:length(.dots)) {
                 .res <- lazyeval::lazy_eval (.dots[.i], .local$envir())
-                .local$bm[, .rescols[.i]] <- .local$factor_map (.rescols[.i], .res[[1]])
+                .local$set_data (, .rescols[.i], .res[[1]])
             }
         }
         NULL
@@ -586,6 +590,7 @@ summarise_ <- function (.self, ..., .dots) {
                 }
                 .grouped[[.g]]$bm[, .grouped[[.g]]$filtercol] <- 0
                 .grouped[[.g]]$bm[1:.len, .grouped[[.g]]$filtercol] <- 1
+                .grouped[[.g]]$filtered <- TRUE
             }
         } else if (.local$grouped) {
             stop ("FIXME")
@@ -600,9 +605,11 @@ summarise_ <- function (.self, ..., .dots) {
             }
             .local$bm[, .local$filtercol] <- 0
             .local$bm[1:.len, .local$filtercol] <- 1
+            .local$filtered <- TRUE
         }
         NULL
     })
+    .self$filtered <- TRUE
 
     .self$free_col (avail, update=TRUE)
     .self$alloc_col (newnames, update=TRUE)
@@ -626,7 +633,7 @@ transmute_ <- function (.self, ..., .dots) {
             for (.g in 1:length(.groups)) {
                 for (.i in 1:length(.dots)) {
                     .res <- lazyeval::lazy_eval (.dots[.i], .grouped[[.g]]$envir())
-                    .grouped[[.g]]$bm[, .rescols[.i]] <- .grouped[[.g]]$factor_map (.rescols[.i], .res[[1]])
+                    .grouped[[.g]]$set_data (, .rescols[.i], .res[[1]])
                 }
             }
         } else if (.local$grouped) {
@@ -634,7 +641,7 @@ transmute_ <- function (.self, ..., .dots) {
         } else {
             for (.i in 1:length(.dots)) {
                 .res <- lazyeval::lazy_eval (.dots[.i], .local$envir())
-                .local$bm[, .rescols[.i]] <- .local$factor_map (.rescols[.i], .res[[1]])
+                .local$set_data (, .rescols[.i], .res[[1]])
             }
         }
         NULL
@@ -667,46 +674,6 @@ undefine_ <- function (.self, ..., .dots) {
 #' @describeIn undefine
 #' @export
 unselect_ <- undefine_
-
-#' @export
-compact <- function (.data, redistribute=FALSE) {
-    cl <- attr(.data, "cl")
-
-    .filtercol <- match (".filter", attr(.data, "colnames"))
-    .redis <- redistribute
-    parallel::clusterExport (cl, c(".filtercol",
-                                   ".redis"), envir=environment())
-    parallel::clusterEvalQ(cl, {
-        if (.empty) { return (NULL) }
-        bigmemory::mpermute (.local[[1]], cols=.filtercol, decreasing=TRUE)
-        if (!.redis) {
-            .complast <- match (0, .local[[1]][, .filtercol])
-            if (!is.na (.complast)) {
-                if (.complast == 1) {
-                    .empty <- TRUE
-                } else {
-                    .local[[1]] <- sub.big.matrix(.local[[1]],
-                                                  firstRow=1,
-                                                  lastRow=.complast-1)
-                }
-            }
-        }
-        NULL
-    })
-    if (redistribute) {
-        bigmemory::mpermute (.data[[1]], cols=.filtercol, decreasing=TRUE)
-        complast <- match(0, .data[[1]][, .filtercol])
-        if (!is.na (complast)) {
-            if (complast == 1) {
-                .empty <- TRUE
-                parallel::clusterExport (cl, ".empty", envir=environment())
-            } else {
-                .data <- .data %>% partition (max.row = complast-1)
-            }
-        }
-    }
-    .data
-}
 
 #' Return to grouped data
 #' @param .data Data frame
