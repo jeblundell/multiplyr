@@ -363,6 +363,10 @@ sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=FALSE) {
     bigmemory::mpermute (bm, cols=cols)
 },
 alloc_col = function (name=".tmp") {
+    res <- match (name, col.names)
+    if (!is.na(res)) {
+        return (res)
+    }
     res <- which (is.na (col.names))
     if (length(res) == 0) {
         stop ("No free columns available")
