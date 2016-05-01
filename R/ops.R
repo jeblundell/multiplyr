@@ -483,6 +483,9 @@ select_ <- function (.self, ..., .dots) {
     del <- substr(.self$col.names, 1, 1) != "."
     del[is.na(del)] <- FALSE
     del[cols] <- FALSE
+    if (.self$grouped) {
+        del[.self$group.cols] <- FALSE
+    }
 
     del <- which (del)
     .self$free_col (del, update=TRUE)
