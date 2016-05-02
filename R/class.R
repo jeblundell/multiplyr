@@ -299,25 +299,51 @@ get_data = function (i=NULL, j=NULL, nsa=FALSE) {
         }
     }
 
-    if (filtered) {
-        filtrows <- bm[, filtercol] == 1
-        if (!is.null(rowslice)) {
-            if (is.numeric(rowslice)) {
-                filtrows[-rowslice] <- FALSE
-            } else if (is.logical(rowslice)) {
-                filtrows[!rowslice] <- FALSE
+    if (is.null(rowslice)) {
+        if (filtered) {
+            filtrows <- bm[, filtercol] == 1
+        } else {
+            filtrows <- NULL
+        }
+    } else {
+        if (is.numeric(rowslice)) {
+            if (min(rowslice) < 1) {
+                stop (sprintf("Invalid row reference: %d < 1", min(rowslice)))
+            }
+            if (filtered) {
+                filtrows <- which(bm[, filtercol] == 1)
+                if (max(rowslice) > length(filtrows)) {
+                    stop (sprintf("Invalid row reference: %d > %d", max(rowslice), length(filtrows)))
+                }
+                filtrows <- filtrows[-rowslice]
+            } else {
+                if (max(rowslice) > ((last-first+1))) {
+                    stop (sprintf("Invalid row reference: %d > %d", max(rowslice), (last-first)+1))
+                }
+                filtrows <- rowslice
+            }
+        } else if (is.logical(rowslice)) {
+            if (filtered) {
+                filtrows <- bm[, filtercol] == 1
+                if (sum(filtrows) %% length(rowslice) != 0) {
+                    stop ("Number of available rows needs to be an exact multiple of rowslice length")
+                }
+                filtrows <- filtrows[!rowslice]
+            } else {
+                if (((last-first)+1) %% length(rowslice) != 0) {
+                    stop ("Number of available rows needs to be an exact multiple of rowslice length")
+                }
+                filtrows <- rowslice
             }
         }
-        if (nsa) {
+    }
+
+    if (nsa) {
+        if (is.null(filtrows)) {
             return (bm[filtrows, cols])
+        } else {
+            return (bm[, cols])
         }
-    } else if (!is.null(rowslice)) {
-        if (nsa) {
-            return (bm[rowslice, cols])
-        }
-        filtrows <- rowslice
-    } else {
-        filtrows <- NULL
     }
 
     out <- NULL
@@ -344,7 +370,9 @@ get_data = function (i=NULL, j=NULL, nsa=FALSE) {
         }
     }
 
-    names (out) <- col.names[cols]
+    if (length(cols) > 1) {
+        colnames (out) <- col.names[cols]
+    }
 
     return (out)
 },
