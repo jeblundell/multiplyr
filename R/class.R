@@ -30,6 +30,7 @@ Multiplyr <- setRefClass("Multiplyr",
                 last            = "numeric",
                 filtercol       = "numeric",
                 groupcol        = "numeric",
+                tmpcol          = "numeric",
                 empty           = "logical",
                 filtered        = "logical",
                 auto_compact    = "logical",
@@ -65,7 +66,7 @@ initialize = function (..., alloc=1, cl=NULL,
         library (lazyeval)
     })
 
-    special <- c(".filter", ".group")
+    special <- c(".filter", ".group", ".tmp")
     nrows <- length(vars[[1]])
     ncols <- length(vars) + alloc + length(special)
     col.names <<- c(names(vars), rep(NA, alloc), special)
@@ -79,6 +80,7 @@ initialize = function (..., alloc=1, cl=NULL,
     last <<- nrows
     filtercol <<- match (".filter", col.names)
     groupcol <<- match (".group", col.names)
+    tmpcol <<- match (".tmp", col.names)
 
     bm[,match(".filter", col.names)] <<- 1
 
@@ -575,7 +577,7 @@ rebuild_grouped = function () {
         NULL
     })
 },
-filter_rows = function (tmpcol, filtercol, rows) {
+filter_rows = function (rows) {
     bm[, tmpcol] <<- 0
     bm[rows, tmpcol] <<- 1
 
@@ -662,12 +664,10 @@ calc_group_sizes = function (delay=TRUE) {
     }
     #FIXME: make parallel/more efficient
     if (filtered) {
-        tmpcol <- alloc_col()
         bm[, tmpcol] <<- bm[, groupcol] * bm[, filtercol]
         for (g in 1:group_max) {
             group_sizes[g] <<- sum(bm[, tmpcol] == g)
         }
-        free_col (tmpcol)
     } else {
         for (g in 1:group_max) {
             group_sizes[g] <<- sum(bm[, groupcol] == g)

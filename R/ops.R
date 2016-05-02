@@ -42,13 +42,11 @@ define_ <- function (.self, ..., .dots) {
 #' @export
 distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
-    .filtercol <- match(".filter", .self$col.names)
 
     if (is.null(auto_compact)) {
         auto_compact <- .self$auto_compact
     }
 
-    .tmpcol <- .self$alloc_col()
     N <- length (.self$cls)
 
     if (length(.dots) > 0) {
@@ -76,7 +74,7 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
     .self$sort (decreasing=FALSE, cols=.cols)
     if (N == 1) {
         if (nrow(.self$bm) == 2) {
-            .self$bm[2, .filtercol] <- ifelse (
+            .self$bm[2, .self$filtercol] <- ifelse (
                 all(.self$bm[1, .cols] == .self$bm[2, .cols]), 0, 1)
             return (.self)
         }
@@ -89,13 +87,12 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
         }
         breaks <- c(0, breaks) + 1
 
-        .self$filter_rows (.tmpcol, .filtercol, breaks)
+        .self$filter_rows (breaks)
 
-        .self$free_col (.tmpcol)
         return (.self)
     }
 
-    .self$cluster_export (c(".cols", ".filtercol", ".tmpcol"))
+    .self$cluster_export (c(".cols"))
 
     # (0) If partitioned by group, temporarily repartition evenly
     regroup_partition <- .self$group_partition
@@ -145,12 +142,10 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
     # (4) filter at breaks
     .self$cluster_eval ({
         if (.local$empty) { return (NULL) }
-        .local$filter_rows (.tmpcol, .filtercol, .breaks)
+        .local$filter_rows (.breaks)
         NULL
     })
     .self$filtered <- TRUE
-
-    .self$free_col (.tmpcol)
 
     if (auto_compact) {
         .self$compact()
@@ -526,7 +521,6 @@ slice <- function (.self, rows=NULL, start=NULL, end=NULL, each=FALSE, auto_comp
                 NULL
             })
         } else if (is.logical(rows)) {
-            tmpcol <- .self$alloc_col()
             .self$cluster_export ("rows", ".rows")
             .self$cluster_eval ({
                 if (.local$empty) { return (NULL) }
@@ -539,22 +533,19 @@ slice <- function (.self, rows=NULL, start=NULL, end=NULL, each=FALSE, auto_comp
                 }
                 NULL
             })
-            .self$free_col (tmpcol)
         } else {
-            tmpcol <- .self$alloc_col()
-            .self$cluster_export (c("rows", "tmpcol"), c(".rows", ".tmpcol"))
+            .self$cluster_export ("rows", ".rows")
             .self$cluster_eval ({
                 if (.local$empty) { return (NULL) }
                 if (.self$grouped) {
                     for (.g in 1:length(.groups)) {
-                        .grouped[[.g]]$filter_rows (.tmpcol, .local$filtercol, .rows)
+                        .grouped[[.g]]$filter_rows (.rows)
                     }
                 } else {
-                    .local$filter_rows (.tmpcol, .local$filtercol, .rows)
+                    .local$filter_rows (.rows)
                 }
                 NULL
             })
-            .self$free_col (tmpcol)
         }
     } else {
         if (is.null(rows)) {
@@ -562,9 +553,7 @@ slice <- function (.self, rows=NULL, start=NULL, end=NULL, each=FALSE, auto_comp
         } else if (is.logical(rows)) {
             .self$filter_vector (rows)
         } else {
-            tmpcol <- .self$alloc_col()
-            .self$filter_rows (tmpcol, .self$filtercol, rows)
-            .self$free_col (tmpcol)
+            .self$filter_rows (rows)
         }
     }
 
