@@ -534,7 +534,6 @@ partition_even = function (max.row = last) {
     nr <- distribute (max.row, N)
     if (max.row < N) {
         nr[nr != 0] <- 1:max.row
-        nr <- c(nr, rep(0, N-max.row))
         cluster_export_each ("nr", ".first")
         cluster_export_each ("nr", ".last")
     } else {
@@ -548,6 +547,7 @@ partition_even = function (max.row = last) {
             .local <- .master$copy (shallow=TRUE)
         }
         .local$empty <- (.last < .first || .last == 0)
+        if (.local$empty) { return(NULL) }
         .local$local_subset (.first, .last)
         NULL
     })
