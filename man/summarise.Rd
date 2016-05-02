@@ -7,7 +7,7 @@
 \usage{
 summarise(.self, ...)
 
-summarise_(.self, ..., .dots)
+summarise_(.self, ..., .dots, auto_compact = NULL)
 }
 \arguments{
 \item{.self}{Data frame}

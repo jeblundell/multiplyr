@@ -40,9 +40,13 @@ define_ <- function (.self, ..., .dots) {
 
 #' @describeIn distinct
 #' @export
-distinct_ <- function (.self, ..., .dots) {
+distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
     .filtercol <- match(".filter", .self$col.names)
+
+    if (is.null(auto_compact)) {
+        auto_compact <- .self$auto_compact
+    }
 
     .tmpcol <- .self$alloc_col()
     N <- length (.self$cls)
@@ -159,6 +163,11 @@ distinct_ <- function (.self, ..., .dots) {
 
     .self$free_col (.tmpcol)
 
+    if (auto_compact) {
+        .self$compact()
+        return (.self)
+    }
+
     # Repartition by group if appropriate
     if (regroup_partition) {
         return (.self %>% partition_group())
@@ -174,8 +183,11 @@ distinct_ <- function (.self, ..., .dots) {
 
 #' @describeIn filter
 #' @export
-filter_ <- function (.self, ..., .dots) {
+filter_ <- function (.self, ..., .dots, auto_compact = NULL) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    if (is.null(auto_compact)) {
+        auto_compact <- .self$auto_compact
+    }
 
     .self$cluster_export (c(".dots"))
     .self$cluster_eval ({
@@ -200,17 +212,24 @@ filter_ <- function (.self, ..., .dots) {
     })
     .self$filtered <- TRUE
 
+    if (auto_compact) {
+        .self$compact()
+    }
+
     return (.self)
 }
 
 #' @describeIn group_by
 #' @export
-group_by_ <- function (.self, ..., .dots, .cols=NULL) {
+group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
     if (is.null(.cols)) {
         .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
         namelist <- .dots2names (.dots)
 
         .cols <- match(namelist, .self$col.names)
+    }
+    if (is.null(auto_partition)) {
+        auto_partition <- .self$auto_partition
     }
     .Gcol <- match(".group", .self$col.names)
     N <- length(.self$cls)
@@ -358,6 +377,11 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL) {
     # 2: G=1,2   2        TRUE    1      G=2,3
     # --transition between 2->3--
     # 3: G=1,2                           G=4,5
+
+    if (auto_partition && !regroup_partition) {
+        .self$group_partition <- TRUE
+        regroup_partition <- TRUE
+    }
 
     # Repartition by group if appropriate
     if (regroup_partition) {
@@ -562,8 +586,11 @@ slice <- function (.data, rows=NULL, start=NULL, end=NULL) {
 
 #' @describeIn summarise
 #' @export
-summarise_ <- function (.self, ..., .dots) {
+summarise_ <- function (.self, ..., .dots, auto_compact = NULL) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    if (is.null(auto_compact)) {
+        auto_compact <- .self$auto_compact
+    }
     avail <- which (substr (.self$col.names, 1, 1) != ".")
     if (.self$grouped) {
         avail <- avail[-.self$group.cols]
@@ -610,6 +637,9 @@ summarise_ <- function (.self, ..., .dots) {
         NULL
     })
     .self$filtered <- TRUE
+    if (auto_compact) {
+        .self$compact()
+    }
 
     .self$free_col (avail, update=TRUE)
     .self$alloc_col (newnames, update=TRUE)

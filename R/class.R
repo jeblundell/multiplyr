@@ -31,10 +31,13 @@ Multiplyr <- setRefClass("Multiplyr",
                 filtercol       = "numeric",
                 groupcol        = "numeric",
                 empty           = "logical",
-                filtered        = "logical"
+                filtered        = "logical",
+                auto_compact    = "logical",
+                auto_partition  = "logical"
                 ),
     methods=list(
-initialize = function (..., alloc=1, cl=NULL) {
+initialize = function (..., alloc=1, cl=NULL,
+                       auto_compact=TRUE, auto_partition=TRUE) {
     vars <- list(...)
 
     if (length(vars) == 0) {
@@ -108,6 +111,8 @@ initialize = function (..., alloc=1, cl=NULL) {
     group_partition <<- FALSE
     empty <<- nrows > 0
     filtered <<- FALSE
+    auto_compact <<- auto_compact
+    auto_partition <<- auto_partition
 
     desc <<- bigmemory.sri::describe (.bm)
     .master <- .self
@@ -237,7 +242,7 @@ show = function (max.row=10) {
             return (length(.groups))
         })
         res <- do.call (c, res)
-        cat (sprintf ("\nGroup partioned over %d clusters\n", length(cls)))
+        cat (sprintf ("Group partioned over %d clusters\n", length(cls)))
         cat (sprintf ("Groups per cluster: %s\n", paste(res, collapse=", ")))
     } else {
         res <- cluster_eval ({
@@ -250,6 +255,9 @@ show = function (max.row=10) {
         } else {
             cat (sprintf ("N per cluster: %s\n", paste(res, collapse=", ")))
         }
+    }
+    if (filtered) {
+        cat ("\nData filtering is in place: you may want to compact (or enable auto_compact)\n")
     }
     cat ("\n")
 },

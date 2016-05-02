@@ -7,7 +7,7 @@
 \usage{
 distinct(.self, ...)
 
-distinct_(.self, ..., .dots)
+distinct_(.self, ..., .dots, auto_compact = NULL)
 }
 \arguments{
 \item{...}{Additional parameters}

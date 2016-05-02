@@ -7,7 +7,7 @@
 \usage{
 filter(.self, ...)
 
-filter_(.self, ..., .dots)
+filter_(.self, ..., .dots, auto_compact = NULL)
 }
 \arguments{
 \item{...}{Additional parameters}
