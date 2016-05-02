@@ -386,7 +386,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
         return (.self %>% partition_group())
     } else {
         .self$rebuild_grouped()
-        .self$cluster_eval ({.master$grouped <- .local$grouped <- TRUE})
+        .self$update_fields ("grouped")
         return (.self)
     }
 }
@@ -472,12 +472,8 @@ partition_group_ <- function (.self, ..., .dots) {
     })
 
     .self$rebuild_grouped ()
-    #update_fields gets a bit confused, so doing this manually
-    .self$cluster_eval ({
-        .master$group_partition <- .master$group_partition <- TRUE
-        .local$grouped <- .local$group_partition <- TRUE
-    })
     .self$group_partition <- .self$grouped <- TRUE
+    .self$update_fields (c("grouped", "group_partition"))
 
     return (.self)
 }

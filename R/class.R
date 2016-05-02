@@ -496,6 +496,12 @@ free_col = function (cols, update=FALSE) {
     }
 },
 update_fields = function (fieldnames) {
+    idx <- match ("grouped", fieldnames)
+    do_grouped <- !is.na(idx)
+    if (do_grouped) {
+        fieldnames <- fieldnames[-idx]
+    }
+
     for (.fieldname in fieldnames) {
         .fieldval <- .self$field(name=.fieldname)
         cluster_export (c(".fieldname", ".fieldval"))
@@ -510,6 +516,12 @@ update_fields = function (fieldnames) {
             }
             NULL
         })
+    }
+
+    if (do_grouped) {
+        .i <- grouped
+        cluster_export (".i")
+        cluster_eval ({.master$grouped <- .local$grouped <- .i})
     }
 },
 partition_even = function (max.row = last) {
