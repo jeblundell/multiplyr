@@ -540,17 +540,22 @@ partition_even = function (max.row = last) {
         cluster_export_each (".first")
         cluster_export_each (".last")
     }
+
     cluster_eval ({
         if (!exists(".local")) {
             .local <- .master$copy (shallow=TRUE)
         }
+    })
+
+    grouped <<- group_partition <<- FALSE
+    update_fields (c("grouped", "group_partition"))
+
+    cluster_eval ({
         .local$empty <- (.last < .first || .last == 0)
         if (.local$empty) { return(NULL) }
         .local$local_subset (.first, .last)
         NULL
     })
-    grouped <<- group_partition <<- FALSE
-    update_fields (c("grouped", "group_partition"))
 },
 local_subset = function (first, last) {
     first <<- first
