@@ -503,12 +503,10 @@ update_fields = function (fieldnames) {
             .master$field (name = .fieldname, value = .fieldval)
             .local$field (name = .fieldname, value = .fieldval)
             if (.local$empty) { return(NULL) }
-            if (.local$group_partition) {
+            if (.local$grouped) {
                 for (.g in 1:length(.grouped)) {
                     .grouped[[.g]]$field (name = .fieldname, value = .fieldval)
                 }
-            } else if (.local$grouped) {
-                stop ("FIXME")
             }
             NULL
         })
