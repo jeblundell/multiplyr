@@ -162,6 +162,9 @@ cluster_export = function (var, var.as=NULL, envir=parent.frame()) {
     if (is.null(var.as)) {
         parallel::clusterExport (cls, var, envir)
     } else {
+        if (length(var) != length(var.as)) {
+            stop ("var.as needs to be same length as var: did you mean to do cluster_export(c(...))?")
+        }
         tmp <- new.env()
         for (i in 1:length(var)) {
             assign (var.as[i], get(var[i], envir=envir), envir=tmp)
@@ -170,6 +173,9 @@ cluster_export = function (var, var.as=NULL, envir=parent.frame()) {
     }
 },
 cluster_export_each = function (var, var.as=var, envir=parent.frame()) {
+    if (length(var) != length(var.as)) {
+        stop ("var.as needs to be same length as var: did you mean to do cluster_export_each(c(...))?")
+    }
     tmp <- new.env()
     for (i in 1:length(var)) {
         for (j in 1:length(cls)) {
