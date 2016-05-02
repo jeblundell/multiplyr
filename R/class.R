@@ -33,7 +33,8 @@ Multiplyr <- setRefClass("Multiplyr",
                 empty           = "logical",
                 filtered        = "logical",
                 auto_compact    = "logical",
-                auto_partition  = "logical"
+                auto_partition  = "logical",
+                group_sizes_stale = "logical"
                 ),
     methods=list(
 initialize = function (..., alloc=1, cl=NULL,
@@ -113,6 +114,7 @@ initialize = function (..., alloc=1, cl=NULL,
     filtered <<- FALSE
     auto_compact <<- auto_compact
     auto_partition <<- auto_partition
+    group_sizes_stale <<- FALSE
 
     desc <<- bigmemory.sri::describe (.bm)
     .master <- .self
@@ -132,6 +134,7 @@ copy = function (shallow = FALSE) {
 group_restrict = function (group) {
     if (group <= 0) { return (.self) }
     grp <- .self$copy (shallow=TRUE)
+    grp$group_sizes <- grp$group_sizes[grp$group == group]
     grp$group <- group
 
     #presumes that dat is sorted by grouping column first
@@ -233,6 +236,7 @@ show = function (max.row=10) {
     if (grouped) {
         cat (sprintf ("\nGrouped by: %s\n",
                       paste(col.names[group.cols], collapse=", ")))
+        .self$calc_group_sizes (delay=FALSE)
         cat (sprintf ("Groups: %d\nGroup sizes: %s\n", group_max,
                       paste(group_sizes, collapse=", ")))
     }
@@ -635,6 +639,29 @@ compact = function () {
     if (grouped) {
         group_by_ (.self, .cols=rg_cols)
     }
+},
+calc_group_sizes = function (delay=TRUE) {
+    if (delay) {
+        group_sizes_stale <<- TRUE
+        return()
+    }
+    if (!group_sizes_stale) {
+        return()
+    }
+    #FIXME: make parallel/more efficient
+    if (filtered) {
+        tmpcol <- alloc_col()
+        bm[, tmpcol] <<- bm[, groupcol] * bm[, filtercol]
+        for (g in 1:group_max) {
+            group_sizes[g] <<- sum(bm[, tmpcol] == g)
+        }
+        free_col (tmpcol)
+    } else {
+        for (g in 1:group_max) {
+            group_sizes[g] <<- sum(bm[, groupcol] == g)
+        }
+    }
+    group_sizes_stale <<- FALSE
 }
 ))
 

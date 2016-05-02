@@ -165,8 +165,11 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
 
     if (auto_compact) {
         .self$compact()
+        .self$calc_group_sizes()
         return (.self)
     }
+
+    .self$calc_group_sizes()
 
     # Repartition by group if appropriate
     if (regroup_partition) {
@@ -213,6 +216,7 @@ filter_ <- function (.self, ..., .dots, auto_compact = NULL) {
     if (auto_compact) {
         .self$compact()
     }
+    .self$calc_group_sizes()
 
     return (.self)
 }
@@ -367,6 +371,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
 
     .self$group_sizes <- sizes
     .self$group_max <- length(sizes)
+    .self$group_sizes_stale <- FALSE
 
     .self$grouped <- TRUE
 
@@ -395,6 +400,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
 #' @param .self Data frame
 #' @export
 group_sizes <- function (.self) {
+    .self$calc_group_sizes (delay=FALSE)
     .self$group_sizes
 }
 
@@ -423,6 +429,9 @@ mutate_ <- function (.self, ..., .dots) {
         }
         NULL
     })
+    if (any(.rescols == .self$group.cols)) {
+        .self$calc_group_sizes()
+    }
     return (.self)
 }
 
@@ -631,6 +640,8 @@ summarise_ <- function (.self, ..., .dots, auto_compact = NULL) {
         .self$compact()
     }
 
+    .self$calc_group_sizes()
+
     .self$free_col (avail, update=TRUE)
     .self$alloc_col (newnames, update=TRUE)
 
@@ -664,6 +675,9 @@ transmute_ <- function (.self, ..., .dots) {
         }
         NULL
     })
+    if (any(.rescols == .self$group.cols)) {
+        .self$calc_group_sizes()
+    }
     #/mutate
 
     #FIXME: do on local/grouped
