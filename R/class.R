@@ -377,63 +377,126 @@ get_data = function (i=NULL, j=NULL, nsa=FALSE) {
     return (out)
 },
 set_data = function (i=NULL, j=NULL, value, nsa=FALSE) {
-    len <- length(value)
-
     if (is.null(i)) {
         rowslice <- NULL
     } else {
         rowslice <- i
     }
+
     if (!is.null(j)) {
-        if (!is.numeric(j)) {
-            j <- match (j, col.names)
+        if (is.numeric(j)) {
+            if (any(j < 1)) {
+                stop (sprintf ("Invalid reference to column: %d < 1", (j[j < 1])[1]))
+            } else if (any(j > ncol(bm))) {
+                stop (sprintf("Invalid reference to column: %d > %d", (j[j > ncol(bm)])[1], ncol(bm)))
+            }
+            cols <- j
+        } else {
+            cols <- match (j, col.names)
+            cols.na <- is.na(cols)
+            if (any(cols.na)) {
+                stop (.p("Undefined column(s): ", paste0(j[cols.na], collapse=", ")))
+            }
         }
     }
 
-    if (filtered) {
-        filtrows <- bm[, filtercol] == 1
-        if (!is.null(rowslice)) {
-            filtrows[-rowslice] <- FALSE
-        }
-        nr <- sum(filtrows)
-    } else if (!is.null(rowslice)) {
-        filtrows <- rowslice
-        if (is.logical(rowslice)) {
-            nr <- sum(rowslice)
+    if (is.null(rowslice)) {
+        if (filtered) {
+            filtrows <- bm[, filtercol] == 1
+            nr <- sum(filtrows)
         } else {
-            nr <- length(rowslice)
+            nr <- (last - first) + 1
+            filtrows <- NULL
         }
     } else {
-        filtrows <- NULL
-        nr <- (last - first) + 1
+        if (is.numeric(rowslice)) {
+            if (min(rowslice) < 1) {
+                stop (sprintf("Invalid row reference: %d < 1", min(rowslice)))
+            }
+            if (filtered) {
+                filtrows <- which(bm[, filtercol] == 1)
+                nr <- length (filtrows)
+                if (max(rowslice) > nr) {
+                    stop (sprintf("Invalid row reference: %d > %d", max(rowslice), nr))
+                }
+                filtrows <- filtrows[-rowslice]
+            } else {
+                nr <- (last - first) + 1
+                if (max(rowslice) > nr) {
+                    stop (sprintf("Invalid row reference: %d > %d", max(rowslice), nr))
+                }
+                filtrows <- rowslice
+            }
+        } else if (is.logical(rowslice)) {
+            if (filtered) {
+                filtrows <- bm[, filtercol] == 1
+                nr <- sum(filtrows)
+                if (nr %% length(rowslice) != 0) {
+                    stop ("Number of available rows needs to be an exact multiple of rowslice length")
+                }
+                filtrows <- filtrows[!rowslice]
+            } else {
+                nr <- (last - first) + 1
+                if (nr %% length(rowslice) != 0) {
+                    stop ("Number of available rows needs to be an exact multiple of rowslice length")
+                }
+                filtrows <- rowslice
+            }
+        }
     }
 
     if (is.null(i)) {
         # [, j] <-
         # [j] <-
+        len <- length(value)
         if (len == 1 || len == nr) {
             if (is.null(filtrows)) {
                 if (nsa) {
-                    bm[, j] <<- value
+                    bm[, cols] <<- value
                 } else {
-                    bm[, j] <<- factor_map (j, value)
+                    bm[, cols] <<- factor_map (cols, value)
                 }
             } else {
                 if (nsa) {
-                    bm[filtrows, j] <<- value
+                    bm[filtrows, cols] <<- value
                 } else {
-                    bm[filtrows, j] <<- factor_map (j, value)
+                    bm[filtrows, cols] <<- factor_map (cols, value)
                 }
             }
         } else {
             stop (sprintf("replacement data has %d rows to replace %d", len, nr))
         }
-    } else if (is.null(j)) {
-        # [i, ] <-
-        stop ("FIXME: row replace")
     } else {
+        if (is.null(j)) {
+            # [i, ] <-
+            cols <- which (order.cols > 0)
+        }
         # [i, j] <-
-        stop ("FIXME: row/col replace")
+        if (nsa) {
+            if (is.null(filtrows)) {
+                bm[, cols] <<- value
+            } else {
+                bm[filtrows, cols] <<- value
+            }
+        } else {
+            if (is.null(filtrows)) {
+                if (length(cols) == 1) {
+                    bm[, cols] <<- factor_map(cols, value)
+                } else {
+                    for (c in 1:length(cols)) {
+                        bm[, cols[c]] <<- factor_map(cols[c], value[, c])
+                    }
+                }
+            } else {
+                if (length(cols) == 1) {
+                    bm[filtrows, cols] <<- factor_map(cols, value)
+                } else {
+                    for (c in cols) {
+                        bm[filtrows, cols[c]] <<- factor_map(cols[c], value[, c])
+                    }
+                }
+            }
+        }
     }
     invisible (value)
 },
