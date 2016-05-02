@@ -5,12 +5,12 @@
 \alias{regroup}
 \title{Return to grouped data}
 \usage{
-regroup(.data)
+regroup(.self, auto_partition = NULL)
 
-groupwise(.data)
+groupwise(.self, auto_partition = NULL)
 }
 \arguments{
-\item{.data}{Data frame}
+\item{.self}{Data frame}
 }
 \description{
 Return to grouped data

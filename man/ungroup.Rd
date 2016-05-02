@@ -5,14 +5,12 @@
 \alias{ungroup}
 \title{Return data to non-grouped}
 \usage{
-ungroup(.data)
+ungroup(.self)
 
-rowwise(.data)
+rowwise(.self)
 }
 \arguments{
-\item{.data}{Data frame}
-
-\item{...}{Additional parameters}
+\item{.self}{Data frame}
 
 \item{.dots}{Workaround for non-standard evaluation}
 }

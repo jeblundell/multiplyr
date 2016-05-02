@@ -458,6 +458,25 @@ partition_group_ <- function (.self, ..., .dots) {
     return (.self)
 }
 
+#' Return to grouped data
+#' @param .self Data frame
+#' @export
+regroup <- function (.self, auto_partition=NULL) {
+    # This relies upon grouping column being unchanged
+
+    if (is.null(auto_partition)) {
+        auto_partition <- .self$auto_partition
+    }
+    .self$grouped <- TRUE
+    .self$update_fields ("grouped")
+
+    if (auto_partition) {
+        .self$group_partition <- TRUE
+        .self$update_fields ("group_partition")
+    }
+
+    return (.self)
+}
 
 #' @describeIn rename
 #' @export
@@ -688,24 +707,15 @@ undefine_ <- function (.self, ..., .dots) {
 #' @export
 unselect_ <- undefine_
 
-#' Return to grouped data
-#' @param .data Data frame
-#' @export
-regroup <- function (.data) {
-    attr (.data, "grouped") <- TRUE
-    parallel::clusterEvalQ (attr(.data, "cl"), attr(.local, "grouped") <- TRUE)
-    return (.data)
-}
-
 #' Return data to non-grouped
-#' @param .data Data frame
-#' @param ... Additional parameters
+#' @param .self Data frame
 #' @param .dots Workaround for non-standard evaluation
 #' @export
-ungroup <- function (.data) {
-    attr (.data, "grouped") <- FALSE
-    parallel::clusterEvalQ (attr(.data, "cl"), attr(.local, "grouped") <- FALSE)
-    return (.data)
+ungroup <- function (.self) {
+    .self$grouped <- .self$group_partition <- FALSE
+    .self$update_fields (c("grouped", "group_partition"))
+    .self$partition_even ()
+    return (.self)
 }
 
 #' @describeIn ungroup
