@@ -524,65 +524,81 @@ select_ <- function (.self, ..., .dots) {
 }
 
 #' @export
-slice <- function (.data, rows=NULL, start=NULL, end=NULL) {
+slice <- function (.self, rows=NULL, start=NULL, end=NULL, each=FALSE, auto_compact=NULL) {
     if (is.null(rows) && (is.null(start) || is.null(end))) {
         stop ("Must specify either rows or start and stop")
     } else if (!is.null(rows) && !(is.null(start) || is.null(end))) {
         stop ("Can either specify rows or start and stop; not both")
     }
 
-    if (is.null(rows)) {
-        rows <- start:end
+    if (is.null(auto_compact)) {
+        auto_compact <- .self$auto_compact
     }
 
-    #.filter_range?
-
-    filtercol <- match(".filter", attr(.data, "colnames"))
-
-    if (attr(.data, "grouped")) {
-        if (attr(.data, "group_partition")) {
-            .rows <- rows
-            .filtercol <- filtercol
-            parallel::clusterExport (attr(.data, "cl"), c(".rows",
-                                                          ".filtercol"), envir=environment())
-            parallel::clusterEvalQ (attr(.data, "cl"), {
-                if (.empty) { return (NULL) }
-                for (.g in 1:length(.groups)) {
-                    .filtered <- bigmemory::mwhich (.grouped[[.g]][[1]],
-                                                   cols=.filtercol,
-                                                   vals=1,
-                                                   comps="eq")
-                    .rows <- .filtered[.rows]
-                    .grouped[[.g]][[1]][, .filtercol] <- 0
-                    .grouped[[.g]][[1]][.rows, .filtercol] <- 1
+    if (each) {
+        if (is.null(rows)) {
+            .self$cluster_export (c("start", "end"), c(".start", ".end"))
+            .self$cluster_eval ({
+                if (.local$empty) { return (NULL) }
+                if (.self$grouped) {
+                    for (.g in 1:length(.groups)) {
+                        .grouped[[.g]]$filter_range (.start, .end)
+                    }
+                } else {
+                    .local$filter_range (.start, .end)
                 }
                 NULL
             })
+        } else if (is.logical(rows)) {
+            tmpcol <- .self$alloc_col()
+            .self$cluster_export ("rows", ".rows")
+            .self$cluster_eval ({
+                if (.local$empty) { return (NULL) }
+                if (.self$grouped) {
+                    for (.g in 1:length(.groups)) {
+                        .grouped[[.g]]$filter_vector (.rows)
+                    }
+                } else {
+                    .local$filter_vector (.rows)
+                }
+                NULL
+            })
+            .self$free_col (tmpcol)
         } else {
-            #FIXME: pass g on to clusters to do parallel, i.e. temporary partition_group
-            for (g in 1:attr(.data, "group_max")) {
-                grouped <- group_restrict (.data, g)
-                filtered <- bigmemory::mwhich (grouped[[1]],
-                                               cols=filtercol,
-                                               vals=1,
-                                               comps="eq")
-                rows <- filtered[rows]
-                grouped[[1]][, filtercol] <- 0
-                grouped[[1]][rows, filtercol] <- 1
-            }
+            tmpcol <- .self$alloc_col()
+            .self$cluster_export (c("rows", "tmpcol"), c(".rows", ".tmpcol"))
+            .self$cluster_eval ({
+                if (.local$empty) { return (NULL) }
+                if (.self$grouped) {
+                    for (.g in 1:length(.groups)) {
+                        .grouped[[.g]]$filter_rows (.tmpcol, .local$filtercol, .rows)
+                    }
+                } else {
+                    .local$filter_rows (.tmpcol, .local$filtercol, .rows)
+                }
+                NULL
+            })
+            .self$free_col (tmpcol)
         }
     } else {
-        #FIXME: partition rows across clusters or parition data frame across clusters?
-        filtered <- bigmemory::mwhich (.data[[1]],
-                                       cols=filtercol,
-                                       vals=1,
-                                       comps="eq")
-        rows <- filtered[rows]
-        .data[[1]][, filtercol] <- 0
-        .data[[1]][rows, filtercol] <- 1
+        if (is.null(rows)) {
+            .self$filter_range (start, end)
+        } else if (is.logical(rows)) {
+            .self$filter_vector (rows)
+        } else {
+            tmpcol <- .self$alloc_col()
+            .self$filter_rows (tmpcol, .self$filtercol, rows)
+            .self$free_col (tmpcol)
+        }
     }
 
-    .data
+    .self$calc_group_sizes()
+
+    if (auto_compact) {
+        .self$compact()
+    }
+
+    .self
 }
 
 #' @describeIn summarise

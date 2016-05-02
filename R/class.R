@@ -585,6 +585,15 @@ filter_vector = function (rows) {
     empty <<- sum(bm[, filtercol]) == 0
     filtered <<- TRUE
 },
+filter_range = function (start, end) {
+    if (start > 1) {
+        bm[1:(start-1), filtercol] <<- 0
+    }
+    if (end < nrow(bm)) {
+        bm[(end+1):nrow(bm), filtercol] <<- 0
+    }
+    filtered <<- TRUE
+},
 compact = function () {
     if (!filtered) { return() }
 
