@@ -4,12 +4,12 @@
 \alias{within_group}
 \title{Execute code within a group}
 \usage{
-within_group(.data, .expr)
+within_group(.self, expr)
 }
 \arguments{
-\item{.data}{Data frame}
+\item{.self}{Data frame}
 
-\item{.expr}{Code to execute}
+\item{expr}{Code to execute}
 }
 \description{
 Execute code within a group

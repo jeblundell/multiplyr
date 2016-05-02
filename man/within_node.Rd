@@ -4,12 +4,12 @@
 \alias{within_node}
 \title{Execute code within a node}
 \usage{
-within_node(.data, .expr)
+within_node(.self, expr)
 }
 \arguments{
-\item{.data}{Data frame}
+\item{.self}{Data frame}
 
-\item{.expr}{Code to execute}
+\item{expr}{Code to execute}
 }
 \description{
 Execute code within a node

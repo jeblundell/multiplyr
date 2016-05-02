@@ -727,32 +727,33 @@ rowwise <- ungroup
 groupwise <- regroup
 
 #' Execute code within a group
-#' @param .data Data frame
-#' @param .expr Code to execute
+#' @param .self Data frame
+#' @param expr Code to execute
 #' @export
-within_group <- function (.data, .expr) {
-    .expr <- substitute(.expr)
-    parallel::clusterExport (attr(.data, "cl"), c(".expr"), envir = environment())
-    parallel::clusterEvalQ (attr(.data, "cl"), {
-        if (length(.groups) == 0) { return (NULL) }
+within_group <- function (.self, expr) {
+    expr <- substitute(expr)
+    .self$cluster_export ("expr", ".expr")
+    .self$cluster_eval({
+        if (.local$empty) { return(NULL) }
         for (.g in 1:length(.groups)) {
-            eval (.expr, envir = as.environment(.grouped[[.g]]))
+            eval (.expr, envir = .grouped[[.g]]$envir())
         }
         NULL
     })
-    .data
+    .self
 }
 
 #' Execute code within a node
-#' @param .data Data frame
-#' @param .expr Code to execute
+#' @param .self Data frame
+#' @param expr Code to execute
 #' @export
-within_node <- function (.data, .expr) {
-    .expr <- substitute(.expr)
-    parallel::clusterExport (attr(.data, "cl"), c(".expr"), envir = environment())
-    parallel::clusterEvalQ (attr(.data, "cl"), {
-        eval (.expr, envir = as.environment(.local))
+within_node <- function (.self, expr) {
+    expr <- substitute(expr)
+    .self$cluster_export ("expr", ".expr")
+    .self$cluster_eval({
+        if (.local$empty) { return(NULL) }
+        eval (.expr, envir = .local$envir())
         NULL
     })
-    .data
+    .self
 }
