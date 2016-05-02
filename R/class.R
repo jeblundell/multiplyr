@@ -354,7 +354,7 @@ set_data = function (i=NULL, j=NULL, value, nsa=FALSE) {
         }
     } else {
         filtrows <- NULL
-        nr <- last
+        nr <- (last - first) + 1
     }
 
     if (is.null(i)) {
