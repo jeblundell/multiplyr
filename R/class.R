@@ -278,18 +278,35 @@ get_data = function (i=NULL, j=NULL, nsa=FALSE) {
     } else {
         rowslice <- i
     }
+
     if (is.null(j)) {
-        j <- which (order.cols > 0)
-        cols <- col.names[j]
-    } else {
+        m <- which (order.cols > 0)
+        if (length(m) == 0) {
+            return (data.frame())
+        }
+    } else if (is.numeric(j)) {
+        if (any(j < 1)) {
+            stop (sprintf ("Invalid reference to column: %d < 1", (j[j < 1])[1]))
+        } else if (any(j > ncol(bm))) {
+            stop (sprintf("Invalid reference to column: %d > %d", (j[j > ncol(bm)])[1], ncol(bm)))
+        }
         cols <- j
+    } else {
+        cols <- match (j, col.names)
+        cols.na <- is.na(cols)
+        if (any(cols.na)) {
+            stop (.p("Undefined column(s): ", paste0(j[cols.na], collapse=", ")))
+        }
     }
 
-    m <- match (cols, col.names)
     if (filtered) {
         filtrows <- bm[, filtercol] == 1
         if (!is.null(rowslice)) {
-            filtrows[-rowslice] <- FALSE
+            if (is.numeric(rowslice)) {
+                filtrows[-rowslice] <- FALSE
+            } else if (is.logical(rowslice)) {
+                filtrows[!rowslice] <- FALSE
+            }
         }
         if (nsa) {
             return (bm[filtrows, cols])
@@ -304,7 +321,7 @@ get_data = function (i=NULL, j=NULL, nsa=FALSE) {
     }
 
     out <- NULL
-    for (i in m) {
+    for (i in cols) {
         itype <- type.cols[i]
         if (itype == 0) {
             o <- bm[,i]
@@ -326,9 +343,9 @@ get_data = function (i=NULL, j=NULL, nsa=FALSE) {
             out <- cbind (data.frame(out), data.frame(o))
         }
     }
-    if (length(m) > 1) {
-        names (out) <- col.names[m]
-    }
+
+    names (out) <- col.names[cols]
+
     return (out)
 },
 set_data = function (i=NULL, j=NULL, value, nsa=FALSE) {
