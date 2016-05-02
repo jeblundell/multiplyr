@@ -125,26 +125,12 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
         rm (.sm1, .sm2)
         .breaks <- .breaks + 1
 
-        .last
+        .local$last
     })
 
     # (2) work out if there's a group change between local[1] and local[2] etc.
     trans <- do.call (c, trans)
-    trans <- trans[-length(trans)]   #last row is not actually a transition
-    trans.i <- which (!is.na(trans)) #subsetting gets stroppy with NA
-    trans <- trans[trans.i]
-
-    sm1 <- bigmemory::sub.big.matrix (.self$bm, firstRow=1, lastRow=nrow(.self$bm)-1)
-    sm2 <- bigmemory::sub.big.matrix (.self$bm, firstRow=2, lastRow=nrow(.self$bm))
-    if (length(.cols) == 1 || length(trans) == 1) {
-        tg.a <- all(sm1[trans, .cols] != sm2[trans, .cols])
-    } else {
-        tg.a <- !apply (sm1[trans, .cols] == sm2[trans, .cols], 1, all)
-    }
-    rm (sm1, sm2)
-
-    tg <- rep(TRUE, N)
-    tg[trans.i+1] <- tg.a
+    tg <- test_transition (.self, .cols, trans)
 
     # (3) set breaks=1 for all where there's a transition
     .self$cluster_export_each ("tg", ".tg")
@@ -315,25 +301,13 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
             .prev <- .breaks[.i]
         }
 
-        .last
+        .local$last
     })
 
     # (2) work out if there's a group change between local[1] and local[2] etc.
     trans <- do.call (c, trans)
-    trans <- trans[-length(trans)]
-
-    sm1 <- bigmemory::sub.big.matrix (.self$bm, firstRow=1, lastRow=nrow(.self$bm)-1)
-    sm2 <- bigmemory::sub.big.matrix (.self$bm, firstRow=2, lastRow=nrow(.self$bm))
-    if (length(.cols) == 1) {
-        tg <- sm1[trans, .cols] != sm2[trans, .cols]
-    } else {
-        if (length(trans) == 1) {
-            tg <- !all (sm1[trans, .cols] == sm2[trans, .cols])
-        } else {
-            tg <- !apply (sm1[trans, .cols] == sm2[trans, .cols], 1, all)
-        }
-    }
-    rm (sm1, sm2)
+    tg <- test_transition (.self, .cols, trans)
+    tg <- tg[-1]
 
     # (3) add group base to each local
     Gcount <- do.call (c, .self$cluster_eval ({
