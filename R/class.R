@@ -138,8 +138,7 @@ group_restrict = function (group) {
     grp$group <- group
 
     #presumes that dat is sorted by grouping column first
-    Gcol <- match (".group", grp$col.names)
-    rows <- which (grp$bm[, Gcol] == grp$group)
+    rows <- which (grp$bm[, grp$groupcol] == grp$group)
     if (length(rows) == 0) {
         grp$empty <- TRUE
         return (grp)
@@ -444,11 +443,10 @@ sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=FALSE) {
         cols <- match(namelist, col.names)
     }
     if (grouped) {
-        Gcol <- match(".group", col.names)
-        if (Gcol %in% cols) {
-            cols <- cols[cols != Gcol]
+        if (groupcol %in% cols) {
+            cols <- cols[cols != groupcol]
         }
-        cols <- c(Gcol, cols)
+        cols <- c(groupcol, cols)
     }
     bigmemory::mpermute (bm, cols=cols)
 },

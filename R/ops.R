@@ -62,8 +62,11 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
     }
 
     if (.self$grouped) {
-        Gcol <- match (".group", .self$col.names)
-        .cols <- c(Gcol, .cols)
+        idx <- match (.self$groupcol, .cols)
+        if (!is.na(idx)) {
+            .cols <- .cols[-idx]
+        }
+        .cols <- c(.self$groupcol, .cols)
     }
 
     if (nrow(.self$bm) == 1) {
@@ -233,7 +236,6 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
     if (is.null(auto_partition)) {
         auto_partition <- .self$auto_partition
     }
-    .Gcol <- match(".group", .self$col.names)
     N <- length(.self$cls)
 
     .self$sort (decreasing=FALSE, cols=.cols)
@@ -241,7 +243,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
     .self$group.cols <- .cols
 
     if (nrow(.self$bm) == 1) {
-        .self$bm[, .Gcol] <- 1
+        .self$bm[, .self$groupcol] <- 1
         .self$group_sizes <- 1
         .self$group_max <- 1
         return (.self)
@@ -251,7 +253,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
         if (nrow(.self$bm) == 2) {
             i <- ifelse (all(.self$bm[1, .cols] ==
                                  .self$bm[2, .cols]), 1, 2)
-            .self$bm[, .Gcol] <- 1:i
+            .self$bm[, .self$groupcol] <- 1:i
             .self$group_sizes <- rep(1, i)
             .self$group_max <- i
             return (.self)
@@ -267,7 +269,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
         breaks <- c(0, breaks) + 1
         last <- 0
         for (i in 1:length(breaks)) {
-            .self$bm[(last+1):breaks[i], .Gcol] <- i
+            .self$bm[(last+1):breaks[i], .self$groupcol] <- i
             last <- breaks[i]
         }
         .self$group_sizes <- sizes
@@ -282,7 +284,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
     }
 
     # (1) determine local groupings
-    .self$cluster_export (c(".cols", ".Gcol"))
+    .self$cluster_export (c(".cols"))
     trans <- .self$cluster_eval ({
         if (.local$empty) { return (NA) }
         if (nrow(.local$bm) == 1) {
@@ -291,7 +293,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
         } else if (nrow(.local$bm) == 2) {
             i <- ifelse (all(.local$bm[1, .cols] ==
                                  .local$bm[2, .cols]), 1, 2)
-            .local$bm[, .Gcol] <- 1:i
+            .local$bm[, .local$groupcol] <- 1:i
             .breaks <- 1:i
             .local$group_sizes <- rep(1, i)
             .local$group_max <- i
@@ -309,7 +311,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
         .breaks <- c(.breaks, nrow(.local$bm))
         .prev <- 0
         for (.i in 1:length(.breaks)) {
-            .local$bm[(.prev+1):.breaks[.i],.Gcol] <- .i
+            .local$bm[(.prev+1):.breaks[.i], .local$groupcol] <- .i
             .prev <- .breaks[.i]
         }
 
@@ -335,7 +337,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
 
     # (3) add group base to each local
     Gcount <- do.call (c, .self$cluster_eval ({
-        .local$bm[nrow(.local$bm), .Gcol]
+        .local$bm[nrow(.local$bm), .local$groupcol]
     }))
     Gcount <- Gcount[-length(Gcount)]
 
@@ -344,8 +346,8 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
     Gbase <- cumsum(c(0, Gcount-Gtr))
     .self$cluster_export_each ("Gbase", ".Gbase")
     .self$cluster_eval ({
-        .local$bm[, .Gcol] <- .local$bm[, .Gcol] + .Gbase
-        .groups <- unique (.local$bm[, .Gcol]) #FIXME
+        .local$bm[, .local$groupcol] <- .local$bm[, .local$groupcol] + .Gbase
+        .groups <- unique (.local$bm[, .local$groupcol]) #FIXME
         NULL
     })
 
