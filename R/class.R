@@ -272,7 +272,7 @@ show = function (max.row=10) {
     }
     cat ("\n")
 },
-get_data = function (i=NULL, j=NULL, nsa=FALSE, drop=FALSE) {
+get_data = function (i=NULL, j=NULL, nsa=FALSE, drop=TRUE) {
     if (is.null(i)) {
         rowslice <- NULL
     } else {
@@ -547,9 +547,9 @@ envir = function (nsa=FALSE) {
             .nsa<-nsa
             function (x) {
                 if (missing(x)) {
-                    .dat$get_data(NULL, .var, .nsa)
+                    .dat$get_data(NULL, .var, nsa=.nsa, drop=TRUE)
                 } else {
-                    .dat$set_data(NULL, .var, x, .nsa)
+                    .dat$set_data(NULL, .var, x, nsa=.nsa)
                 }
             }
         })
