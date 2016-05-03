@@ -13,12 +13,19 @@ test_that ("Multiplyr(x=..., y=...) creates the appropriate structure", {
     expect_gte (ncol(dat$bm), 3)
     expect_true (class(dat) == "Multiplyr")
 
+    expect_equal (dat$first, 1)
+    expect_equal (dat$last, 100)
+
     expect_equal (dat$col.names[1:3], c("x", "f", "G"))
     expect_equal (dat$order.cols[1:3], c(1, 2, 3))
     expect_equal (dat$type.cols[1:3], c(0, 1, 2))
 
     expect_equal (sum (dat$order.cols[-(1:3)]), 0)
     expect_true (all(c(".tmp", ".filter", ".group") %in% dat$col.names))
+    expect_equal (dat$tmpcol, match(".tmp", dat$col.names))
+    expect_equal (dat$filtercol, match(".filter", dat$col.names))
+    expect_equal (dat$groupcol, match(".group", dat$col.names))
+    expect_true (all(dat$bm[, dat$filtercol] == 1))
 
     expect_equal (dat$factor.cols, c(2, 3))
     expect_equal (dat$factor.levels[[1]], c("f1", "f2"))
@@ -28,6 +35,9 @@ test_that ("Multiplyr(x=..., y=...) creates the appropriate structure", {
 
     expect_equal (length(dat$cls), 2)
     expect_true (all(c("SOCKcluster", "cluster") %in% class(dat$cls)))
+
+    res <- do.call (c, dat$cluster_eval (123))
+    expect_equal (res, rep(123, 2))
 
     expect_equal (dat$grouped, FALSE)
     expect_equal (dat$group, 0)
@@ -46,10 +56,12 @@ test_that ("Multiplyr() works on a data.frame", {
                   alloc=1,
                   cl=cl2)
 
-
     expect_equal (nrow(dat$bm), 100)
     expect_gte (ncol(dat$bm), 3)
     expect_true (class(dat) == "Multiplyr")
+
+    expect_equal (dat$first, 1)
+    expect_equal (dat$last, 100)
 
     expect_equal (dat$col.names[1:3], c("x", "f", "G"))
     expect_equal (dat$order.cols[1:3], c(1, 2, 3))
@@ -57,6 +69,10 @@ test_that ("Multiplyr() works on a data.frame", {
 
     expect_equal (sum (dat$order.cols[-(1:3)]), 0)
     expect_true (all(c(".tmp", ".filter", ".group") %in% dat$col.names))
+    expect_equal (dat$tmpcol, match(".tmp", dat$col.names))
+    expect_equal (dat$filtercol, match(".filter", dat$col.names))
+    expect_equal (dat$groupcol, match(".group", dat$col.names))
+    expect_true (all(dat$bm[, dat$filtercol] == 1))
 
     expect_equal (dat$factor.cols, c(2, 3))
     expect_equal (dat$factor.levels[[1]], c("f1", "f2"))
@@ -66,6 +82,54 @@ test_that ("Multiplyr() works on a data.frame", {
 
     expect_equal (length(dat$cls), 2)
     expect_true (all(c("SOCKcluster", "cluster") %in% class(dat$cls)))
+
+    res <- do.call (c, dat$cluster_eval (123))
+    expect_equal (res, rep(123, 2))
+
+    expect_equal (dat$grouped, FALSE)
+    expect_equal (dat$group, 0)
+    expect_equal (dat$group_partition, FALSE)
+
+    rm (dat)
+})
+
+test_that ("dat$copy(shallow=TRUE) creates the appropriate structure", {
+    tmp <- Multiplyr(x=1:100,
+                     f=factor(rep(c("f1", "f2"), each=50), levels=c("f1", "f2")),
+                     G=rep(c("A", "B", "C", "D"), each=25),
+                     alloc=1,
+                     cl=cl2)
+    dat <- tmp$copy(shallow=TRUE)
+
+    expect_equal (nrow(dat$bm), 100)
+    expect_gte (ncol(dat$bm), 3)
+    expect_true (class(dat) == "Multiplyr")
+
+    expect_equal (dat$first, 1)
+    expect_equal (dat$last, 100)
+
+    expect_equal (dat$col.names[1:3], c("x", "f", "G"))
+    expect_equal (dat$order.cols[1:3], c(1, 2, 3))
+    expect_equal (dat$type.cols[1:3], c(0, 1, 2))
+
+    expect_equal (sum (dat$order.cols[-(1:3)]), 0)
+    expect_true (all(c(".tmp", ".filter", ".group") %in% dat$col.names))
+    expect_equal (dat$tmpcol, match(".tmp", dat$col.names))
+    expect_equal (dat$filtercol, match(".filter", dat$col.names))
+    expect_equal (dat$groupcol, match(".group", dat$col.names))
+    expect_true (all(dat$bm[, dat$filtercol] == 1))
+
+    expect_equal (dat$factor.cols, c(2, 3))
+    expect_equal (dat$factor.levels[[1]], c("f1", "f2"))
+    expect_equal (dat$factor.levels[[2]], c("A", "B", "C", "D"))
+
+    expect_gte (sum(is.na(dat$col.names)), 1)
+
+    expect_equal (length(dat$cls), 2)
+    expect_true (all(c("SOCKcluster", "cluster") %in% class(dat$cls)))
+
+    res <- do.call (c, dat$cluster_eval (123))
+    expect_equal (res, rep(123, 2))
 
     expect_equal (dat$grouped, FALSE)
     expect_equal (dat$group, 0)
@@ -233,7 +297,7 @@ test_that ("with(dat$envir(), x <- ...) sets x to ...", {
     #Quirk: data.frame makes a character vector, Multiplyr still a factor
     expect_equal (as.character(dat["location"]), as.character(dat.df$location))
     expect_true (is.factor(dat["location"]))
-    with (dat, location <- rep(c("field", "space", "house"), length.out=100))
+    with (dat$envir(), location <- rep(c("field", "space", "house"), length.out=100))
     dat.df["location"] <- rep(c("field", "space", "house"), length.out=100)
     expect_equal (as.character(dat["location"]), as.character(dat.df$location))
 })
