@@ -792,6 +792,13 @@ calc_group_sizes = function (delay=TRUE) {
         }
     }
     group_sizes_stale <<- FALSE
+},
+row_names = function () {
+    if (filtered) {
+        return (sum(bm[, filtercol] == 1))
+    } else {
+        return (seq_len((last - first)+1))
+    }
 }
 ))
 
@@ -843,3 +850,20 @@ setMethod ("[<-", "Multiplyr", function (x, i, j, ..., value) {
     }
     invisible (x)
 })
+
+setMethod ("as.data.frame", "Multiplyr", function (x) {
+    x[]
+})
+
+setMethod ("dimnames", "Multiplyr", function (x) {
+    list(row.names(x), names(x))
+})
+
+setMethod("names", "Multiplyr", function(x) {
+    x$col.names[x$order.cols > 0]
+})
+
+setMethod("row.names", "Multiplyr", function (x) {
+    x$row_names()
+})
+
