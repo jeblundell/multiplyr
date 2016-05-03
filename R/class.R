@@ -59,6 +59,10 @@ initialize = function (..., alloc=1, cl=NULL,
     } else {
         Rdsm::mgrinit (cl)
         cls <<- cl
+        cluster_eval ({
+            if (exists(".master")) { rm(.master) }
+            if (exists(".local")) { rm(.local) }
+        })
     }
 
     cluster_eval ({
@@ -71,7 +75,7 @@ initialize = function (..., alloc=1, cl=NULL,
     ncols <- length(vars) + alloc + length(special)
     col.names <<- c(names(vars), rep(NA, alloc), special)
     order.cols <<- c(seq_len(length(vars)), rep(0, alloc), rep(0, length(special)))
-    Rdsm::mgrmakevar(cls, ".bm", nr=nrows, nc=ncols)
+    Rdsm::mgrmakevar(cls, ".bm", nr=nrows, nc=ncols, savedesc=FALSE)
 
     bm <<- .bm
     bm.master <<- .bm
