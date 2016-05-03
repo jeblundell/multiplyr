@@ -272,7 +272,7 @@ show = function (max.row=10) {
     }
     cat ("\n")
 },
-get_data = function (i=NULL, j=NULL, nsa=FALSE) {
+get_data = function (i=NULL, j=NULL, nsa=FALSE, drop=FALSE) {
     if (is.null(i)) {
         rowslice <- NULL
     } else {
@@ -280,8 +280,8 @@ get_data = function (i=NULL, j=NULL, nsa=FALSE) {
     }
 
     if (is.null(j)) {
-        m <- which (order.cols > 0)
-        if (length(m) == 0) {
+        cols <- which (order.cols > 0)
+        if (length(cols) == 0) {
             return (data.frame())
         }
     } else if (is.numeric(j)) {
@@ -339,7 +339,7 @@ get_data = function (i=NULL, j=NULL, nsa=FALSE) {
     }
 
     if (nsa) {
-        if (is.null(filtrows)) {
+        if (!is.null(filtrows)) {
             return (bm[filtrows, cols])
         } else {
             return (bm[, cols])
@@ -370,7 +370,11 @@ get_data = function (i=NULL, j=NULL, nsa=FALSE) {
         }
     }
 
-    if (length(cols) > 1) {
+    if (!drop) {
+        out <- data.frame(out)
+    }
+
+    if (length(cols) > 1 || !drop) {
         colnames (out) <- col.names[cols]
     }
 
@@ -791,3 +795,51 @@ calc_group_sizes = function (delay=TRUE) {
 }
 ))
 
+setMethod ("[", "Multiplyr", function (x, i, j, ..., drop=TRUE) {
+    N <- nargs() - !missing(drop) - !missing(...)
+    if (N < 3) {
+        if (missing(i)) {
+            # dat[]
+            return (x$get_data(NULL, NULL, drop=drop, ...))
+        } else {
+            # dat["x"]
+            return (x$get_data(NULL, i, drop=drop, ...))
+        }
+    } else {
+        if (missing(i)) {
+            # dat[, "x"]
+            return (x$get_data(NULL, j, drop=drop, ...))
+        } else if (missing(j)) {
+            # dat[1:10, ]
+            return (x$get_data(i, NULL, drop=drop, ...))
+        } else {
+            # dat[1:10, "x"]
+            return (x$get_data(i, j, drop=drop))
+        }
+    }
+})
+
+setMethod ("[<-", "Multiplyr", function (x, i, j, ..., value) {
+    N <- nargs() - !missing(...)
+    if (N < 4) {
+        if (missing(i)) {
+            #dat[] <- val
+            x$set_data (NULL, NULL, value, ...)
+        } else {
+            #dat["x"] <- val
+            x$set_data (NULL, i, value, ...)
+        }
+    } else {
+        if (missing(i)) {
+            #dat[,"x"] <- val
+            x$set_data (NULL, j, value, ...)
+        } else if (missing(j)) {
+            #dat[1:10, ] <- val
+            x$set_data(i, NULL, value, ...)
+        } else {
+            #dat[1:10, "x"] <- val
+            x$set_data(i, j, value, ...)
+        }
+    }
+    invisible (x)
+})
