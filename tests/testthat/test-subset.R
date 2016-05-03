@@ -1,7 +1,9 @@
 context("subset")
 
+cl2 <- parallel::makeCluster(2)
+
 test_that ("define() can create new variables", {
-    dat <- Multiplyr (x=1:100, alloc=2, cl=2)
+    dat <- Multiplyr (x=1:100, alloc=2, cl=cl2)
     dat %>% define (a, b)
 
     expect_true (all(c("a", "b") %in% dat$col.names))
@@ -11,14 +13,13 @@ test_that ("define() can create new variables", {
     expect_equal (dat["a"], 1:100)
     expect_equal (dat["b"], 100:1)
 
-    stopCluster (dat$cls)
     rm (dat)
 })
 
 test_that ("define() can copy an existing factor", {
     dat <- Multiplyr (x=rep(c("A", "B", "C", "D"), each=25),
                    y=as.factor(rep(c("A", "B", "C", "D"), each=25)),
-                   alloc=2, cl=2)
+                   alloc=2, cl=cl2)
     dat %>% define (a=x, b=y)
 
     expect_true (all(c("a", "b") %in% dat$col.names))
@@ -27,25 +28,23 @@ test_that ("define() can copy an existing factor", {
     expect_equal (dat["a"], dat["x"])
     expect_equal (dat["b"], rev(as.factor(dat["x"])))
 
-    stopCluster (dat$cls)
     rm (dat)
 })
 
 test_that ("define() propagates to clusters/groups", {
     dat <- Multiplyr (x=rep(c("A", "B"), each=50),
-                   G=rep(c("A", "B"), each=50), alloc=2, cl=2)
+                   G=rep(c("A", "B"), each=50), alloc=2, cl=cl2)
     dat %>% partition_group (G)
 
     dat %>% define (a=x)
     dat %>% transmute (a="A")
     expect_equal (dat["a"], rep("A", each=100))
 
-    stopCluster (dat$cls)
     rm (dat)
 })
 
 test_that ("undefine() can drop a column", {
-    dat <- Multiplyr (w=1:100, x=1:100, y=100:1, z=rep("A",100), cl=2)
+    dat <- Multiplyr (w=1:100, x=1:100, y=100:1, z=rep("A",100), cl=cl2)
     dat %>% undefine(w)
     expect_error (dat["w"])
     expect_equal (dat["x"], 1:100)
@@ -58,13 +57,11 @@ test_that ("undefine() can drop a column", {
     expect_error (dat["y"])
     expect_equal (dat["z"], rep("A", 100))
 
-    stopCluster (dat$cls)
     rm (dat)
-
 })
 
 test_that ("select() drops columns", {
-    dat <- Multiplyr (w=1:100, x=1:100, y=100:1, z=rep("A",100), cl=2)
+    dat <- Multiplyr (w=1:100, x=1:100, y=100:1, z=rep("A",100), cl=cl2)
     dat %>% select (x, y)
 
     expect_error (dat["w"])
@@ -72,12 +69,11 @@ test_that ("select() drops columns", {
     expect_equal (dat["y"], 100:1)
     expect_error (dat["z"])
 
-    stopCluster (dat$cls)
     rm (dat)
 })
 
 test_that ("rename() preserves data and only renames", {
-    dat <- Multiplyr (w=1:100, x=1:100, y=100:1, z=rep("A",100), cl=2)
+    dat <- Multiplyr (w=1:100, x=1:100, y=100:1, z=rep("A",100), cl=cl2)
     dat %>% rename (a=x, b=y)
 
     expect_error (dat["x"])
@@ -87,24 +83,22 @@ test_that ("rename() preserves data and only renames", {
     expect_equal (dat["b"], 100:1)
     expect_equal (dat["z"], rep("A", 100))
 
-    stopCluster (dat$cls)
     rm (dat)
 })
 
 test_that ("rename() propagates to clusters/groups", {
-    dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=2)
+    dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
     dat %>% partition_group (G)
 
     dat %>% rename (a=x)
     dat %>% transmute (y=a)
     expect_equal (dat["y"], 1:100)
 
-    stopCluster (dat$cls)
     rm (dat)
 })
 
 test_that ("slice() works on ungrouped data", {
-    dat <- Multiplyr (x=1:100, y=100:1, cl=2)
+    dat <- Multiplyr (x=1:100, y=100:1, cl=cl2)
     dat %>% slice(start = 1, end = 50)
     expect_equal (dat["x"], 1:50)
     expect_equal (dat["y"], 100:51)
@@ -117,13 +111,12 @@ test_that ("slice() works on ungrouped data", {
     expect_equal (dat["x"], 5)
     expect_equal (dat["y"], 96)
 
-    stopCluster (dat$cls)
     rm (dat)
 })
 
 test_that ("slice() works with grouped data", {
     dat <- Multiplyr (x=1:100, y=100:1,
-                   G=rep(c("A", "B"), each=50), cl=2)
+                   G=rep(c("A", "B"), each=50), cl=cl2)
     dat %>% partition_group (G)
 
     dat %>% slice (start=1, end=25)
@@ -138,6 +131,7 @@ test_that ("slice() works with grouped data", {
     expect_equal (dat["x"], c(5, 55))
     expect_equal (dat["y"], c(96, 46))
 
-    stopCluster (dat$cls)
     rm (dat)
 })
+
+parallel::stopCluster(cl2)

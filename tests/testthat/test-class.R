@@ -1,11 +1,13 @@
 context("class")
 
+cl2 <- parallel::makeCluster(2)
+
 test_that ("Multiplyr(x=..., y=...) creates the appropriate structure", {
     dat <- Multiplyr(x=1:100,
                   f=factor(rep(c("f1", "f2"), each=50), levels=c("f1", "f2")),
                   G=rep(c("A", "B", "C", "D"), each=25),
                   alloc=1,
-                  cl=2)
+                  cl=cl2)
 
     expect_equal (nrow(dat$bm), 100)
     expect_gte (ncol(dat$bm), 3)
@@ -31,7 +33,6 @@ test_that ("Multiplyr(x=..., y=...) creates the appropriate structure", {
     expect_equal (dat$group, 0)
     expect_equal (dat$group_partition, FALSE)
 
-    stopCluster (dat$cls)
     rm (dat)
 })
 # .filter, .group, alloc
@@ -43,7 +44,7 @@ test_that ("Multiplyr() works on a data.frame", {
                          stringsAsFactors = FALSE)
     dat <- Multiplyr(dat.df,
                   alloc=1,
-                  cl=2)
+                  cl=cl2)
 
 
     expect_equal (nrow(dat$bm), 100)
@@ -70,7 +71,6 @@ test_that ("Multiplyr() works on a data.frame", {
     expect_equal (dat$group, 0)
     expect_equal (dat$group_partition, FALSE)
 
-    stopCluster (dat$cls)
     rm (dat)
 })
 
@@ -79,7 +79,7 @@ dat.df <- data.frame (x=N:1,
              animal=rep(c("dog", "cat", "mouse", "cow"), each=N/4),
              location=as.factor(rep(c("house", "field", "space"), length.out=N)),
              stringsAsFactors = FALSE)
-dat <- Multiplyr (dat.df, alloc=1, cl=2)
+dat <- Multiplyr (dat.df, alloc=1, cl=cl2)
 
 ### Getting
 
@@ -256,3 +256,5 @@ test_that ("with(dat$envir(), x <- ...) sets x to ...", {
 #         expect_equal (as.character(dat$location), as.character(dat.df$location))
 #     }
 # })
+
+parallel::stopCluster (cl2)

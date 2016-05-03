@@ -1,11 +1,13 @@
 context("partition")
 
+cl2 <- parallel::makeCluster(2)
+
 test_that("Multiplyr() partitions data evenly over 2 nodes by default", {
     dat <- Multiplyr(x=1:100,
                   f=factor(rep(c("f1", "f2"), each=50), levels=c("f1", "f2")),
                   G=rep(c("A", "B", "C", "D"), each=25),
                   alloc=1,
-                  cl=2)
+                  cl=cl2)
     res <- do.call (c, dat$cluster_eval(nrow(.local$bm)))
     expect_equal (res, c(50, 50))
     first <- do.call (c, dat$cluster_eval(.local$first))
@@ -24,12 +26,11 @@ test_that("Multiplyr() partitions data evenly over 2 nodes by default", {
     res <- sort (do.call (c, dat$cluster_eval(.local[, "G"])))
     expect_equal (res, rep(c("A", "B", "C", "D"), each=25))
 
-    stopCluster (dat$cls)
     rm(dat)
 })
 
 test_that("Multiplyr() partitions N=1 over 2 nodes sensibly", {
-    dat <- Multiplyr (x=1, y=2, cl=2)
+    dat <- Multiplyr (x=1, y=2, cl=cl2)
     res <- do.call (c, dat$cluster_eval(.local$empty))
     expect_equal (sort(res), c(FALSE, TRUE))
     res <- sort (do.call (c, dat$cluster_eval({
@@ -37,12 +38,11 @@ test_that("Multiplyr() partitions N=1 over 2 nodes sensibly", {
         return (c(.local["x"], .local["y"]))
     })))
     expect_equal (res, c(1, 2))
-    stopCluster (dat$cls)
     rm (dat)
 })
 
 test_that("Multiplyr() partitions N=2 over 2 nodes sensibly", {
-    dat <- Multiplyr (x=1:2, y=1:2, cl=2)
+    dat <- Multiplyr (x=1:2, y=1:2, cl=cl2)
     res <- do.call (c, dat$cluster_eval(nrow(.local$bm)))
     expect_equal (res, c(1, 1))
     first <- do.call (c, dat$cluster_eval(.local$first))
@@ -50,13 +50,12 @@ test_that("Multiplyr() partitions N=2 over 2 nodes sensibly", {
     expect_equal (sort(first), c(1,2))
     expect_equal (sort(last), c(1,2))
     expect_equal (first, last)
-    stopCluster (dat$cls)
     rm (dat)
 })
 
 
 test_that("partition_group() can partition 2 groups over 2 nodes", {
-    dat <- Multiplyr (x=1:100, G=rep(c(1,2), length.out=100), cl=2)
+    dat <- Multiplyr (x=1:100, G=rep(c(1,2), length.out=100), cl=cl2)
     dat %>% partition_group (G)
     res <- do.call (c, dat$cluster_eval(length(.grouped)))
     expect_equal (res, c(1, 1))
@@ -68,21 +67,19 @@ test_that("partition_group() can partition 2 groups over 2 nodes", {
     res <- dat$cluster_eval(.grouped[[1]][, "x"])
     expect_equal (res[[1]], seq(1, 99, by=2))
     expect_equal (res[[2]], seq(2, 100, by=2))
-    stopCluster (dat$cls)
     rm (dat)
 })
 
 test_that("partition_group() with 1 group uses only 1 node", {
-    dat <- Multiplyr (x=1:100, G=rep(1, length.out=100), cl=2)
+    dat <- Multiplyr (x=1:100, G=rep(1, length.out=100), cl=cl2)
     dat %>% partition_group (G)
     res <- do.call (c, dat$cluster_eval (.local$empty))
     expect_equal (sort(res), c(FALSE, TRUE))
-    stopCluster (dat$cls)
     rm (dat)
 })
 
 test_that("partition_group() with 3 groups partitions as 2,1 or 1,2", {
-    dat <- Multiplyr (x=1:99, G=rep(c(1,2,3), length.out=99), cl=2)
+    dat <- Multiplyr (x=1:99, G=rep(c(1,2,3), length.out=99), cl=cl2)
     dat %>% partition_group (G)
     res <- do.call (c, dat$cluster_eval(length(.grouped)))
     expect_equal (sort(res), c(1,2))
@@ -91,12 +88,11 @@ test_that("partition_group() with 3 groups partitions as 2,1 or 1,2", {
     expect_equal (sort(do.call(c, res)), c(1, 2, 3))
     expect_equal (sort(c(length(res[[1]]),
                          length(res[[2]]))), c(1,2))
-    stopCluster (dat$cls)
     rm (dat)
 })
 
 test_that("partition_group() with 2 levels of 2 groups partitions as 2,2 with 2 clusters", {
-    dat <- Multiplyr (x=1:100, A=rep(c(1,2), each=50), B=rep(c(1,2), length.out=100), cl=2)
+    dat <- Multiplyr (x=1:100, A=rep(c(1,2), each=50), B=rep(c(1,2), length.out=100), cl=cl2)
     dat %>% partition_group (A, B)
     res <- do.call (c, dat$cluster_eval(length(.grouped)))
     expect_equal (res, c(2,2))
@@ -104,6 +100,7 @@ test_that("partition_group() with 2 levels of 2 groups partitions as 2,2 with 2 
     res <- dat$cluster_eval(.groups)
     expect_equal (sort(do.call(c, res)), c(1, 2, 3, 4))
 
-    stopCluster (dat$cls)
     rm (dat)
 })
+
+parallel::stopCluster(cl2)
