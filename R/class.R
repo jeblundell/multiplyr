@@ -173,7 +173,7 @@ cluster_export = function (var, var.as=NULL, envir=parent.frame()) {
         tmp <- new.env()
         for (i in 1:length(var)) {
             assign (var.as[i], get(var[i], envir=envir), envir=tmp)
-            parallel::clusterExport (cls, var.as, envir=tmp)
+            parallel::clusterExport (cls, var.as[i], envir=tmp)
         }
     }
 },
