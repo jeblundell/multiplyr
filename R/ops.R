@@ -118,8 +118,11 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
     .self$cluster_export (c(".cols"))
 
     # (0) If partitioned by group, temporarily repartition evenly
-    regroup_partition <- .self$group_partition
-    if (.self$group_partition) {
+    rg_grouped <- .self$grouped
+    rg_partition <- .self$group_partition
+    rg_cols <- .self$group.cols
+
+    if (rg_partition) {
         .self$partition_even()
     }
 
@@ -171,6 +174,10 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
         NULL
     })
     .self$filtered <- TRUE
+
+    .self$grouped <- rg_grouped
+    .self$group_partition <- rg_partition
+    .self$group.cols <- rg_cols
 
     if (auto_compact) {
         .self$compact()
