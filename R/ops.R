@@ -279,6 +279,8 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
     .self$sort (decreasing=FALSE, cols=.cols)
 
     .self$group.cols <- .cols
+    .self$grouped <- TRUE
+    .self$group_sizes_stale <- FALSE
 
     if (nrow(.self$bm) == 1) {
         .self$bm[, .self$groupcol] <- 1
@@ -400,8 +402,6 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
     .self$group_sizes <- sizes
     .self$group_max <- length(sizes)
     .self$group_sizes_stale <- FALSE
-
-    .self$grouped <- TRUE
 
     # Input      Gcount   tg      Gbase  Output
     # 1: G=1,2   2        FALSE   0      G=1,2
