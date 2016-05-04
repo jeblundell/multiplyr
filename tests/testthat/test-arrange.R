@@ -19,6 +19,7 @@ test_that ("arrange() sorts on a single cluster", {
     expect_equal (dat["x"], c(50:1, 100:51))
     expect_equal (dat["y"], c(51:100, 1:50))
     expect_equal (dat["G"], rep(c(1, 2), each=50))
+
     rm (dat)
 })
 
@@ -76,6 +77,28 @@ test_that ("arrange() maintains groups when sorting a grouped data frame", {
 test_that ("arrange() throws an error with undefined columns", {
     dat <- Multiplyr (x=1:100, y=100:1, G=rep(c("A", "B", "C", "D", each=25)), cl=cl2)
     expect_error (dat %>% arrange(nonexistent))
+    rm (dat)
+})
+
+test_that ("arrange() can deal with an empty data frame", {
+    dat <- Multiplyr (x=1:100, y=100:1, G=rep(c("A", "B", "C", "D", each=25)), cl=cl2)
+    dat %>% filter(x<0)
+    expect_equal (dat %>% arrange(x), dat)
+    rm (dat)
+})
+
+test_that ("arrange() with no parameters returns data frame unchanged", {
+    dat <- Multiplyr (x=1:100, y=100:1, G=rep(c("A", "B", "C", "D", each=25)), cl=cl2)
+    expect_equal (dat %>% arrange(), dat)
+    rm (dat)
+})
+
+test_that ("arrange() returns a data frame", {
+    dat <- Multiplyr (x=1:100, y=100:1, G=rep(c("A", "B", "C", "D", each=25)), cl=cl2)
+    expect_equal (dat %>% arrange(), dat)
+
+    dat %>% arrange(x)
+    expect_equal (dat %>% arrange(x), dat)
     rm (dat)
 })
 
