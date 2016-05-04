@@ -55,6 +55,28 @@ test_that("mutate(x=\"A\") works", {
     rm (dat)
 })
 
+test_that ("mutate() on a group column throws an error", {
+    dat <- Multiplyr (x=rep(c("A", "B"), each=50), G=rep(1:5, each=20), cl=cl2)
+    dat %>% group_by (G)
+    expect_error (dat %>% mutate (G=3), "group column")
+    rm (dat)
+})
+
+test_that ("mutate() on a former group column prevents regroup()", {
+    dat <- Multiplyr (x=rep(c("A", "B"), each=50), G=rep(1:5, each=20), cl=cl2)
+    dat %>% group_by (G) %>% ungroup()
+    dat %>% mutate (G=3)
+    expect_error (dat %>% regroup())
+    rm (dat)
+})
+
+test_that ("mutate() throws error with no parameters or non-Multiplyr object", {
+    dat <- Multiplyr (x=1:100, y=1:100, cl=cl2)
+    expect_error (dat %>% mutate(), "mutation")
+    expect_error (data.frame(x=1:100) %>% mutate(x=x*2), "Multiplyr")
+    rm (dat)
+})
+
 test_that("transmute(x=123) works", {
     dat <- Multiplyr (x=1:100, cl=cl2)
     dat %>% transmute (x=123)

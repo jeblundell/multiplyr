@@ -286,6 +286,13 @@ test_that ("ungroup() works appropriately after partition_group()", {
     rm (dat)
 })
 
+test_that ("ungroup() gives an error if no previous group or applied to non-Multiplyr", {
+    dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25), cl=cl2)
+    expect_warning (dat %>% ungroup(), "not grouped")
+    expect_error (data.frame(x=1:100) %>% ungroup(), "Multiplyr")
+    rm (dat)
+})
+
 test_that ("regroup() works appropriately", {
     dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25), cl=cl2)
     dat %>% partition_group (G) %>% ungroup() %>% regroup()
@@ -297,6 +304,22 @@ test_that ("regroup() works appropriately", {
 
     dat %>% summarise (x=length(x))
     expect_equal (dat["x"], rep(25, 4))
+
+    rm (dat)
+})
+
+test_that ("regroup() gives error if no previous group or if groupcol modified", {
+    dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25), cl=cl2)
+    expect_error (dat %>% regroup(), "after group_by")
+
+    dat %>% group_by (G)
+    expect_warning (dat %>% regroup(), "already grouped")
+
+    dat %>% ungroup()
+    dat %>% mutate (G="C")
+    expect_error (dat %>% regroup())
+
+    expect_error (data.frame(x=1:100) %>% regroup(), "Multiplyr")
 
     rm (dat)
 })

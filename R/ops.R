@@ -425,9 +425,26 @@ group_sizes <- function (.self) {
 #' @describeIn mutate
 #' @export
 mutate_ <- function (.self, ..., .dots) {
+    if (!is(.self, "Multiplyr")) {
+        stop ("mutate operation only valid for Multiplyr objects")
+    }
+    if (.self$empty) { return (.self) }
+
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    if (length(.dots) == 0) {
+        stop ("No mutation operations specified")
+    }
+
     .resnames <- names(.dots)
     .rescols <- .self$alloc_col (.resnames, update=TRUE)
+    if (any(.rescols == .self$group.cols)) {
+        if (.self$grouped) {
+            stop("mutate on a group column is not permitted")
+        } else {
+            #FIXME: more elegant solution
+            .self$group.cols <- 0 #prevent regroup
+        }
+    }
 
     .self$cluster_export (c(".resnames", ".rescols", ".dots"))
     .self$cluster_eval ({
@@ -447,9 +464,7 @@ mutate_ <- function (.self, ..., .dots) {
         }
         NULL
     })
-    if (any(.rescols == .self$group.cols)) {
-        .self$calc_group_sizes()
-    }
+
     return (.self)
 }
 
@@ -509,7 +524,16 @@ partition_group_ <- function (.self, ..., .dots) {
 #' @param .self Data frame
 #' @export
 regroup <- function (.self, auto_partition=NULL) {
-    # This relies upon grouping column being unchanged
+    if (!is(.self, "Multiplyr")) {
+        stop ("regroup operation only valid for Multiplyr objects")
+    }
+    if (.self$grouped) {
+        warning ("regroup attempted on an object that's already grouped")
+        return (.self)
+    }
+    if (.self$group.cols == 0) {
+        stop ("regroup may only be used after group_by (and without modifying the group columns)")
+    }
 
     if (is.null(auto_partition)) {
         auto_partition <- .self$auto_partition
@@ -759,6 +783,13 @@ unselect_ <- undefine_
 #' @param .dots Workaround for non-standard evaluation
 #' @export
 ungroup <- function (.self) {
+    if (!is(.self, "Multiplyr")) {
+        stop ("ungroup operation only valid for Multiplyr objects")
+    }
+    if (!.self$grouped) {
+        warning ("ungroup attempted on an object that's not grouped")
+        return (.self)
+    }
     .self$grouped <- .self$group_partition <- FALSE
     .self$update_fields (c("grouped", "group_partition"))
     .self$partition_even ()

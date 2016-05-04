@@ -113,6 +113,7 @@ initialize = function (..., alloc=1, cl=NULL,
     }
 
     nsa <<- FALSE
+    group.cols <<- 0
     grouped <<- FALSE
     group <<- 0
     group_partition <<- FALSE
