@@ -133,4 +133,18 @@ test_that("transmute(x=\"A\") works", {
     rm (dat)
 })
 
+test_that ("transmute() on a group column throws an error", {
+    dat <- Multiplyr (x=rep(c("A", "B"), each=50), G=rep(1:5, each=20), cl=cl2)
+    dat %>% group_by (G)
+    expect_error (dat %>% transmute (G=3), "group column")
+    rm (dat)
+})
+
+test_that ("transmute() throws error with no parameters or non-Multiplyr object", {
+    dat <- Multiplyr (x=1:100, y=1:100, cl=cl2)
+    expect_error (dat %>% transmute(), "mutation")
+    expect_error (data.frame(x=1:100) %>% transmute(x=x*2), "Multiplyr")
+    rm (dat)
+})
+
 parallel::stopCluster(cl2)

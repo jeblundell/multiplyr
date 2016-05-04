@@ -326,6 +326,11 @@ test_that ("regroup() gives error if no previous group or if groupcol modified",
     dat %>% mutate (G="C")
     expect_error (dat %>% regroup())
 
+    dat %>% group_by (G)
+    dat %>% ungroup()
+    dat %>% transmute (G="C")
+    expect_error (dat %>% regroup())
+
     expect_error (data.frame(x=1:100) %>% regroup(), "Multiplyr")
 
     rm (dat)

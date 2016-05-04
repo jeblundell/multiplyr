@@ -769,11 +769,28 @@ summarise_ <- function (.self, ..., .dots, auto_compact = NULL) {
 #' @describeIn transmute
 #' @export
 transmute_ <- function (.self, ..., .dots) {
+    if (!is(.self, "Multiplyr")) {
+        stop ("transmute operation only valid for Multiplyr objects")
+    }
+
+    if (.self$empty) { return (.self) }
+
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    if (length(.dots) == 0) {
+        stop ("No mutation operations specified")
+    }
 
     #mutate
     .resnames <- names(.dots)
     .rescols <- .self$alloc_col (.resnames, update=FALSE)
+    if (any(.rescols == .self$group.cols)) {
+        if (.self$grouped) {
+            stop("transmute on a group column is not permitted")
+        } else {
+            #FIXME: more elegant solution
+            .self$group.cols <- 0 #prevent regroup
+        }
+    }
 
     .self$cluster_export (c(".resnames", ".rescols", ".dots"))
     .self$cluster_eval ({
