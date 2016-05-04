@@ -56,7 +56,6 @@ test_that("Multiplyr() partitions N=2 over 2 nodes sensibly", {
     rm (dat)
 })
 
-
 test_that("partition_group() can partition 2 groups over 2 nodes", {
     dat <- Multiplyr (x=1:100, G=rep(c(1,2), length.out=100), cl=cl2)
     dat %>% partition_group (G)
@@ -103,6 +102,17 @@ test_that("partition_group() with 2 levels of 2 groups partitions as 2,2 with 2 
     res <- dat$cluster_eval(.groups)
     expect_equal (sort(do.call(c, res)), c(1, 2, 3, 4))
 
+    rm (dat)
+})
+
+test_that ("partition_even() gives error if non-Multiplyr", {
+    expect_error (data.frame (x=1:100) %>% partition_even(), "Multiplyr")
+})
+
+test_that ("partition_group() gives errors if no grouping or non-Multiplyr", {
+    dat <- Multiplyr (x=1:100, A=rep(c(1,2), each=50), B=rep(c(1,2), length.out=100), cl=cl2)
+    expect_error (dat %>% partition_group(), "group_by")
+    expect_error (data.frame (x=1:100) %>% partition_group(x), "Multiplyr")
     rm (dat)
 })
 

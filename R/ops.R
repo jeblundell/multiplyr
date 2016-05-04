@@ -406,6 +406,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
 
     # Repartition by group if appropriate
     if (regroup_partition) {
+        .self$grouped <- TRUE
         return (.self %>% partition_group())
     } else {
         .self$rebuild_grouped()
@@ -472,6 +473,9 @@ mutate_ <- function (.self, ..., .dots) {
 #' @param .self Data frame
 #' @export
 partition_even <- function (.self) {
+    if (!is(.self, "Multiplyr")) {
+        stop ("partition_even operation only valid for Multiplyr objects")
+    }
     .self$partition_even ()
     .self$group_partition <- FALSE
     .self$update_fields ("group_partition")
@@ -481,12 +485,18 @@ partition_even <- function (.self) {
 #' @describeIn partition_group
 #' @export
 partition_group_ <- function (.self, ..., .dots) {
+    if (!is(.self, "Multiplyr")) {
+        stop ("partition_group operation only valid for Multiplyr objects")
+    }
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
 
     if (length(.dots) > 0) {
         .self$group_partition <- TRUE
         return (group_by_ (.self, .dots=.dots))
         #group_by_ calls partition_group() on its return
+    }
+    if (!.self$grouped) {
+        stop ("Need to specify grouping factors or apply group_by first")
     }
 
     N <- length(.self$cls)
