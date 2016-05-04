@@ -148,18 +148,29 @@ test_that ("slice() works with grouped data", {
                    G=rep(c("A", "B"), each=50), cl=cl2)
     dat %>% partition_group (G)
 
-    dat %>% slice (start=1, end=25)
+    dat %>% slice (start=1, end=25, each=TRUE)
     expect_equal (dat["x"], c(1:25, 51:75))
     expect_equal (dat["y"], c(100:76, 50:26))
 
-    dat %>% slice (1:5)
+    dat %>% slice (1:5, each=TRUE)
     expect_equal (dat["x"], c(1:5, 51:55))
     expect_equal (dat["y"], c(100:96, 50:46))
 
-    dat %>% slice (5)
+    dat %>% slice (5, each=TRUE)
     expect_equal (dat["x"], c(5, 55))
     expect_equal (dat["y"], c(96, 46))
 
+    rm (dat)
+})
+
+test_that ("slice() throws errors for missing parameters/non-Multiplyr", {
+    dat <- Multiplyr (x=1:100, y=100:1,
+                      G=rep(c("A", "B"), each=50), cl=cl2)
+    expect_error (dat %>% slice(), "either")
+    expect_error (dat %>% slice(start=1), "either")
+    expect_error (dat %>% slice(end=5), "either")
+    expect_error (dat %>% slice(start=1,end=5,rows=1:5), "not both")
+    expect_error (data.frame(x=1:100) %>% slice(1:5), "Multiplyr")
     rm (dat)
 })
 

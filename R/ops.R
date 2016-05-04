@@ -620,7 +620,9 @@ select_ <- function (.self, ..., .dots) {
 
 #' @export
 slice <- function (.self, rows=NULL, start=NULL, end=NULL, each=FALSE, auto_compact=NULL) {
-    if (is.null(rows) && (is.null(start) || is.null(end))) {
+    if (!is(.self, "Multiplyr")) {
+        stop ("slice operation only valid for Multiplyr objects")
+    } else if (is.null(rows) && (is.null(start) || is.null(end))) {
         stop ("Must specify either rows or start and stop")
     } else if (!is.null(rows) && !(is.null(start) || is.null(end))) {
         stop ("Can either specify rows or start and stop; not both")
@@ -635,7 +637,7 @@ slice <- function (.self, rows=NULL, start=NULL, end=NULL, each=FALSE, auto_comp
             .self$cluster_export (c("start", "end"), c(".start", ".end"))
             .self$cluster_eval ({
                 if (.local$empty) { return (NULL) }
-                if (.self$grouped) {
+                if (.local$grouped) {
                     for (.g in 1:length(.groups)) {
                         .grouped[[.g]]$filter_range (.start, .end)
                     }
@@ -648,7 +650,7 @@ slice <- function (.self, rows=NULL, start=NULL, end=NULL, each=FALSE, auto_comp
             .self$cluster_export ("rows", ".rows")
             .self$cluster_eval ({
                 if (.local$empty) { return (NULL) }
-                if (.self$grouped) {
+                if (.local$grouped) {
                     for (.g in 1:length(.groups)) {
                         .grouped[[.g]]$filter_vector (.rows)
                     }
@@ -661,7 +663,7 @@ slice <- function (.self, rows=NULL, start=NULL, end=NULL, each=FALSE, auto_comp
             .self$cluster_export ("rows", ".rows")
             .self$cluster_eval ({
                 if (.local$empty) { return (NULL) }
-                if (.self$grouped) {
+                if (.local$grouped) {
                     for (.g in 1:length(.groups)) {
                         .grouped[[.g]]$filter_rows (.rows)
                     }
@@ -681,6 +683,7 @@ slice <- function (.self, rows=NULL, start=NULL, end=NULL, each=FALSE, auto_comp
         }
     }
 
+    .self$filtered <- TRUE
     .self$calc_group_sizes()
 
     if (auto_compact) {
