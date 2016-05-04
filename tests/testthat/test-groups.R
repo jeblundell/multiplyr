@@ -168,22 +168,24 @@ test_that ("group_sizes() works appropriately", {
     dat %>% group_by (I)
     expect_equal (group_sizes(dat), rep(25, 4))
 
+    dat %>% distinct (G)
+    expect_equal (group_sizes(dat), rep(1, 4))
+
     rm (dat)
 })
 
 test_that ("ungroup() works appropriately after group_by()", {
-    dat <- Multiplyr (x=1:100, G=rep(1, 100), H=rep(1:2, each=50),
-                   I=rep(1:4, each=25), cl=cl2)
+    dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25), cl=cl2)
     dat %>% group_by (G) %>% ungroup()
     dat %>% summarise (x=length(x))
-    expect_equal (dat["x"], 100)
+    expect_equal (dat["x"], c(50, 50))
     rm (dat)
 })
 test_that ("ungroup() works appropriately after partition_group()", {
     dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25), cl=cl2)
     dat %>% partition_group (G) %>% ungroup()
     dat %>% summarise (x=length(x))
-    expect_equal (dat["x"], 100)
+    expect_equal (dat["x"], c(50, 50))
     rm (dat)
 })
 
