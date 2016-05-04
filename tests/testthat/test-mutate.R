@@ -1,5 +1,8 @@
 context("mutate")
 
+#mutate
+#transmute
+
 cl2 <- parallel::makeCluster(2)
 
 test_that("mutate(x=x*2) works", {

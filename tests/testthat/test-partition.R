@@ -1,5 +1,8 @@
 context("partition")
 
+#partition_even
+#partition_group
+
 cl2 <- parallel::makeCluster(2)
 
 test_that("Multiplyr() partitions data evenly over 2 nodes by default", {

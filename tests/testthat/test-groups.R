@@ -1,5 +1,11 @@
 context("groups")
 
+#distinct
+#group_by
+#group_sizes
+#ungroup
+#regroup
+
 cl1 <- parallel::makeCluster(1)
 cl2 <- parallel::makeCluster(2)
 

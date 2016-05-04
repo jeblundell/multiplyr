@@ -1,5 +1,7 @@
 context("summarise")
 
+#summarise
+
 cl2 <- parallel::makeCluster(2)
 
 test_that ("summarise() works on ungrouped data", {

@@ -1,5 +1,7 @@
 context("utils")
 
+#distribute
+
 test_that ("distribute(x, N) returns N lots of x/N", {
     for (each in c(10, 33, 50)) {
         for (N in c(1, 3)) {
