@@ -251,13 +251,26 @@ filter_ <- function (.self, ..., .dots, auto_compact = NULL) {
 #' @describeIn group_by
 #' @export
 group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
+    if (!is(.self, "Multiplyr")) {
+        stop ("group_by operation only valid for Multiplyr objects")
+    }
+
     if (.self$empty) { return (.self) }
+
     if (is.null(.cols)) {
         .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
         namelist <- .dots2names (.dots)
 
         .cols <- match(namelist, .self$col.names)
+        if (any(is.na(.cols))) {
+            stop (sprintf("Undefined columns: %s", paste0(namelist[is.na(.cols)], collapse=", ")))
+        }
     }
+
+    if (length(.cols) == 0) {
+        stop ("No grouping columns specified")
+    }
+
     if (is.null(auto_partition)) {
         auto_partition <- .self$auto_partition
     }
