@@ -61,11 +61,9 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
     if (length(.dots) > 0) {
         namelist <- .dots2names (.dots)
         .cols <- match(namelist, .self$col.names)
-        .self$sort (decreasing=FALSE, dots=.dots)
     } else {
         .cols <- .self$order.cols > 0
         .cols <- (1:length(.cols))[.cols]
-        .self$sort (decreasing=FALSE, cols=.cols)
     }
 
     if (.self$grouped) {
