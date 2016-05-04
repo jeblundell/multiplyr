@@ -61,6 +61,9 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
     if (length(.dots) > 0) {
         namelist <- .dots2names (.dots)
         .cols <- match(namelist, .self$col.names)
+        if (any(is.na(.cols))) {
+            stop (sprintf("Undefined columns: %s", paste0(namelist[is.na(.cols)], collapse=", ")))
+        }
     } else {
         .cols <- .self$order.cols > 0
         .cols <- (1:length(.cols))[.cols]

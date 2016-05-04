@@ -69,6 +69,11 @@ test_that ("distinct() works on grouped data", {
     expect_equal (dat["x"], rep(1,4))
 })
 
+test_that ("distinct() throws an error with undefined columns", {
+    dat <- Multiplyr (x=rep(1, 100), G=rep(1:4, each=25), cl=cl2)
+    expect_error (dat %>% distinct (nonexistent))
+})
+
 test_that ("group_by() can group by one level", {
     dat <- Multiplyr (x=1:100, G=rep(1:4, each=25), cl=cl2)
     dat %>% group_by (G)
