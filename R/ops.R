@@ -5,6 +5,9 @@
 arrange_ <- function (.self, ..., .dots) {
     #This works on the presumption that factors have levels
     #sorted already
+    if (!is(.self, "Multiplyr")) {
+        stop ("arrange operation only valid for Multiplyr objects")
+    }
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
     if (length(.dots) == 0 || .self$empty) {
         return (.self)
