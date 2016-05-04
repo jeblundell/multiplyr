@@ -73,5 +73,11 @@ test_that ("arrange() maintains groups when sorting a grouped data frame", {
     rm (dat)
 })
 
+test_that ("arrange() throws an error with undefined columns", {
+    dat <- Multiplyr (x=1:100, y=100:1, G=rep(c("A", "B", "C", "D", each=25)), cl=cl2)
+    expect_error (dat %>% arrange(nonexistent))
+    rm (dat)
+})
+
 stopCluster (cl1)
 stopCluster (cl2)

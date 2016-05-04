@@ -6,6 +6,11 @@ arrange_ <- function (.self, ..., .dots) {
     #This works on the presumption that factors have levels
     #sorted already
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    nm <- .dots2names(.dots)
+    cols <- match(nm, .self$col.names)
+    if (any(is.na(cols))) {
+        stop (sprintf("Undefined columns: %s", paste0(nm[is.na(cols)], collapse=", ")))
+    }
     .self$sort(decreasing=FALSE, .dots)
 }
 
