@@ -43,19 +43,18 @@ no.strings.attached <- function (x) {
 #' @export
 test_transition <- function (.self, cols, rows) {
     N <- length(rows)
-    rows <- rows[-N]               #last row is not actually a transition
     rows.i <- which (!is.na(rows)) #subsetting gets stroppy with NA
     rows <- rows[rows.i]
 
     sm1 <- bigmemory::sub.big.matrix (.self$bm, firstRow=1, lastRow=nrow(.self$bm)-1)
     sm2 <- bigmemory::sub.big.matrix (.self$bm, firstRow=2, lastRow=nrow(.self$bm))
     if (length(cols) == 1 || length(rows) == 1) {
-        tg.a <- all(sm1[rows, cols] != sm2[rows, cols])
+        tg.a <- any(sm1[rows, cols] != sm2[rows, cols])
     } else {
         tg.a <- !apply (sm1[rows, cols] == sm2[rows, cols], 1, all)
     }
 
     tg <- rep(TRUE, N)
-    tg[rows.i+1] <- tg.a
+    tg[rows.i] <- tg.a
     tg
 }

@@ -136,7 +136,9 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
 
     # (2) work out if there's a group change between local[1] and local[2] etc.
     trans <- do.call (c, trans)
+    trans <- trans[-length(trans)] #last row not a transition
     tg <- test_transition (.self, .cols, trans)
+    tg <- c(TRUE, tg) #first node is a pseudo-transition
 
     # (3) set breaks=1 for all where there's a transition
     .self$cluster_export_each ("tg", ".tg")
@@ -311,8 +313,8 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
 
     # (2) work out if there's a group change between local[1] and local[2] etc.
     trans <- do.call (c, trans)
+    trans <- trans[-length(trans)] #last row not a transition
     tg <- test_transition (.self, .cols, trans)
-    tg <- tg[-1]
 
     # (3) add group base to each local
     Gcount <- do.call (c, .self$cluster_eval ({
