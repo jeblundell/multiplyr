@@ -24,7 +24,13 @@ arrange_ <- function (.self, ..., .dots) {
 #' @describeIn define
 #' @export
 define_ <- function (.self, ..., .dots) {
+    if (!is(.self, "Multiplyr")) {
+        stop ("arrange operation only valid for Multiplyr objects")
+    }
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    if (length(.dots) == 0) {
+        stop ("No column names specified")
+    }
     nm <- names(.dots)
     vars <- .dots2names (.dots)
     if (any(vars %in% .self$col.names)) {

@@ -48,10 +48,12 @@ test_that ("define() propagates to clusters/groups", {
     rm (dat)
 })
 
-test_that ("define() throws an error for existing columns", {
+test_that ("define() throws an error for existing/unspecified columns or non-Multiplyr", {
     dat <- Multiplyr (x=1:100, y=1:100, cl=cl2)
     expect_error (dat %>% define(x))
     expect_error (dat %>% define(x,y))
+    expect_error (dat %>% define())
+    expect_error (data.frame(x=1:100) %>% define(y), "Multiplyr")
 })
 
 test_that ("undefine() can drop a column", {
