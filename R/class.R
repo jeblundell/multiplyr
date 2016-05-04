@@ -812,13 +812,13 @@ calc_group_sizes = function (delay=TRUE) {
     #FIXME: make parallel/more efficient
     if (filtered) {
         bm[, tmpcol] <<- bm[, groupcol] * bm[, filtercol]
-        for (g in 1:group_max) {
-            group_sizes[g] <<- sum(bm[, tmpcol] == g)
-        }
+        group_sizes <<- sapply(seq_len(group_max), function (g) {
+            sum(.self$bm[, .self$tmpcol] == g)
+        })
     } else {
-        for (g in 1:group_max) {
-            group_sizes[g] <<- sum(bm[, groupcol] == g)
-        }
+        group_sizes <<- sapply(seq_len(group_max), function (g) {
+            sum(.self$bm[, .self$groupcol] == g)
+        })
     }
     group_sizes_stale <<- FALSE
 },

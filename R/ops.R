@@ -380,24 +380,14 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
     })
 
     # (4) figure out group sizes
-    res <- .self$cluster_eval (.breaks)
-    for (i in 1:length(res)) {
-        if (length(res[[i]]) > 1) {
-            for (j in 2:length(res[[i]])) {
-                res[[i]][j] <- res[[i]][j] - res[[i]][j-1]
-            }
-        }
+    res <- .self$cluster_eval (.breaks + .local$first - 1)
+    len <- sapply (res, length)
+    clen <- cumsum(len)
+    res <- do.call (c, res)
+    if (any(!tg)) {
+        res <- res[-clen[c(!tg, FALSE)]]
     }
-    sizes <- res[[1]]
-    for (i in 2:length(res)) {
-        if (!tg[i-1]) {
-            sizes[length(sizes)] <- sizes[length(sizes)] +
-                res[[i]][1]
-            sizes <- c(sizes, res[[i]][-1])
-        } else {
-            sizes <- c(sizes, res[[i]])
-        }
-    }
+    sizes <- res - (c(0, res)[-length(res)-1])
 
     .self$group_sizes <- sizes
     .self$group_max <- length(sizes)

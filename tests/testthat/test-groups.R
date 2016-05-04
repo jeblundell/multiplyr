@@ -218,8 +218,10 @@ test_that ("group_by() maintains data integrity across cluster nodes", {
 })
 
 test_that ("group_sizes() works appropriately", {
-    dat <- Multiplyr (x=1:100, G=rep(1, 100), H=rep(1:2, each=50),
-                   I=rep(1:4, each=25), cl=cl2)
+    dat <- Multiplyr (x=1:100,
+                      G=rep(1, 100),
+                      H=rep(1:2, length.out=100),
+                      I=rep(1:4, each=25), cl=cl2)
 
     dat %>% group_by (G)
     expect_equal (group_sizes(dat), rep(100, 1))
@@ -229,6 +231,9 @@ test_that ("group_sizes() works appropriately", {
 
     dat %>% group_by (I)
     expect_equal (group_sizes(dat), rep(25, 4))
+
+    dat %>% group_by (H, I)
+    expect_equal (sum(group_sizes(dat)), 100)
 
     dat %>% distinct (G)
     expect_equal (group_sizes(dat), rep(1, 4))
