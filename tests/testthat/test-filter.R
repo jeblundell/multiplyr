@@ -75,6 +75,28 @@ test_that ("filter() can return an empty result", {
     dat <- Multiplyr (x=1:100, y=1:100, cl=cl2)
     expect_silent (dat %>% filter(x<0))
     expect_true (dat$empty)
+    rm (dat)
+})
+
+test_that ("filter() can cope with an empty data frame", {
+    dat <- Multiplyr (x=1:100, y=1:100, cl=cl2)
+    dat %>% filter (x<0)
+    expect_silent (dat %>% filter(x>50))
+    rm (dat)
+})
+
+test_that ("filter() throws errors with no criteria or non-Multiplyr object", {
+    dat <- Multiplyr (x=1:100, y=1:100, cl=cl2)
+    expect_error (dat %>% filter(), "criteria")
+    expect_error (data.frame(x=1:100) %>% filter(), "Multiplyr")
+    rm (dat)
+})
+
+test_that ("filter() updates group sizes", {
+    dat <- Multiplyr (x=1:100, G=rep(1:2, each=50), cl=cl2)
+    dat %>% group_by (G)
+    dat %>% filter (x<=50)
+    expect_equal (group_sizes(dat), 50)
 })
 
 parallel::stopCluster (cl2)

@@ -206,7 +206,15 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
 #' @describeIn filter
 #' @export
 filter_ <- function (.self, ..., .dots, auto_compact = NULL) {
+    if (!is(.self, "Multiplyr")) {
+        stop ("filter operation only valid for Multiplyr objects")
+    }
+
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    if (length(.dots) == 0) {
+        stop ("No filtering criteria specified")
+    }
+
     if (is.null(auto_compact)) {
         auto_compact <- .self$auto_compact
     }
