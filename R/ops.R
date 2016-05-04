@@ -696,14 +696,24 @@ slice <- function (.self, rows=NULL, start=NULL, end=NULL, each=FALSE, auto_comp
 #' @describeIn summarise
 #' @export
 summarise_ <- function (.self, ..., .dots, auto_compact = NULL) {
+    if (!is(.self, "Multiplyr")) {
+        stop ("summarise operation only valid for Multiplyr objects")
+    }
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    if (length(.dots) == 0) {
+        stop ("No summarise operations specified")
+    }
+
     if (is.null(auto_compact)) {
         auto_compact <- .self$auto_compact
     }
+
     avail <- which (substr (.self$col.names, 1, 1) != ".")
     if (.self$grouped) {
         avail <- avail[-.self$group.cols]
     }
+    avail <- sort(c(avail, which (is.na(.self$col.names))))
+
     newnames <- names(.dots)
     if (length(newnames) > length(avail)) {
         stop ("Insufficient free columns available")

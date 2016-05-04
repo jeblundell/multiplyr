@@ -7,9 +7,9 @@ cl2 <- parallel::makeCluster(2)
 test_that ("summarise() works on ungrouped data", {
     dat <- Multiplyr (x=1:100, y=rep(2, 100), alloc=1, cl=cl2)
     dat %>% summarise (x=length(x), y=length(y)/2, z=sum(y))
-    expect_equal (dat["x"], 100)
-    expect_equal (dat["y"], 50)
-    expect_equal (dat["z"], 200)
+    expect_equal (dat["x"], c(50, 50))
+    expect_equal (dat["y"], c(25, 25))
+    expect_equal (dat["z"], c(100, 100))
     rm (dat)
 })
 
@@ -38,6 +38,13 @@ test_that ("summarise() works with transmute/rename", {
     expect_equal (dat["x"], rep(25, 4))
     expect_equal (dat["y"], rep(100, 4))
 
+    rm (dat)
+})
+
+test_that ("summarise() throws an error if no parameters or non-Multiplyr", {
+    dat <- Multiplyr (x=1:100, y=rep(2, 100), alloc=1, cl=cl2)
+    expect_error (dat %>% summarise(), "operations")
+    expect_error (data.frame(x=1:100) %>% summarise(N=length(x)), "Multiplyr")
     rm (dat)
 })
 
