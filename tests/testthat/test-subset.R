@@ -85,6 +85,14 @@ test_that ("select() drops columns", {
     rm (dat)
 })
 
+test_that ("select() throws errors for no parameters/non-Multiplyr", {
+    dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
+    expect_error (dat %>% select(), "columns")
+    expect_error (dat %>% select(nonexistent), "Undefined")
+    expect_error (data.frame(x=1:100) %>% select(x), "Multiplyr")
+    rm (dat)
+})
+
 test_that ("rename() preserves data and only renames", {
     dat <- Multiplyr (w=1:100, x=1:100, y=100:1, z=rep("A",100), cl=cl2)
     dat %>% rename (a=x, b=y)
@@ -107,6 +115,14 @@ test_that ("rename() propagates to clusters/groups", {
     dat %>% transmute (y=a)
     expect_equal (dat["y"], 1:100)
 
+    rm (dat)
+})
+
+test_that ("rename() throws errors for no parameters/non-Multiplyr", {
+    dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
+    expect_error (dat %>% rename(), "operations")
+    expect_error (dat %>% rename(newname=nonexistent), "Undefined")
+    expect_error (data.frame(x=1:100) %>% rename(y=x), "Multiplyr")
     rm (dat)
 })
 

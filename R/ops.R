@@ -419,6 +419,12 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
 #' @param .self Data frame
 #' @export
 group_sizes <- function (.self) {
+    if (!is(.self, "Multiplyr")) {
+        stop ("group_sizes operation only valid for Multiplyr objects")
+    }
+    if (!.self$grouped) {
+        stop ("group_sizes may only be used after group_by")
+    }
     .self$calc_group_sizes (delay=FALSE)
     .self$group_sizes
 }
@@ -562,11 +568,20 @@ regroup <- function (.self, auto_partition=NULL) {
 #' @describeIn rename
 #' @export
 rename_ <- function (.self, ..., .dots) {
+    if (!is(.self, "Multiplyr")) {
+        stop ("rename operation only valid for Multiplyr objects")
+    }
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    if (length(.dots) == 0) {
+        stop ("No renaming operations specified")
+    }
     newnames <- names(.dots)
     oldnames <- as.vector (vapply (.dots, function (x) { as.character (x$expr) }, ""))
-    match <- match(oldnames, .self$col.names)
-    .self$col.names[match] <- newnames
+    m <- match(oldnames, .self$col.names)
+    if (any(is.na(m))) {
+        stop (sprintf("Undefined columns: %s", paste0(oldnames[is.na(m)], collapse=", ")))
+    }
+    .self$col.names[m] <- newnames
     .self$update_fields ("col.names")
     return (.self)
 }
@@ -574,9 +589,18 @@ rename_ <- function (.self, ..., .dots) {
 #' @describeIn select
 #' @export
 select_ <- function (.self, ..., .dots) {
+    if (!is(.self, "Multiplyr")) {
+        stop ("select operation only valid for Multiplyr objects")
+    }
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    if (length(.dots) == 0) {
+        stop ("No select columns specified")
+    }
     coln <- as.vector (vapply (.dots, function (x) { as.character (x$expr) }, ""))
     cols <- match (coln, .self$col.names)
+    if (any(is.na(cols))) {
+        stop (sprintf("Undefined columns: %s", paste0(coln[is.na(cols)], collapse=", ")))
+    }
 
     .self$order.cols[sort(cols)] <- order(cols)
     #rest set to zero by free_col (del)

@@ -257,6 +257,13 @@ test_that ("group_sizes() works appropriately", {
     rm (dat)
 })
 
+test_that ("group_sizes() throws errors for non-grouped/non-Multiplyr", {
+    dat <- Multiplyr (x=rep(1, 100), G=rep(1:4, each=25), cl=cl2)
+    expect_error (group_sizes(dat), "group_by")
+    expect_error (group_sizes(data.frame(x=1:100)), "Multiplyr")
+    rm (dat)
+})
+
 test_that ("group_by() throws an error with unspecified/undefined columns or non-Multiplyr", {
     dat <- Multiplyr (x=rep(1, 100), G=rep(1:4, each=25), cl=cl2)
     expect_error (dat %>% group_by (nonexistent), "Undefined")
