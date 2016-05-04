@@ -71,5 +71,11 @@ test_that ("filter() combinations work", {
     rm (dat)
 })
 
+test_that ("filter() can return an empty result", {
+    dat <- Multiplyr (x=1:100, y=1:100, cl=cl2)
+    expect_silent (dat %>% filter(x<0))
+    expect_true (dat$empty)
+})
+
 parallel::stopCluster (cl2)
 

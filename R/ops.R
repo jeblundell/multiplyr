@@ -49,6 +49,7 @@ define_ <- function (.self, ..., .dots) {
 #' @describeIn distinct
 #' @export
 distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
+    if (.self$empty) { return() }
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
 
     if (is.null(auto_compact)) {
@@ -216,6 +217,7 @@ filter_ <- function (.self, ..., .dots, auto_compact = NULL) {
 #' @describeIn group_by
 #' @export
 group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
+    if (.self$empty) { return (.self) }
     if (is.null(.cols)) {
         .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
         namelist <- .dots2names (.dots)

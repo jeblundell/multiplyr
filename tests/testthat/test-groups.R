@@ -56,6 +56,19 @@ test_that ("distinct() works when local N=2", {
     rm (dat)
 })
 
+test_that ("distinct() works on empty data", {
+    dat <- Multiplyr (x=1:100, cl=cl2)
+    dat %>% filter (x==0)
+    expect_silent (dat %>% distinct(x))
+})
+
+test_that ("distinct() works on grouped data", {
+    dat <- Multiplyr (x=rep(1, 100), G=rep(1:4, each=25), cl=cl2)
+    dat %>% group_by (G)
+    dat %>% distinct (x)
+    expect_equal (dat["x"], rep(1,4))
+})
+
 test_that ("group_by() can group by one level", {
     dat <- Multiplyr (x=1:100, G=rep(1:4, each=25), cl=cl2)
     dat %>% group_by (G)
@@ -94,6 +107,14 @@ test_that ("group_by() can group a single item", {
     dat %>% group_by (G, H)
     expect_equal (dat$bm[, dat$groupcol], 1)
 
+    rm (dat)
+})
+
+test_that ("group_by() can group an empty data frame", {
+    dat <- Multiplyr (x=1:100, cl=cl2)
+    dat %>% filter (x < 0)
+    expect_silent (dat %>% group_by(x))
+    expect_true (dat$empty)
     rm (dat)
 })
 

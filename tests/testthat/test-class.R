@@ -42,6 +42,7 @@ test_that ("Multiplyr(x=..., y=...) creates the appropriate structure", {
     expect_equal (dat$grouped, FALSE)
     expect_equal (dat$group, 0)
     expect_equal (dat$group_partition, FALSE)
+    expect_equal (dat$empty, FALSE)
 
     rm (dat)
 })
@@ -89,6 +90,7 @@ test_that ("Multiplyr() works on a data.frame", {
     expect_equal (dat$grouped, FALSE)
     expect_equal (dat$group, 0)
     expect_equal (dat$group_partition, FALSE)
+    expect_equal (dat$empty, FALSE)
 
     rm (dat)
 })

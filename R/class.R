@@ -116,7 +116,7 @@ initialize = function (..., alloc=1, cl=NULL,
     grouped <<- FALSE
     group <<- 0
     group_partition <<- FALSE
-    empty <<- nrows > 0
+    empty <<- nrows == 0
     filtered <<- FALSE
     auto_compact <<- auto_compact
     auto_partition <<- auto_partition
@@ -562,6 +562,7 @@ envir = function (nsa=FALSE) {
     return (bindenv)
 },
 sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=FALSE) {
+    if (empty) { return() }
     if (is.null(cols)) {
         namelist <- .dots2names (dots)
         cols <- match(namelist, col.names)
@@ -652,6 +653,19 @@ update_fields = function (fieldnames) {
 },
 partition_even = function (max.row = last) {
     N <- length(cls)
+
+    if (max.row == 0) {
+        cluster_eval ({
+            if (exists(".master")) {
+                .master$empty <- TRUE
+            }
+            if (exists(".local")) {
+                .local$empty <- TRUE
+            }
+            NULL
+        })
+        return()
+    }
 
     nr <- distribute (max.row, N)
     if (max.row < N) {
@@ -754,15 +768,23 @@ compact = function () {
 
     #(5) Submatrix master, propagate to local
     filtered <<- FALSE
-    .self$bm <- bigmemory::sub.big.matrix (.self$bm, firstRow=1, lastRow=last)
-    cluster_export ("last", ".last")
-    cluster_eval ({
-        .master$last <- .last
-        .master$filtered <- FALSE
-        .master$bm <- bigmemory::sub.big.matrix (.master$bm, firstRow=1, lastRow=.master$last)
-        rm (.local)
-        NULL
-    })
+    if (last > 0) {
+        bm <<- bigmemory::sub.big.matrix (.self$bm, firstRow=1, lastRow=last)
+        cluster_export ("last", ".last")
+        cluster_eval ({
+            .master$last <- .last
+            .master$filtered <- FALSE
+            .master$bm <- bigmemory::sub.big.matrix (.master$bm, firstRow=1, lastRow=.master$last)
+            rm (.local)
+            NULL
+        })
+    } else {
+        empty <<- TRUE
+        cluster_eval ({
+            .master$empty <- TRUE
+            NULL
+        })
+    }
 
     #(6) Regroup/partition
     partition_even()
