@@ -831,9 +831,21 @@ transmute_ <- function (.self, ..., .dots) {
 #' @describeIn undefine
 #' @export
 undefine_ <- function (.self, ..., .dots) {
+    if (!is(.self, "Multiplyr")) {
+        stop ("undefine operation only valid for Multiplyr objects")
+    }
+
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    if (length(.dots) == 0) {
+        stop ("No undefine operations specified")
+    }
+
     dropnames <- .dots2names (.dots)
     dropcols <- match (dropnames, .self$col.names)
+    if (any(is.na(dropcols))) {
+        stop (sprintf("Undefined columns: %s", paste0(dropnames[is.na(dropcols)], collapse=", ")))
+    }
+
     .self$free_col (dropcols, update=TRUE)
     return (.self)
 }

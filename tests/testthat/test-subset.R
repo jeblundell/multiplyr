@@ -53,7 +53,7 @@ test_that ("define() throws an error for existing/unspecified columns or non-Mul
     expect_error (dat %>% define(x))
     expect_error (dat %>% define(x,y))
     expect_error (dat %>% define())
-    expect_error (data.frame(x=1:100) %>% define(y), "Multiplyr")
+    expect_error (data.frame(x=1:100) %>% define(x), "Multiplyr")
 })
 
 test_that ("undefine() can drop a column", {
@@ -71,6 +71,13 @@ test_that ("undefine() can drop a column", {
     expect_equal (dat["z"], rep("A", 100))
 
     rm (dat)
+})
+
+test_that ("undefine() throws an error for existing/unspecified columns or non-Multiplyr", {
+    dat <- Multiplyr (x=1:100, y=1:100, cl=cl2)
+    expect_error (dat %>% undefine(), "operations")
+    expect_error (dat %>% undefine(nonexistent), "Undefined")
+    expect_error (data.frame(x=1:100) %>% undefine(x), "Multiplyr")
 })
 
 test_that ("select() drops columns", {
