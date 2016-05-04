@@ -573,6 +573,9 @@ sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=FALSE) {
         }
         cols <- c(groupcol, cols)
     }
+    if (length(cols) == 0) {
+        stop ("No sorting column(s) specified")
+    }
     bigmemory::mpermute (bm, cols=cols)
 },
 alloc_col = function (name=".tmp", update=FALSE) {
