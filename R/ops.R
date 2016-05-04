@@ -20,6 +20,9 @@ define_ <- function (.self, ..., .dots) {
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
     nm <- names(.dots)
     vars <- .dots2names (.dots)
+    if (any(vars %in% .self$col.names)) {
+        stop (sprintf("Columns already defined: %s", paste0(.self$col.names[.self$col.names %in% vars], collapse=", ")))
+    }
     for (i in 1:length(.dots)) {
         if (nm[i] == "") { #x
             .self$alloc_col (vars[i])

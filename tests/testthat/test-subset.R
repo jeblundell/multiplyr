@@ -1,5 +1,10 @@
 context("subset")
 
+#define
+#undefine
+#select
+#rename
+
 cl2 <- parallel::makeCluster(2)
 
 test_that ("define() can create new variables", {
@@ -41,6 +46,12 @@ test_that ("define() propagates to clusters/groups", {
     expect_equal (dat["a"], rep("A", each=100))
 
     rm (dat)
+})
+
+test_that ("define() throws an error for existing columns", {
+    dat <- Multiplyr (x=1:100, y=1:100, cl=cl2)
+    expect_error (dat %>% define(x))
+    expect_error (dat %>% define(x,y))
 })
 
 test_that ("undefine() can drop a column", {
