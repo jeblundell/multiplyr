@@ -62,6 +62,9 @@ define_ <- function (.self, ..., .dots) {
 #' @describeIn distinct
 #' @export
 distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
+    if (!is(.self, "Multiplyr")) {
+        stop ("distinct operation only valid for Multiplyr objects")
+    }
     if (.self$empty) { return() }
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
 

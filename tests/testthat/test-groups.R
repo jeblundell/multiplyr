@@ -60,6 +60,7 @@ test_that ("distinct() works on empty data", {
     dat <- Multiplyr (x=1:100, cl=cl2)
     dat %>% filter (x==0)
     expect_silent (dat %>% distinct(x))
+    rm (dat)
 })
 
 test_that ("distinct() works on grouped data", {
@@ -67,11 +68,30 @@ test_that ("distinct() works on grouped data", {
     dat %>% group_by (G)
     dat %>% distinct (x)
     expect_equal (dat["x"], rep(1,4))
+    expect_true (dat$grouped)
+    expect_true (dat$group_partition)
+    expect_equal (group_sizes(dat), rep(1, 4))
+    rm (dat)
 })
 
-test_that ("distinct() throws an error with undefined columns", {
+test_that ("distinct() throws an error with undefined columns or non-Multiplyr", {
     dat <- Multiplyr (x=rep(1, 100), G=rep(1:4, each=25), cl=cl2)
     expect_error (dat %>% distinct (nonexistent))
+    expect_error (data.frame(x=1:100) %>% distinct(x), "Multiplyr")
+    rm (dat)
+})
+
+test_that ("distinct() works with no parameters", {
+    dat <- Multiplyr (x=rep(1:2, each=50), cl=cl2)
+    dat %>% distinct()
+    expect_equal (dat["x"], 1:2)
+    rm (dat)
+
+    dat <- Multiplyr (x=rep(1:2, length.out=100), G=rep(1:4, each=25), cl=cl2)
+    dat %>% group_by (G)
+    dat %>% distinct()
+    expect_equal (dat["x"], rep(1:2, 4))
+    rm (dat)
 })
 
 test_that ("group_by() can group by one level", {
