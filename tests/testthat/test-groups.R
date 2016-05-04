@@ -67,10 +67,12 @@ test_that ("distinct() works on grouped data", {
     dat <- Multiplyr (x=rep(1, 100), G=rep(1:4, each=25), cl=cl2)
     dat %>% group_by (G)
     dat %>% distinct (x)
+
     expect_equal (dat["x"], rep(1,4))
     expect_true (dat$grouped)
     expect_true (dat$group_partition)
     expect_equal (group_sizes(dat), rep(1, 4))
+
     rm (dat)
 })
 
@@ -83,6 +85,7 @@ test_that ("distinct() throws an error with undefined columns or non-Multiplyr",
 
 test_that ("distinct() works with no parameters", {
     dat <- Multiplyr (x=rep(1:2, each=50), cl=cl2)
+
     dat %>% distinct()
     expect_equal (dat["x"], 1:2)
     rm (dat)
@@ -91,20 +94,34 @@ test_that ("distinct() works with no parameters", {
     dat %>% group_by (G)
     dat %>% distinct()
     expect_equal (dat["x"], rep(1:2, 4))
+
     rm (dat)
 })
 
 test_that ("group_by() can group by one level", {
     dat <- Multiplyr (x=1:100, G=rep(1:4, each=25), cl=cl2)
     dat %>% group_by (G)
+
     expect_equal (dat$bm[, dat$groupcol], dat[, "G"])
+    expect_equal (dat$group.cols, match("G", dat$col.names))
+    expect_true (dat$grouped)
+    expect_equal (dat$group_sizes, rep(25, 4))
+    expect_equal (dat$group_max, 4)
+
     rm (dat)
 })
 
 test_that ("group_by() can group by multiple levels", {
     dat <- Multiplyr (x=1:100, G=rep(1:4, each=25), H=rep(1:5, length.out=100), cl=cl2)
     dat %>% group_by (G, H)
+
     expect_equal (dat$bm[, dat$groupcol], rep(1:20, each=5))
+    expect_equal (dat$group.cols, match(c("G", "H"), dat$col.names))
+    expect_true (dat$grouped)
+    expect_equal (length(dat$group_sizes), 20)
+    expect_equal (sum(group_sizes(dat)), 100)
+    expect_equal (dat$group_max, 20)
+
     rm (dat)
 })
 
@@ -113,24 +130,45 @@ test_that ("group_by() can group uneven sizes", {
                    G=rep(1:2, length.out=13),
                    cl=cl2)
     dat %>% group_by (G)
+
     expect_equal (dat$bm[, dat$groupcol], dat[, "G"])
+    expect_equal (dat$group.cols, match("G", dat$col.names))
+    expect_true (dat$grouped)
+    expect_equal (dat$group_sizes, c(7, 6))
+    expect_equal (dat$group_max, 2)
+
     rm (dat)
 })
 
 test_that ("group_by() can group when size of group=1", {
     dat <- Multiplyr (x=1:4, G=c(1,1,2,2), H=c(1,2,1,2), cl=cl2)
     dat %>% group_by (G, H)
+
     expect_equal (dat$bm[, dat$groupcol], 1:4)
+    expect_equal (dat$group.cols, match(c("G", "H"), dat$col.names))
+    expect_true (dat$grouped)
+    expect_equal (dat$group_sizes, rep(1, 4))
+    expect_equal (dat$group_max, 4)
+
     rm (dat)
 })
 
 test_that ("group_by() can group a single item", {
     dat <- Multiplyr (x=1, G=1, H=1, cl=cl2)
+
     dat %>% group_by (G)
     expect_equal (dat$bm[, dat$groupcol], 1)
+    expect_equal (dat$group.cols, match("G", dat$col.names))
+    expect_true (dat$grouped)
+    expect_equal (dat$group_sizes, 1)
+    expect_equal (dat$group_max, 1)
 
     dat %>% group_by (G, H)
     expect_equal (dat$bm[, dat$groupcol], 1)
+    expect_equal (dat$group.cols, match(c("G", "H"), dat$col.names))
+    expect_true (dat$grouped)
+    expect_equal (dat$group_sizes, 1)
+    expect_equal (dat$group_max, 1)
 
     rm (dat)
 })
@@ -138,8 +176,10 @@ test_that ("group_by() can group a single item", {
 test_that ("group_by() can group an empty data frame", {
     dat <- Multiplyr (x=1:100, cl=cl2)
     dat %>% filter (x < 0)
+
     expect_silent (dat %>% group_by(x))
     expect_true (dat$empty)
+
     rm (dat)
 })
 
@@ -183,8 +223,10 @@ test_that ("group_sizes() works appropriately", {
 
     dat %>% group_by (G)
     expect_equal (group_sizes(dat), rep(100, 1))
+
     dat %>% group_by (H)
     expect_equal (group_sizes(dat), rep(50, 2))
+
     dat %>% group_by (I)
     expect_equal (group_sizes(dat), rep(25, 4))
 
@@ -205,23 +247,36 @@ test_that ("group_by() throws an error with unspecified/undefined columns or non
 test_that ("ungroup() works appropriately after group_by()", {
     dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25), cl=cl2)
     dat %>% group_by (G) %>% ungroup()
+    expect_false (dat$grouped)
+
     dat %>% summarise (x=length(x))
     expect_equal (dat["x"], c(50, 50))
+
     rm (dat)
 })
 test_that ("ungroup() works appropriately after partition_group()", {
     dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25), cl=cl2)
     dat %>% partition_group (G) %>% ungroup()
+    expect_false (dat$grouped)
+
     dat %>% summarise (x=length(x))
     expect_equal (dat["x"], c(50, 50))
+
     rm (dat)
 })
 
 test_that ("regroup() works appropriately", {
     dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25), cl=cl2)
     dat %>% partition_group (G) %>% ungroup() %>% regroup()
+
+    expect_equal (dat$group.cols, match("G", dat$col.names))
+    expect_true (dat$grouped)
+    expect_equal (dat$group_sizes, rep(25, 4))
+    expect_equal (dat$group_max, 4)
+
     dat %>% summarise (x=length(x))
     expect_equal (dat["x"], rep(25, 4))
+
     rm (dat)
 })
 
