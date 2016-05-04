@@ -276,7 +276,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
     }
     N <- length(.self$cls)
 
-    .self$sort (decreasing=FALSE, cols=.cols)
+    .self$sort (decreasing=FALSE, cols=.cols, with.group=FALSE)
 
     .self$group.cols <- .cols
     .self$grouped <- TRUE

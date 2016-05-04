@@ -111,6 +111,22 @@ test_that ("group_by() can group by one level", {
     rm (dat)
 })
 
+test_that ("group_by() run a second time only groups by the second set of factors", {
+    dat <- Multiplyr (x=1:100,
+                      G=rep(1:2, length.out=100),
+                      H=rep(1:4, each=25), cl=cl2)
+    dat %>% group_by (H)
+    dat %>% group_by (G)
+
+    expect_equal (dat$bm[, dat$groupcol], dat[, "G"])
+    expect_equal (dat$group.cols, match("G", dat$col.names))
+    expect_true (dat$grouped)
+    expect_equal (dat$group_sizes, rep(50, 2))
+    expect_equal (dat$group_max, 2)
+
+    rm (dat)
+})
+
 test_that ("group_by() can group by multiple levels", {
     dat <- Multiplyr (x=1:100, G=rep(1:4, each=25), H=rep(1:5, length.out=100), cl=cl2)
     dat %>% group_by (G, H)
@@ -236,7 +252,7 @@ test_that ("group_sizes() works appropriately", {
     expect_equal (sum(group_sizes(dat)), 100)
 
     dat %>% distinct (G)
-    expect_equal (group_sizes(dat), rep(1, 4))
+    expect_equal (group_sizes(dat), rep(1, 8))
 
     rm (dat)
 })

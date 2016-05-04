@@ -561,13 +561,13 @@ envir = function (nsa=FALSE) {
     }
     return (bindenv)
 },
-sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=FALSE) {
+sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=TRUE) {
     if (empty) { return() }
     if (is.null(cols)) {
         namelist <- .dots2names (dots)
         cols <- match(namelist, col.names)
     }
-    if (grouped) {
+    if (grouped && with.group) {
         if (groupcol %in% cols) {
             cols <- cols[cols != groupcol]
         }
