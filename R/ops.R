@@ -885,6 +885,13 @@ groupwise <- regroup
 #' @param expr Code to execute
 #' @export
 within_group <- function (.self, expr) {
+    if (!is(.self, "Multiplyr")) {
+        stop ("within_group operation only valid for Multiplyr objects")
+    }
+    if (!.self$grouped) {
+        stop ("within_group may only be used after group_by")
+
+    }
     expr <- substitute(expr)
     .self$cluster_export ("expr", ".expr")
     .self$cluster_eval({
@@ -902,6 +909,9 @@ within_group <- function (.self, expr) {
 #' @param expr Code to execute
 #' @export
 within_node <- function (.self, expr) {
+    if (!is(.self, "Multiplyr")) {
+        stop ("within_node operation only valid for Multiplyr objects")
+    }
     expr <- substitute(expr)
     .self$cluster_export ("expr", ".expr")
     .self$cluster_eval({
