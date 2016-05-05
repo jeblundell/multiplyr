@@ -304,6 +304,17 @@ get_data = function (i=NULL, j=NULL, nsa=FALSE, drop=TRUE) {
         }
     }
 
+    if (empty) {
+        l <- lapply(type.cols[cols], function (x) { if (x==0) { numeric(0) } else { character(0) } })
+        if (length(l) == 1) {
+            return (l[[1]])
+        } else {
+            class(l) <- "data.frame"
+            colnames(l) <- col.names[cols]
+            return (l)
+        }
+    }
+
     if (is.null(rowslice)) {
         if (filtered) {
             filtrows <- bm[, filtercol] == 1
@@ -656,6 +667,7 @@ update_fields = function (fieldnames) {
     }
 },
 partition_even = function (max.row = last) {
+    if (empty || max.row == 0) { return() }
     N <- length(cls)
 
     if (max.row == 0) {
@@ -700,11 +712,13 @@ partition_even = function (max.row = last) {
     })
 },
 local_subset = function (first, last) {
+    if (empty) { return() }
     first <<- first
     last <<- last
     bm <<- bigmemory::sub.big.matrix (bm.master, firstRow=first, lastRow=last)
 },
 rebuild_grouped = function () {
+    if (empty) { return() }
     cluster_eval ({
         if (.local$empty) { return(NULL) }
 
@@ -718,6 +732,7 @@ rebuild_grouped = function () {
     })
 },
 filter_rows = function (rows) {
+    if (empty) { return() }
     bm[, tmpcol] <<- 0
     bm[rows, tmpcol] <<- 1
 
@@ -726,11 +741,13 @@ filter_rows = function (rows) {
     filtered <<- TRUE
 },
 filter_vector = function (rows) {
+    if (empty) { return() }
     bm[, filtercol] <<- bm[, filtercol] * rows
     empty <<- sum(bm[, filtercol]) == 0
     filtered <<- TRUE
 },
 filter_range = function (start, end) {
+    if (empty) { return() }
     if (start > 1) {
         bm[1:(start-1), filtercol] <<- 0
     }
@@ -741,6 +758,11 @@ filter_range = function (start, end) {
 },
 compact = function () {
     if (!filtered) { return() }
+    if (empty) {
+        filtered <<- FALSE
+        update_fields ("filtered")
+        return ()
+    }
 
     rg_grouped <- grouped
     rg_partion <- group_partition
@@ -811,7 +833,9 @@ calc_group_sizes = function (delay=TRUE) {
         return()
     }
     #FIXME: make parallel/more efficient
-    if (filtered) {
+    if (empty) {
+        group_sizes <<- rep(0, group_max)
+    } else if (filtered) {
         bm[, tmpcol] <<- bm[, groupcol] * bm[, filtercol]
         group_sizes <<- sapply(seq_len(group_max), function (g) {
             sum(.self$bm[, .self$tmpcol] == g)
@@ -824,6 +848,9 @@ calc_group_sizes = function (delay=TRUE) {
     group_sizes_stale <<- FALSE
 },
 row_names = function () {
+    if (empty) {
+        return(character(0))
+    }
     if (filtered) {
         return (sum(bm[, filtercol] == 1))
     } else {
