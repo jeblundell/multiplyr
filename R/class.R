@@ -68,14 +68,6 @@ initialize = function (..., alloc=1, cl=NULL,
             NULL
         })
     }
-    res <- do.call (c, cluster_eval(exists("rdsmlock")))
-    if (any(!res)) {
-        if (file.exists("barrnumleft.desc")) {
-            unlink ("barrnumleft.desc")
-            unlink ("barrsense.desc")
-        }
-        Rdsm::mgrinit (cls)
-    }
 
     res <- do.call (c, cluster_eval(exists("partition_even")))
     if (any(!res)) {
@@ -90,10 +82,9 @@ initialize = function (..., alloc=1, cl=NULL,
     ncols <- length(vars) + alloc + length(special)
     col.names <<- c(names(vars), rep(NA, alloc), special)
     order.cols <<- c(seq_len(length(vars)), rep(0, alloc), rep(0, length(special)))
-    Rdsm::mgrmakevar(cls, ".bm", nr=nrows, nc=ncols, savedesc=FALSE)
 
-    bm <<- .bm
-    bm.master <<- .bm
+    bm <<- bigmemory::big.matrix (nrow=nrows, ncol=ncols)
+    bm.master <<- bm
 
     first <<- 1
     last <<- nrows
@@ -142,7 +133,7 @@ initialize = function (..., alloc=1, cl=NULL,
     auto_partition <<- auto_partition
     group_sizes_stale <<- FALSE
 
-    desc <<- bigmemory.sri::describe (.bm)
+    desc <<- bigmemory.sri::describe (bm)
 
     cluster_export_self ()
 
