@@ -49,6 +49,9 @@ initialize = function (..., alloc=1, cl=NULL,
     } else if (length(vars) == 1) {
         if (is.data.frame(vars[[1]])) {
             vars <- unclass(vars[[1]])
+        } else if (is(vars[[1]], "Multiplyr.desc")) {
+            reattach (vars[[1]])
+            return()
         }
     }
 
@@ -62,10 +65,15 @@ initialize = function (..., alloc=1, cl=NULL,
         cluster_eval ({
             if (exists(".master")) { rm(.master) }
             if (exists(".local")) { rm(.local) }
+            NULL
         })
     }
     res <- do.call (c, cluster_eval(exists("rdsmlock")))
     if (any(!res)) {
+        if (file.exists("barrnumleft.desc")) {
+            unlink ("barrnumleft.desc")
+            unlink ("barrsense.desc")
+        }
         Rdsm::mgrinit (cls)
     }
 
@@ -135,13 +143,27 @@ initialize = function (..., alloc=1, cl=NULL,
     group_sizes_stale <<- FALSE
 
     desc <<- bigmemory.sri::describe (.bm)
-    .master <- .self
-    cluster_export (".master")
-    cluster_eval ({
-        .master$reattach()
+
+    cluster_export_self ()
+
+    partition_even()
+},
+cluster_export_self = function () {
+    #Replaces cluster_export (".master")
+    .res <- .self$describe()
+    cluster_export (".res")
+    cluster_eval({
+        .master <- Multiplyr(.res)
         NULL
     })
-    partition_even()
+},
+describe = function () {
+    fnames <- names(.refClassDef@fieldClasses)
+    fnames <- as.list(fnames[-match(c("bm", "bm.master", "cls"), fnames)])
+    out <- lapply(fnames, function (x, d) { d$field(x) }, .self)
+    names(out) <- fnames
+    class(out) <- "Multiplyr.desc"
+    return (out)
 },
 copy = function (shallow = FALSE) {
     if (!shallow) {
@@ -171,9 +193,20 @@ group_restrict = function (group) {
     grp$empty <- FALSE
     return (grp)
 },
-reattach = function (descriptor = desc) {
-    bm <<- bigmemory::attach.big.matrix(descriptor)
+reattach = function (descres) {
+    nm <- names(descres)
+    for (i in 1:length(descres)) {
+        field(nm[i], descres[[i]])
+    }
+
+    bm <<- bigmemory::attach.big.matrix(desc)
     bm.master <<- bm
+
+    #horrible kludge so copy() doesn't complain about NULL
+    #as apparently R can't cope with assigning NULL to fields?
+    clsna <- NA
+    class(clsna) <- "SOCKcluster"
+    cls <<- clsna
 },
 cluster_export = function (var, var.as=NULL, envir=parent.frame()) {
     if (is.null(var.as)) {
