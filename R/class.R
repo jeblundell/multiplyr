@@ -53,22 +53,29 @@ initialize = function (..., alloc=1, cl=NULL,
     }
 
     if (is.null (cl)) {
-        cls <<- parallel::makeCluster (parallel::detectCores() - 1)
+        cl <- max (1, parallel::detectCores() - 1)
+        cls <<- parallel::makeCluster (cl)
     } else if (is.numeric(cl)) {
         cls <<- parallel::makeCluster(cl)
     } else {
-        Rdsm::mgrinit (cl)
         cls <<- cl
         cluster_eval ({
             if (exists(".master")) { rm(.master) }
             if (exists(".local")) { rm(.local) }
         })
     }
+    res <- do.call (c, cluster_eval(exists("rdsmlock")))
+    if (any(!res)) {
+        Rdsm::mgrinit (cls)
+    }
 
-    cluster_eval ({
-        library (multiplyr)
-        library (lazyeval)
-    })
+    res <- do.call (c, cluster_eval(exists("partition_even")))
+    if (any(!res)) {
+        cluster_eval ({
+            library (multiplyr)
+            library (lazyeval)
+        })
+    }
 
     special <- c(".filter", ".group", ".tmp")
     nrows <- length(vars[[1]])
@@ -86,7 +93,7 @@ initialize = function (..., alloc=1, cl=NULL,
     groupcol <<- match (".group", col.names)
     tmpcol <<- match (".tmp", col.names)
 
-    bm[,match(".filter", col.names)] <<- 1
+    bm[,filtercol] <<- 1
 
     type.cols <<- rep(0, ncols)
 
@@ -97,14 +104,18 @@ initialize = function (..., alloc=1, cl=NULL,
         } else if (is.factor (tmp)) {
             factor.cols <<- c(factor.cols, i)
             factor.levels <<- append(factor.levels, list(levels(vars[[i]])))
-            bm[,i] <<- as.numeric(vars[[i]])
             type.cols[i] <<- 1
+            #These next two lines are faster version of as.numeric
+            attr(vars[[i]], "levels") <- NULL
+            bm[,i] <<- unclass(vars[[i]])
         } else if (is.character (tmp)) {
             factor.cols <<- c(factor.cols, i)
             vars[[i]] <- as.factor(vars[[i]])
             factor.levels <<- append(factor.levels, list(levels(vars[[i]])))
-            bm[,i] <<- as.numeric(vars[[i]])
             type.cols[i] <<- 2
+            #These next two lines are faster version of as.numeric
+            attr(vars[[i]], "levels") <- NULL
+            bm[,i] <<- unclass(vars[[i]])
         }
     }
     pad <<- rep(0, ncols)
@@ -695,21 +706,23 @@ partition_even = function (max.row = last) {
         cluster_export_each (".last")
     }
 
+    grouped <<- group_partition <<- FALSE
+
     cluster_eval ({
         if (!exists(".local")) {
             .local <- .master$copy (shallow=TRUE)
         }
-    })
 
-    grouped <<- group_partition <<- FALSE
-    update_fields (c("grouped", "group_partition"))
+        .master$grouped <- .local$grouped <- FALSE
+        .master$group_partition <- .local$group_partition <- FALSE
 
-    cluster_eval ({
         .local$empty <- (.last < .first || .last == 0)
         if (.local$empty) { return(NULL) }
         .local$local_subset (.first, .last)
         NULL
     })
+
+    return()
 },
 local_subset = function (first, last) {
     if (empty) { return() }
