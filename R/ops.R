@@ -104,8 +104,8 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
                 all(.self$bm[1, .cols] == .self$bm[2, .cols]), 0, 1)
             return (.self)
         }
-        sm1 <- bigmemory::sub.big.matrix (.self$bm, firstRow=1, lastRow=nrow(.self$bm)-1)
-        sm2 <- bigmemory::sub.big.matrix (.self$bm, firstRow=2, lastRow=nrow(.self$bm))
+        sm1 <- bigmemory::sub.big.matrix (.self$desc, firstRow=1, lastRow=nrow(.self$bm)-1)
+        sm2 <- bigmemory::sub.big.matrix (.self$desc, firstRow=2, lastRow=nrow(.self$bm))
         if (length(.cols) == 1) {
             breaks <- which (sm1[,.cols] != sm2[,.cols])
         } else {
@@ -141,8 +141,8 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
             .breaks <- 1:i
             return (i)
         }
-        .sm1 <- bigmemory::sub.big.matrix (.local$bm, firstRow=1, lastRow=nrow(.local$bm)-1)
-        .sm2 <- bigmemory::sub.big.matrix (.local$bm, firstRow=2, lastRow=nrow(.local$bm))
+        .sm1 <- bigmemory::sub.big.matrix (.local$desc, firstRow=1, lastRow=nrow(.local$bm)-1)
+        .sm2 <- bigmemory::sub.big.matrix (.local$desc, firstRow=2, lastRow=nrow(.local$bm))
         if (length(.cols) == 1) {
             .breaks <- which (.sm1[,.cols] != .sm2[,.cols])
         } else {
@@ -298,8 +298,8 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
             .self$group_max <- i
             return (.self)
         }
-        sm1 <- bigmemory::sub.big.matrix (.self$bm, firstRow=1, lastRow=nrow(.self$bm)-1)
-        sm2 <- bigmemory::sub.big.matrix (.self$bm, firstRow=2, lastRow=nrow(.self$bm))
+        sm1 <- bigmemory::sub.big.matrix (.self$desc, firstRow=1, lastRow=nrow(.self$bm)-1)
+        sm2 <- bigmemory::sub.big.matrix (.self$desc, firstRow=2, lastRow=nrow(.self$bm))
         if (length(.cols) == 1) {
             breaks <- which (sm1[,.cols] != sm2[,.cols])
         } else {
@@ -339,8 +339,8 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
             .local$group_max <- i
             return (i)
         }
-        .sm1 <- bigmemory::sub.big.matrix (.local$bm, firstRow=1, lastRow=nrow(.local$bm)-1)
-        .sm2 <- bigmemory::sub.big.matrix (.local$bm, firstRow=2, lastRow=nrow(.local$bm))
+        .sm1 <- bigmemory::sub.big.matrix (.local$desc, firstRow=1, lastRow=nrow(.local$bm)-1)
+        .sm2 <- bigmemory::sub.big.matrix (.local$desc, firstRow=2, lastRow=nrow(.local$bm))
         if (length(.cols) == 1) {
             .breaks <- which (.sm1[,.cols] != .sm2[,.cols])
         } else {

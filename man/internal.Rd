@@ -6,6 +6,8 @@
 \alias{.p}
 \alias{internal}
 \alias{no.strings.attached}
+\alias{sm_desc_update}
+\alias{test_transition}
 \title{Internal functions}
 \usage{
 .p(...)
@@ -15,6 +17,10 @@
 no.strings.attached(x)
 
 .filter_range(x, filtercol, start, end)
+
+sm_desc_update(desc, first, last)
+
+test_transition(.self, cols, rows)
 }
 \description{
 Internal functions

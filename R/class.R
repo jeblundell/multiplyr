@@ -162,9 +162,10 @@ group_restrict = function (group) {
         return (grp)
     }
     lims <- range(rows)
-    grp$bm <- bigmemory::sub.big.matrix(grp$bm,
+    grp$bm <- bigmemory::sub.big.matrix(grp$desc,
                                           firstRow=lims[1],
                                           lastRow=lims[2])
+    grp$desc <- sm_desc_update (grp$desc, lims[1], lims[2])
     grp$first <- lims[1]
     grp$last <- lims[2]
     grp$empty <- FALSE
@@ -712,6 +713,7 @@ partition_even = function (max.row = last) {
         if (!exists(".local")) {
             .local <- .master$copy (shallow=TRUE)
         }
+        .local$desc <- .master$desc
 
         .master$grouped <- .local$grouped <- FALSE
         .master$group_partition <- .local$group_partition <- FALSE
@@ -728,7 +730,8 @@ local_subset = function (first, last) {
     if (empty) { return() }
     first <<- first
     last <<- last
-    bm <<- bigmemory::sub.big.matrix (bm.master, firstRow=first, lastRow=last)
+    bm <<- bigmemory::sub.big.matrix (desc, firstRow=first, lastRow=last)
+    desc <<- sm_desc_update (desc, first, last)
 },
 rebuild_grouped = function () {
     if (empty) { return() }
@@ -808,12 +811,14 @@ compact = function () {
     #(5) Submatrix master, propagate to local
     filtered <<- FALSE
     if (last > 0) {
-        bm <<- bigmemory::sub.big.matrix (.self$bm, firstRow=1, lastRow=last)
+        bm <<- bigmemory::sub.big.matrix (desc, firstRow=1, lastRow=last)
+        desc <<- sm_desc_update (desc, 1, last)
         cluster_export ("last", ".last")
         cluster_eval ({
             .master$last <- .last
             .master$filtered <- FALSE
-            .master$bm <- bigmemory::sub.big.matrix (.master$bm, firstRow=1, lastRow=.master$last)
+            .master$bm <- bigmemory::sub.big.matrix (.master$desc, firstRow=1, lastRow=.master$last)
+            .master$desc <- sm_desc_update (.master$desc, 1, .master$last)
             rm (.local)
             NULL
         })

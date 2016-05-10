@@ -38,16 +38,28 @@ no.strings.attached <- function (x) {
     x[[1]][start:end, filtercol] <- 1
 }
 
+
 #' @export
 #' @keywords internal
+#' @rdname internal
+sm_desc_update <- function (desc, first, last) {
+    desc@description$rowOffset <- c(
+        (desc@description$rowOffset[1] + first) - 1,
+        (last-first)+1)
+    desc@description$nrow <- (last - first)+1
+    return (desc)
+}
+
 #' @export
+#' @keywords internal
+#' @rdname internal
 test_transition <- function (.self, cols, rows) {
     N <- length(rows)
     rows.i <- which (!is.na(rows)) #subsetting gets stroppy with NA
     rows <- rows[rows.i]
 
-    sm1 <- bigmemory::sub.big.matrix (.self$bm, firstRow=1, lastRow=nrow(.self$bm)-1)
-    sm2 <- bigmemory::sub.big.matrix (.self$bm, firstRow=2, lastRow=nrow(.self$bm))
+    sm1 <- bigmemory::sub.big.matrix (.self$desc, firstRow=1, lastRow=nrow(.self$bm)-1)
+    sm2 <- bigmemory::sub.big.matrix (.self$desc, firstRow=2, lastRow=nrow(.self$bm))
     if (length(cols) == 1 || length(rows) == 1) {
         tg.a <- any(sm1[rows, cols] != sm2[rows, cols])
     } else {
