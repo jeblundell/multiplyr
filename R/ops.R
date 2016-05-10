@@ -209,6 +209,9 @@ filter_ <- function (.self, ..., .dots, auto_compact = NULL) {
     if (!is(.self, "Multiplyr")) {
         stop ("filter operation only valid for Multiplyr objects")
     }
+    if (.self$empty) {
+        return (.self)
+    }
 
     .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
     if (length(.dots) == 0) {
