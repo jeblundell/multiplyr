@@ -11,6 +11,8 @@ groupwise(.self, auto_partition = NULL)
 }
 \arguments{
 \item{.self}{Data frame}
+
+\item{auto_partition}{Re-partition across cluster after operation}
 }
 \description{
 Return to grouped data

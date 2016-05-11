@@ -191,8 +191,8 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
     .self$calc_group_sizes()
 
     # Repartition by group if appropriate
-    if (regroup_partition) {
-        return (.self %>% partition_group())
+    if (rg_partition) {
+        return (partition_group_(.self))
     } else {
         if (.self$grouped) {
             .self$rebuild_grouped()
@@ -409,8 +409,8 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
 
     # Repartition by group if appropriate
     if (regroup_partition) {
-        .self$grouped <- TRUE
-        return (.self %>% partition_group())
+        .self$egrouped <- TRUE
+        return (partition_group_(.self))
     } else {
         .self$rebuild_grouped()
         .self$update_fields ("grouped")
@@ -611,6 +611,7 @@ reduce_ <- function (.self, ..., .dots, auto_compact = NULL) {
 
 #' Return to grouped data
 #' @param .self Data frame
+#' @param auto_partition Re-partition across cluster after operation
 #' @export
 regroup <- function (.self, auto_partition=NULL) {
     if (!is(.self, "Multiplyr")) {
@@ -691,6 +692,13 @@ select_ <- function (.self, ..., .dots) {
     return (.self)
 }
 
+#' Select rows by position
+#' @param .self Data frame
+#' @param rows Rows to select
+#' @param start Start of range of rows
+#' @param end End of range of rows
+#' @param each Apply slice to each cluster/group
+#' @param auto_compact Compact data
 #' @export
 slice <- function (.self, rows=NULL, start=NULL, end=NULL, each=FALSE, auto_compact=NULL) {
     if (!is(.self, "Multiplyr")) {
@@ -929,7 +937,6 @@ unselect_ <- undefine_
 
 #' Return data to non-grouped
 #' @param .self Data frame
-#' @param .dots Workaround for non-standard evaluation
 #' @export
 ungroup <- function (.self) {
     if (!is(.self, "Multiplyr")) {

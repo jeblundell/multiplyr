@@ -5,7 +5,7 @@
 \alias{group_by_}
 \title{Group data}
 \usage{
-group_by(.self, ...)
+group_by(.self, ..., auto_partition = NULL)
 
 group_by_(.self, ..., .dots, .cols = NULL, auto_partition = NULL)
 }
@@ -14,7 +14,11 @@ group_by_(.self, ..., .dots, .cols = NULL, auto_partition = NULL)
 
 \item{...}{Variables to sort by}
 
+\item{auto_partition}{Re-partition across cluster after operation}
+
 \item{.dots}{Workaround for non-standard evaluation}
+
+\item{.cols}{Columns to group by (used internally)}
 }
 \description{
 Group data

@@ -3,21 +3,21 @@
 \name{arrange}
 \alias{arrange}
 \alias{arrange_}
-\title{Sort data frame}
+\title{Sort data}
 \usage{
 arrange(.self, ...)
 
 arrange_(.self, ..., .dots)
 }
 \arguments{
+\item{.self}{Data frame}
+
 \item{...}{Variables to sort by}
 
 \item{.dots}{Workaround for non-standard evaluation}
-
-\item{.data}{Data frame}
 }
 \description{
-Sort data frame
+Sort data
 }
 \section{Functions}{
 \itemize{

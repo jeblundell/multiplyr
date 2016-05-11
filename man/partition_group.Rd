@@ -13,6 +13,8 @@ partition_group_(.self, ..., .dots)
 \item{.self}{Data frame}
 
 \item{...}{Names of grouping variables}
+
+\item{.dots}{Workaround for non-standard evaluation}
 }
 \description{
 Partition data so that each group is wholly on a node

@@ -5,16 +5,18 @@
 \alias{filter_}
 \title{Filter data}
 \usage{
-filter(.self, ...)
+filter(.self, ..., auto_compact = NULL)
 
 filter_(.self, ..., .dots, auto_compact = NULL)
 }
 \arguments{
+\item{.self}{Data frame}
+
 \item{...}{Additional parameters}
 
-\item{.dots}{Workaround for non-standard evaluation}
+\item{auto_compact}{Compact data after operation}
 
-\item{.data}{Data frame}
+\item{.dots}{Workaround for non-standard evaluation}
 }
 \description{
 Filter data

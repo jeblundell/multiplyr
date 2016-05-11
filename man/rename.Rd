@@ -10,11 +10,11 @@ rename(.self, ...)
 rename_(.self, ..., .dots)
 }
 \arguments{
+\item{.self}{Data frame}
+
 \item{...}{Additional parameters}
 
 \item{.dots}{Workaround for non-standard evaluation}
-
-\item{.data}{Data frame}
 }
 \description{
 Rename variables

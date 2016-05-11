@@ -11,8 +11,6 @@ rowwise(.self)
 }
 \arguments{
 \item{.self}{Data frame}
-
-\item{.dots}{Workaround for non-standard evaluation}
 }
 \description{
 Return data to non-grouped

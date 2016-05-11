@@ -10,11 +10,11 @@ define(.self, ...)
 define_(.self, ..., .dots)
 }
 \arguments{
+\item{.self}{Data frame}
+
 \item{...}{Names of new variables}
 
 \item{.dots}{Workaround for non-standard evaluation}
-
-\item{.data}{Data frame}
 }
 \description{
 Define new variables

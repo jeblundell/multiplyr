@@ -9,7 +9,7 @@
 \usage{
 reduce(.self, ...)
 
-summarise(.self, ...)
+summarise(.self, ..., auto_compact = auto_compact)
 
 reduce_(.self, ..., .dots, auto_compact = NULL)
 
@@ -19,6 +19,8 @@ summarise_(.self, ..., .dots, auto_compact = NULL)
 \item{.self}{Data frame}
 
 \item{...}{Additional parameters}
+
+\item{auto_compact}{Compact data after operation}
 
 \item{.dots}{Workaround for non-standard evaluation}
 }

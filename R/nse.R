@@ -1,7 +1,7 @@
 # Workarounds for non-standard evaluation
 
-#' Sort data frame
-#' @param .data Data frame
+#' Sort data
+#' @param .self Data frame
 #' @param ... Variables to sort by
 #' @param .dots Workaround for non-standard evaluation
 #' @export
@@ -11,7 +11,7 @@ arrange <- function (.self, ...) {
 }
 
 #' Define new variables
-#' @param .data Data frame
+#' @param .self Data frame
 #' @param ... Names of new variables
 #' @param .dots Workaround for non-standard evaluation
 #' @export
@@ -21,37 +21,41 @@ define <- function (.self, ...) {
 }
 
 #' Select unique rows or unique combinations of variables
-#' @param .data Data frame
+#' @param .self Data frame
 #' @param ... Additional parameters
 #' @param .dots Workaround for non-standard evaluation
+#' @param auto_compact Compact data after operation
 #' @export
-distinct <- function (.self, ...) {
+distinct <- function (.self, ..., auto_compact = NULL) {
     .dots <- lazyeval::lazy_dots (...)
-    distinct_ (.self, .dots=.dots)
+    distinct_ (.self, .dots=.dots, auto_compact=auto_compact)
 }
 
 #' Filter data
-#' @param .data Data frame
+#' @param .self Data frame
 #' @param ... Additional parameters
 #' @param .dots Workaround for non-standard evaluation
+#' @param auto_compact Compact data after operation
 #' @export
-filter <- function (.self, ...) {
+filter <- function (.self, ..., auto_compact=NULL) {
     .dots <- lazyeval::lazy_dots (...)
-    filter_ (.self, .dots=.dots)
+    filter_ (.self, .dots=.dots, auto_compact=auto_compact)
 }
 
 #' Group data
 #' @param .self Data frame
 #' @param ... Variables to sort by
+#' @param .cols Columns to group by (used internally)
 #' @param .dots Workaround for non-standard evaluation
+#' @param auto_partition Re-partition across cluster after operation
 #' @export
-group_by <- function (.self, ...) {
+group_by <- function (.self, ..., auto_partition=NULL) {
     .dots <- lazyeval::lazy_dots (...)
-    group_by_ (.self, .dots=.dots)
+    group_by_ (.self, .dots=.dots, auto_partition=auto_partition)
 }
 
 #' Change values of existing variables (and create new ones)
-#' @param .data Data frame
+#' @param .self Data frame
 #' @param ... Additional parameters
 #' @param .dots Workaround for non-standard evaluation
 #' @export
@@ -63,6 +67,7 @@ mutate <- function (.self, ...) {
 #' Partition data so that each group is wholly on a node
 #' @param .self Data frame
 #' @param ... Names of grouping variables
+#' @param .dots Workaround for non-standard evaluation
 #' @export
 partition_group <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots (...)
@@ -78,7 +83,7 @@ reduce <- function (.self, ...) {
 }
 
 #' Rename variables
-#' @param .data Data frame
+#' @param .self Data frame
 #' @param ... Additional parameters
 #' @param .dots Workaround for non-standard evaluation
 #' @export
@@ -101,10 +106,11 @@ select <- function (.self, ...) {
 #' @param .self Data frame
 #' @param ... Additional parameters
 #' @param .dots Workaround for non-standard evaluation
+#' @param auto_compact Compact data after operation
 #' @export
-summarise <- function (.self, ...) {
+summarise <- function (.self, ..., auto_compact=auto_compact) {
     .dots <- lazyeval::lazy_dots (...)
-    summarise_ (.self, .dots=.dots)
+    summarise_ (.self, .dots=.dots, auto_compact=auto_compact)
 }
 
 #' Change variables and drop all others

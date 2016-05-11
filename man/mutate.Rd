@@ -10,11 +10,11 @@ mutate(.self, ...)
 mutate_(.self, ..., .dots)
 }
 \arguments{
+\item{.self}{Data frame}
+
 \item{...}{Additional parameters}
 
 \item{.dots}{Workaround for non-standard evaluation}
-
-\item{.data}{Data frame}
 }
 \description{
 Change values of existing variables (and create new ones)

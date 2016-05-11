@@ -5,16 +5,18 @@
 \alias{distinct_}
 \title{Select unique rows or unique combinations of variables}
 \usage{
-distinct(.self, ...)
+distinct(.self, ..., auto_compact = NULL)
 
 distinct_(.self, ..., .dots, auto_compact = NULL)
 }
 \arguments{
+\item{.self}{Data frame}
+
 \item{...}{Additional parameters}
 
-\item{.dots}{Workaround for non-standard evaluation}
+\item{auto_compact}{Compact data after operation}
 
-\item{.data}{Data frame}
+\item{.dots}{Workaround for non-standard evaluation}
 }
 \description{
 Select unique rows or unique combinations of variables
