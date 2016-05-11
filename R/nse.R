@@ -69,6 +69,14 @@ partition_group <- function (.self, ...) {
     partition_group_ (.self, .dots=.dots)
 }
 
+#' Summarise data locally with reduction
+#' @describeIn summarise
+#' @export
+reduce <- function (.self, ...) {
+    .dots <- lazyeval::lazy_dots (...)
+    reduce_ (.self, .dots=.dots)
+}
+
 #' Rename variables
 #' @param .data Data frame
 #' @param ... Additional parameters

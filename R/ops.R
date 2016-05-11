@@ -539,6 +539,76 @@ partition_group_ <- function (.self, ..., .dots) {
     return (.self)
 }
 
+#' @describeIn summarise
+#' @export
+reduce_ <- function (.self, ..., .dots, auto_compact = NULL) {
+    if (!is(.self, "Multiplyr")) {
+        stop ("reduce operation only valid for Multiplyr objects")
+    }
+    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    if (length(.dots) == 0) {
+        stop ("No reduce operations specified")
+    }
+
+    if (is.null(auto_compact)) {
+        auto_compact <- .self$auto_compact
+    }
+
+    avail <- which (substr (.self$col.names, 1, 1) != ".")
+    if (.self$grouped) {
+        avail <- avail[-.self$group.cols]
+    }
+    avail <- sort(c(avail, which (is.na(.self$col.names))))
+
+    newnames <- names(.dots)
+    if (length(newnames) > length(avail)) {
+        stop ("Insufficient free columns available")
+    }
+    newcols <- avail[1:length(newnames)]
+    #FIXME: preserve type?
+
+    if (!.self$empty) {
+        if (.self$grouped) {
+            for (g in 1:.self$group_max) {
+                grp <- .self$group_restrict (g)
+                res <- lazyeval::lazy_eval (.dots, grp$envir())
+                len <- 0
+                for (i in 1:length(res)) {
+                    grp$bm[, newcols[i]] <- res[[i]]
+                    if (length(res[[i]]) > len) {
+                        len <- length(res[[i]])
+                    }
+                }
+                grp$bm[, grp$filtercol] <- 0
+                grp$bm[1:len, grp$filtercol] <- 1
+                grp$filtered <- TRUE
+            }
+        } else {
+            res <- lazyeval::lazy_eval (.dots, .self$envir())
+            len <- 0
+            for (i in 1:length(res)) {
+                .self$bm[, newcols[i]] <- res[[i]]
+                if (length(res[[i]]) > len) {
+                    len <- length(res[[i]])
+                }
+            }
+            .self$bm[, .self$filtercol] <- 0
+            .self$bm[1:len, .self$filtercol] <- 1
+            .self$filtered <- TRUE
+        }
+    }
+    if (auto_compact) {
+        .self$compact()
+    }
+
+    .self$free_col (avail, update=TRUE)
+    .self$alloc_col (newnames, update=TRUE)
+
+    .self$calc_group_sizes()
+
+    return (.self)
+}
+
 #' Return to grouped data
 #' @param .self Data frame
 #' @export
@@ -761,10 +831,10 @@ summarise_ <- function (.self, ..., .dots, auto_compact = NULL) {
         .self$compact()
     }
 
-    .self$calc_group_sizes()
-
     .self$free_col (avail, update=TRUE)
     .self$alloc_col (newnames, update=TRUE)
+
+    .self$calc_group_sizes()
 
     return (.self)
 }
