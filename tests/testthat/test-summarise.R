@@ -48,4 +48,13 @@ test_that ("summarise() throws an error if no parameters or non-Multiplyr", {
     rm (dat)
 })
 
+test_that ("reduce() keeps the right columns", {
+    dat <- Multiplyr (x=1:100, y=rep(2, 100),
+                      G=rep(c("A", "B", "C", "D"), each=25),
+                      alloc=1, cl=cl2)
+    dat %>% group_by (G) %>% summarise (N=length(x)) %>% reduce(N=sum(N))
+    expect_equal (names(dat), c("G", "N"))
+    rm (dat)
+})
+
 parallel::stopCluster(cl2)

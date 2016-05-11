@@ -556,7 +556,7 @@ reduce_ <- function (.self, ..., .dots, auto_compact = NULL) {
 
     avail <- which (substr (.self$col.names, 1, 1) != ".")
     if (.self$grouped) {
-        avail <- avail[-.self$group.cols]
+        avail <- avail[!(avail %in% .self$group.cols)]
     }
     avail <- sort(c(avail, which (is.na(.self$col.names))))
 
@@ -783,7 +783,7 @@ summarise_ <- function (.self, ..., .dots, auto_compact = NULL) {
 
     avail <- which (substr (.self$col.names, 1, 1) != ".")
     if (.self$grouped) {
-        avail <- avail[-.self$group.cols]
+        avail <- avail[!(avail %in% .self$group.cols)]
     }
     avail <- sort(c(avail, which (is.na(.self$col.names))))
 
