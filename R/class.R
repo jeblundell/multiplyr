@@ -201,7 +201,7 @@ reattach = function (descres) {
 },
 cluster_export = function (var, var.as=NULL, envir=parent.frame()) {
     if (is.null(var.as)) {
-        parallel::clusterExport (cls, var, envir)
+        parallel::clusterExport (cls, var, envir) #PROFME
     } else {
         if (length(var) != length(var.as)) {
             stop ("var.as needs to be same length as var: did you mean to do cluster_export(c(...))?")
@@ -808,8 +808,8 @@ compact = function () {
     rg_partion <- group_partition
     rg_cols <- group.cols
 
-    partition_even()
-    N <- cluster_eval ({
+    partition_even() #PROFME
+    N <- cluster_eval ({ #PROFME
         #(1) Sort by filtercol decreasing
         bigmemory::mpermute (.local$bm, cols=.local$filtercol, decreasing=TRUE)
 
