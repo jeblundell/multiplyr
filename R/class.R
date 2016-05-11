@@ -959,7 +959,8 @@ setMethod ("dimnames", "Multiplyr", function (x) {
 })
 
 setMethod("names", "Multiplyr", function(x) {
-    x$col.names[x$order.cols > 0]
+    m <- x$order.cols > 0
+    (x$col.names[m])[order(x$order.cols[m])]
 })
 
 setMethod("row.names", "Multiplyr", function (x) {
