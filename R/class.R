@@ -834,6 +834,16 @@ rebuild_grouped = function () {
     destroy_grouped()
     build_grouped()
 },
+row_names = function () {
+    if (empty) {
+        return(character(0))
+    }
+    if (filtered) {
+        return (seq_len(sum(bm[, filtercol] == 1)))
+    } else {
+        return (seq_len((last - first)+1))
+    }
+},
 set_data = function (i=NULL, j=NULL, value, nsa=FALSE) {
     if (is.null(i)) {
         rowslice <- NULL
@@ -1083,16 +1093,6 @@ update_fields = function (fieldnames) {
         })
     }
     profile ("stop", "update_fields")
-},
-row_names = function () {
-    if (empty) {
-        return(character(0))
-    }
-    if (filtered) {
-        return (sum(bm[, filtercol] == 1))
-    } else {
-        return (seq_len((last - first)+1))
-    }
 }
 ))
 
