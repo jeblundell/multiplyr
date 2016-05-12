@@ -716,4 +716,48 @@ test_that ("$group_restrict() for an empty group returns a frame with $empty=TRU
     rm (dat)
 })
 
+test_that ("$sort() returns sorted data", {
+    dat <- Multiplyr (x=1:100, y=100:1, G=rep(c("A", "B"), length.out=100), cl=cl2)
+
+    dat$sort (decreasing=FALSE, cols=2)
+    expect_equal (dat["x"], 100:1)
+    expect_equal (dat["y"], 1:100)
+    expect_equal (dat["G"], rep(c("B", "A"), length.out=100))
+
+    dat$sort (decreasing=TRUE, cols=2)
+    expect_equal (dat["x"], 1:100)
+    expect_equal (dat["y"], 100:1)
+    expect_equal (dat["G"], rep(c("A", "B"), length.out=100))
+
+    dat$sort (decreasing=TRUE, cols=c(1,2))
+    expect_equal (dat["x"], 100:1)
+    expect_equal (dat["y"], 1:100)
+    expect_equal (dat["G"], rep(c("B", "A"), length.out=100))
+
+    dat %>% group_by (G)
+    dat$sort (decreasing=FALSE, cols=1)
+    expect_equal (dat["x"], c(seq(1, 100, by=2), seq(2, 100, by=2)))
+    expect_equal (dat["G"], rep(c("A", "B"), each=50))
+    dat$sort (decreasing=FALSE, cols=1, with.group=FALSE)
+    expect_equal (dat["x"], 1:100)
+    expect_equal (dat["y"], 100:1)
+    expect_equal (dat["G"], rep(c("A", "B"), length.out=100))
+    dat %>% ungroup()
+
+    f <- function (...) { lazyeval::lazy_dots (...) }
+
+    .dots <- f(y)
+    dat$sort (decreasing=FALSE, dots=.dots)
+    expect_equal (dat["x"], 100:1)
+    expect_equal (dat["y"], 1:100)
+    expect_equal (dat["G"], rep(c("B", "A"), length.out=100))
+
+    .dots <- f(G, x)
+    dat$sort (decreasing=FALSE, dots=.dots)
+    expect_equal (dat["x"], c(seq(1, 100, by=2), seq(2, 100, by=2)))
+    expect_equal (dat["G"], rep(c("A", "B"), each=50))
+
+    rm (dat)
+})
+
 parallel::stopCluster (cl2)

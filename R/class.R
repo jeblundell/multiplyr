@@ -1047,8 +1047,11 @@ sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=TRUE) {
     if (empty) { return() }
     profile ("start", "sort")
     if (is.null(cols)) {
-        namelist <- .dots2names (dots)
+        namelist <- .dots2names (lazyeval::all_dots (dots, all_named = TRUE))
         cols <- match(namelist, col.names)
+        if (any(is.na(cols))) {
+            stop (.p("Undefined column(s): ", paste0(namelist[is.na(cols)], collapse=", ")))
+        }
     }
     if (grouped && with.group) {
         if (groupcol %in% cols) {
@@ -1059,7 +1062,7 @@ sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=TRUE) {
     if (length(cols) == 0) {
         stop ("No sorting column(s) specified")
     }
-    bigmemory::mpermute (bm, cols=cols)
+    bigmemory::mpermute (bm, cols=cols, decreasing=decreasing)
     profile ("stop", "sort")
 },
 update_fields = function (fieldnames) {
