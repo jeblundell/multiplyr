@@ -388,7 +388,7 @@ copy = function (shallow = FALSE) {
 },
 describe = function () {
     fnames <- names(.refClassDef@fieldClasses)
-    fnames <- as.list(fnames[-match(c("bm", "bm.master", "cls"), fnames)])
+    fnames <- as.list(fnames[-match(c("bm", "bm.master", "cls", "bindenv"), fnames)])
     out <- lapply(fnames, function (x, d) { d$field(x) }, .self)
     names(out) <- fnames
     class(out) <- "Multiplyr.desc"
@@ -809,6 +809,7 @@ reattach_slave = function (descres) {
     bm <<- bigmemory::attach.big.matrix(desc)
     bm.master <<- bm
     slave <<- TRUE
+    bindenv <<- new.env()
 
     #horrible kludge so copy() doesn't complain about NULL
     #as apparently R can't cope with assigning NULL to fields?
