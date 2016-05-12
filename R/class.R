@@ -488,6 +488,19 @@ filter_vector = function (rows) {
     profile ("stop", "filter_vector")
 },
 free_col = function (cols, update=FALSE) {
+    if (grouped) {
+        if (any(cols %in% group.cols)) {
+            stop ("Attempted to drop columns currently in use by grouping")
+        }
+    }
+    if (any(cols == filtercol)) {
+        stop ("Attempted to drop filter column")
+    } else if (any(cols == groupcol)) {
+        stop ("Attempted to drop group ID column")
+    } else if (any(cols == tmpcol)) {
+        stop ("Attempted to drop tmp column")
+    }
+
     fc <- type.cols[cols] > 0
     if (any(fc)) {
         fc <- cols[fc]
