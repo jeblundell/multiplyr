@@ -12,6 +12,7 @@ Multiplyr <- setRefClass("Multiplyr",
                 bm.master       = "big.matrix",
                 desc            = "big.matrix.descriptor",
                 cls             = "SOCKcluster",
+                slave           = "logical",
                 factor.cols     = "numeric",
                 factor.levels   = "list",
                 type.cols       = "numeric",
@@ -54,15 +55,22 @@ initialize = function (..., alloc=1, cl=NULL,
         #Occurs when $copy() used
         #FIXME: how to manage when user calls
         return()
-    } else if (length(vars) == 1) {
+    }
+
+    profiling <<- profiling
+    profile ("start", "initialize")
+
+    if (length(vars) == 1) {
         if (is.data.frame(vars[[1]])) {
             vars <- unclass(vars[[1]])
         } else if (is(vars[[1]], "Multiplyr.desc")) {
-            reattach (vars[[1]])
+            reattach_slave (vars[[1]])
+            profile ("stop", "initialize")
             return()
         }
     }
 
+    profile ("start", "initialize.cluster")
     if (is.null (cl)) {
         cl <- max (1, parallel::detectCores() - 1)
         cls <<- parallel::makeCluster (cl)
@@ -77,6 +85,8 @@ initialize = function (..., alloc=1, cl=NULL,
         })
     }
 
+    slave <<- FALSE
+
     res <- do.call (c, cluster_eval(exists("partition_even")))
     if (any(!res)) {
         cluster_eval ({
@@ -84,7 +94,9 @@ initialize = function (..., alloc=1, cl=NULL,
             library (lazyeval)
         })
     }
+    profile ("stop", "initialize.cluster")
 
+    profile ("start", "initialize.data")
     special <- c(".filter", ".group", ".tmp")
     nrows <- length(vars[[1]])
     ncols <- length(vars) + alloc + length(special)
@@ -104,6 +116,7 @@ initialize = function (..., alloc=1, cl=NULL,
 
     type.cols <<- rep(0, ncols)
 
+    profile ("start", "initialize.load")
     for (i in 1:length(vars)) {
         tmp <- vars[[i]][1]
         if (is.numeric (tmp)) {
@@ -129,6 +142,8 @@ initialize = function (..., alloc=1, cl=NULL,
     for (i in seq_len(length(factor.cols))) {
         pad[factor.cols[i]] <<- max(nchar(factor.levels[[i]]))
     }
+    profile ("stop", "initialize.load")
+    profile ("stop", "initialize.data")
 
     nsa <<- FALSE
     group.cols <<- 0
@@ -139,7 +154,6 @@ initialize = function (..., alloc=1, cl=NULL,
     filtered <<- FALSE
     auto_compact <<- auto_compact
     auto_partition <<- auto_partition
-    profiling <<- profiling
     group_sizes_stale <<- FALSE
 
     desc <<- bigmemory.sri::describe (bm)
@@ -147,6 +161,7 @@ initialize = function (..., alloc=1, cl=NULL,
     cluster_export_self ()
 
     partition_even()
+    profile ("stop", "initialize")
 },
 alloc_col = function (name=".tmp", update=FALSE) {
     res <- match (name, col.names)
@@ -170,6 +185,20 @@ alloc_col = function (name=".tmp", update=FALSE) {
         update_fields (c("col.names", "type.cols", "order.cols"))
     }
     return (res)
+},
+build_grouped = function () {
+    if (empty) { return() }
+    cluster_eval ({
+        if (.local$empty) { return(NULL) }
+
+        .grouped <- list()
+        for (.g in 1:length(.local$group)) {
+            .grp <- .master$group_restrict(.local$group[.g])
+            .grouped <- append(.grouped, list(.grp))
+        }
+
+        NULL
+    })
 },
 calc_group_sizes = function (delay=TRUE) {
     if (delay) {
@@ -195,9 +224,16 @@ calc_group_sizes = function (delay=TRUE) {
     group_sizes_stale <<- FALSE
 },
 cluster_eval = function (...) {
+    if (profiling) {
+        profile ("start", "cluster_eval")
+        res <- parallel::clusterEvalQ (cls, ...)
+        profile ("stop", "cluster_eval")
+        return (res)
+    }
     parallel::clusterEvalQ (cls, ...)
 },
 cluster_export = function (var, var.as=NULL, envir=parent.frame()) {
+    profile ("start", "cluster_export")
     if (is.null(var.as)) {
         parallel::clusterExport (cls, var, envir) #PROFME
     } else {
@@ -210,8 +246,10 @@ cluster_export = function (var, var.as=NULL, envir=parent.frame()) {
             parallel::clusterExport (cls, var.as[i], envir=tmp)
         }
     }
+    profile ("stop", "cluster_export")
 },
 cluster_export_each = function (var, var.as=var, envir=parent.frame()) {
+    profile ("start", "cluster_export_each")
     if (length(var) != length(var.as)) {
         stop ("var.as needs to be same length as var: did you mean to do cluster_export_each(c(...))?")
     }
@@ -222,6 +260,7 @@ cluster_export_each = function (var, var.as=var, envir=parent.frame()) {
             parallel::clusterExport (cls[j], var.as[i], envir=tmp)
         }
     }
+    profile ("stop", "cluster_export_each")
 },
 cluster_export_self = function () {
     #Replaces cluster_export (".master")
@@ -231,6 +270,31 @@ cluster_export_self = function () {
         .master <- Multiplyr(.res)
         NULL
     })
+},
+cluster_profile = function () {
+    if (!profiling || slave) { return() }
+    res <- cluster_eval({
+        if (exists(".grouped")) {
+            for (.grp in .grouped) {
+                .local$profile_import (.grp$profile())
+                if (length(.grp$profile_names) > 0) {
+                    .grp$profile_names <- character(0)
+                    .grp$profile_sys <- numeric(0)
+                    .grp$profile_user <- numeric(0)
+                }
+            }
+        }
+        res <- .local$profile()
+        if (nrow(res) > 0) {
+            .local$profile_names <- character(0)
+            .local$profile_user <- numeric(0)
+            .local$profile_sys <- numeric(0)
+        }
+        res
+    })
+    for (i in res) {
+        profile_import (i)
+    }
 },
 compact = function () {
     if (!filtered) { return() }
@@ -306,7 +370,15 @@ copy = function (shallow = FALSE) {
     if (!shallow) {
         stop ("Non-shallow copy not implemented safely yet")
     }
-    callSuper (shallow)
+    if (profiling) {
+        res <- callSuper (shallow)
+        res$profile_names <- character(0)
+        res$profile_rsys <- res$profile_sys <- numeric(0)
+        res$profile_ruser <- res$profile_user <- numeric(0)
+        return (res)
+    } else {
+        callSuper (shallow)
+    }
 },
 describe = function () {
     fnames <- names(.refClassDef@fieldClasses)
@@ -315,6 +387,15 @@ describe = function () {
     names(out) <- fnames
     class(out) <- "Multiplyr.desc"
     return (out)
+},
+destroy_grouped = function () {
+    cluster_profile ()
+    cluster_eval ({
+        if (exists(".grouped")) {
+            rm (.grouped)
+        }
+        NULL
+    })
 },
 envir = function (nsa=FALSE) {
     if (is.null(bindenv)) {
@@ -545,6 +626,9 @@ group_restrict = function (group=0) {
         stop ("group_restrict may only be used on grouped data")
     }
     grp <- copy (shallow=TRUE)
+    grp$profile_names <- character(0)
+    grp$profile_sys <- grp$profile_user <- numeric(0)
+    grp$profile_rsys <- grp$profile_ruser <- numeric(0)
     grp$group_sizes <- grp$group_sizes[grp$group == group]
     grp$group <- group
 
@@ -575,13 +659,20 @@ partition_even = function (max.row = last) {
     if (empty || max.row == 0) { return() }
     N <- length(cls)
 
+    if (grouped) {
+        destroy_grouped ()
+    }
+    grouped <<- group_partition <<- FALSE
+
     if (max.row == 0) {
         cluster_eval ({
             if (exists(".master")) {
                 .master$empty <- TRUE
+                .master$grouped <- .master$group_partition <- FALSE
             }
             if (exists(".local")) {
                 .local$empty <- TRUE
+                .local$grouped <- .local$group_partition <- FALSE
             }
             NULL
         })
@@ -599,8 +690,6 @@ partition_even = function (max.row = last) {
         cluster_export_each (".first")
         cluster_export_each (".last")
     }
-
-    grouped <<- group_partition <<- FALSE
 
     cluster_eval ({
         if (!exists(".local")) {
@@ -621,19 +710,22 @@ partition_even = function (max.row = last) {
 },
 profile = function (action=NULL, name=NULL) {
     if (!profiling) {
-        return()
+        return(data.frame())
     }
 
     if (is.null(action)) {
+        if (!slave) {
+            cluster_profile ()
+        }
+
         if (length(profile_names) == 0) {
-            cat ("No profiles defined\n")
-            return
+            return (data.frame())
         }
 
         if (is.null(name)) {
-            m <- seq_len(length(profile_names))
+            m <- order(profile_names)
         } else {
-            m <- match (name, profile_names)
+            m <- match (sort(name), profile_names)
         }
 
         return (data.frame(Profile=profile_names[m],
@@ -665,8 +757,25 @@ profile = function (action=NULL, name=NULL) {
         profile_user[m] <<- profile_user[m] + user.diff
         profile_sys[m] <<- profile_sys[m] + sys.diff
     }
+    return (invisible(res))
 },
-reattach = function (descres) {
+profile_import = function (prof) {
+    if (!profiling) { return() }
+    if (nrow(prof) == 0) { return() }
+    m <- match (prof$Profile, profile_names)
+    if (any(is.na(m))) {
+        profile_names <<- c(profile_names, prof$Profile[is.na(m)])
+        len <- sum(is.na(m))
+        profile_sys <<- c(profile_sys, rep(0, len))
+        profile_user <<- c(profile_user, rep(0, len))
+        profile_rsys <<- c(profile_rsys, rep(0, len))
+        profile_ruser <<- c(profile_ruser, rep(0, len))
+        m <- match (prof$Profile, profile_names)
+    }
+    profile_sys[m] <<- profile_sys[m] + prof$System
+    profile_user[m] <<- profile_user[m] + prof$User
+},
+reattach_slave = function (descres) {
     nm <- names(descres)
     for (i in 1:length(descres)) {
         field(nm[i], descres[[i]])
@@ -674,6 +783,7 @@ reattach = function (descres) {
 
     bm <<- bigmemory::attach.big.matrix(desc)
     bm.master <<- bm
+    slave <<- TRUE
 
     #horrible kludge so copy() doesn't complain about NULL
     #as apparently R can't cope with assigning NULL to fields?
@@ -682,18 +792,8 @@ reattach = function (descres) {
     cls <<- clsna
 },
 rebuild_grouped = function () {
-    if (empty) { return() }
-    cluster_eval ({
-        if (.local$empty) { return(NULL) }
-
-        .grouped <- list()
-        for (.g in 1:length(.local$group)) {
-            .grp <- .local$group_restrict(.local$group[.g])
-            .grouped <- append(.grouped, list(.grp))
-        }
-
-        NULL
-    })
+    destroy_grouped()
+    build_grouped()
 },
 set_data = function (i=NULL, j=NULL, value, nsa=FALSE) {
     if (is.null(i)) {
@@ -922,12 +1022,6 @@ sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=TRUE) {
     bigmemory::mpermute (bm, cols=cols)
 },
 update_fields = function (fieldnames) {
-    idx <- match ("grouped", fieldnames)
-    do_grouped <- !is.na(idx)
-    if (do_grouped) {
-        fieldnames <- fieldnames[-idx]
-    }
-
     for (.fieldname in fieldnames) {
         .fieldval <- .self$field(name=.fieldname)
         cluster_export (c(".fieldname", ".fieldval"))
@@ -935,19 +1029,13 @@ update_fields = function (fieldnames) {
             .master$field (name = .fieldname, value = .fieldval)
             .local$field (name = .fieldname, value = .fieldval)
             if (.local$empty) { return(NULL) }
-            if (.local$grouped) {
+            if (exists(".grouped")) {
                 for (.g in 1:length(.grouped)) {
                     .grouped[[.g]]$field (name = .fieldname, value = .fieldval)
                 }
             }
             NULL
         })
-    }
-
-    if (do_grouped) {
-        .i <- grouped
-        cluster_export (".i")
-        cluster_eval ({.master$grouped <- .local$grouped <- .i})
     }
 },
 row_names = function () {

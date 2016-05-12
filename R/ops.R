@@ -520,6 +520,9 @@ partition_group_ <- function (.self, ..., .dots) {
 
     .self$cluster_export_each ("Gi", ".groups")
 
+    .self$destroy_grouped()
+    .self$cluster_profile()
+
     .self$cluster_eval ({
         if (NA %in% .groups) {
             .local$empty <- TRUE
@@ -533,9 +536,9 @@ partition_group_ <- function (.self, ..., .dots) {
         NULL
     })
 
-    .self$rebuild_grouped ()
     .self$group_partition <- .self$grouped <- TRUE
     .self$update_fields (c("grouped", "group_partition"))
+    .self$build_grouped ()
 
     return (.self)
 }
@@ -629,6 +632,7 @@ regroup <- function (.self, auto_partition=NULL) {
     if (is.null(auto_partition)) {
         auto_partition <- .self$auto_partition
     }
+
     .self$grouped <- TRUE
     .self$update_fields ("grouped")
 
@@ -636,6 +640,8 @@ regroup <- function (.self, auto_partition=NULL) {
         .self$group_partition <- TRUE
         .self$update_fields ("group_partition")
     }
+
+    .self$build_grouped()
 
     return (.self)
 }
@@ -947,6 +953,7 @@ ungroup <- function (.self) {
         warning ("ungroup attempted on an object that's not grouped")
         return (.self)
     }
+    .self$destroy_grouped ()
     .self$grouped <- .self$group_partition <- FALSE
     .self$update_fields (c("grouped", "group_partition"))
     .self$partition_even ()
