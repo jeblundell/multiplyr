@@ -716,6 +716,25 @@ test_that ("$group_restrict() for an empty group returns a frame with $empty=TRU
     rm (dat)
 })
 
+test_that ("$local_subset() works appropriately", {
+    dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
+    dat$local_subset (50, 60)
+    expect_equal (dat$first, 50)
+    expect_equal (dat$last, 60)
+    expect_equal (dat["x"], 50:60)
+    rm (dat)
+})
+
+test_that ("$row_names() works appropriately", {
+    dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
+    expect_equal (dat$row_names(), 1:100)
+    dat$filter_range (51, 60)
+    expect_equal (dat$row_names(), 1:10)
+    dat$filter_vector (rep(FALSE, 100))
+    expect_equal (dat$row_names(), character(0))
+    rm (dat)
+})
+
 test_that ("$sort() returns sorted data", {
     dat <- Multiplyr (x=1:100, y=100:1, G=rep(c("A", "B"), length.out=100), cl=cl2)
 
@@ -759,5 +778,39 @@ test_that ("$sort() returns sorted data", {
 
     rm (dat)
 })
+
+test_that ("$update_fields() works appropriately", {
+    dat <- Multiplyr (x=1:100, y=100:1, G=rep(c("A", "B"), length.out=100), cl=cl2)
+    dat %>% group_by (G)
+    dat$pad <- 1:100
+    dat$update_fields ("pad")
+    expect_equal (dat$cluster_eval(.local$pad), list(1:100, 1:100))
+    expect_equal (dat$cluster_eval(.grouped[[1]]$pad), list(1:100, 1:100))
+    rm (dat)
+})
+
+dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
+test_that ("as.data.frame() works appropriately", {
+    expect_equal (as.data.frame (dat), data.frame(x=1:100, G=rep(c("A", "B"), each=50), stringsAsFactors = FALSE))
+})
+
+test_that ("dimnames() works appropriately", {
+    expect_equal (dimnames(dat), list(row.names(dat), names(dat)))
+})
+
+test_that ("names() works appropriately", {
+    expect_equal (names(dat), c("x", "G"))
+    dat %>% select (G, x)
+    expect_equal (names(dat), c("G", "x"))
+})
+
+test_that ("row.names() works appropriately", {
+    expect_equal (row.names(dat), 1:100)
+    dat$filter_range (51, 60)
+    expect_equal (row.names(dat), 1:10)
+    dat$filter_vector (rep(FALSE, 100))
+    expect_equal (row.names(dat), character(0))
+})
+rm (dat)
 
 parallel::stopCluster (cl2)
