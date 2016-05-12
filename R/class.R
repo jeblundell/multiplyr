@@ -373,11 +373,14 @@ copy = function (shallow = FALSE) {
         stop ("Non-shallow copy not implemented safely yet")
     }
     if (profiling) {
+        t1 <- proc.time()
         res <- callSuper (shallow)
-        res$profile_names <- character(0)
-        res$profile_rsys <- res$profile_sys <- numeric(0)
-        res$profile_ruser <- res$profile_user <- numeric(0)
-        res$profile_rreal <- res$profile_real <- numeric(0)
+        t2 <- proc.time() - t1
+        res$profile_names <- "copy"
+        res$profile_sys <- t2[1][[1]]
+        res$profile_user <- t2[2][[1]]
+        res$profile_real <- t2[3][[1]]
+        res$profile_rsys <- res$profile_ruser <- res$profile_rreal <- 0
         return (res)
     } else {
         callSuper (shallow)
