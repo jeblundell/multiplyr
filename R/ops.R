@@ -226,7 +226,7 @@ filter_ <- function (.self, ..., .dots, auto_compact = NULL) {
     .self$cluster_eval ({
         if (.local$empty) { return (NULL) }
         if (.local$grouped) {
-            for (.g in 1:length(.groups)) {
+            for (.g in 1:length(.local$group)) {
                 for (.i in 1:length(.dots)) {
                     if (.grouped[[.g]]$empty) { next }
                     .res <- lazyeval::lazy_eval (.dots[.i], .grouped[[.g]]$envir())
@@ -378,7 +378,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
     .self$cluster_export_each ("Gbase", ".Gbase")
     .self$cluster_eval ({ #PROFME
         .local$bm[, .local$groupcol] <- .local$bm[, .local$groupcol] + .Gbase
-        .groups <- unique (.local$bm[, .local$groupcol]) #FIXME
+        .local$group <- unique (.local$bm[, .local$groupcol]) #FIXME
         NULL
     })
 
@@ -460,7 +460,7 @@ mutate_ <- function (.self, ..., .dots) {
     .self$cluster_eval ({
         if (.local$empty) { return (NULL) }
         if (.local$grouped) {
-            for (.g in 1:length(.groups)) {
+            for (.g in 1:length(.local$group)) {
                 for (.i in 1:length(.dots)) {
                     .res <- lazyeval::lazy_eval (.dots[.i], .grouped[[.g]]$envir())
                     .grouped[[.g]]$set_data (, .rescols[.i], .res[[1]])
@@ -528,6 +528,7 @@ partition_group_ <- function (.self, ..., .dots) {
 
         .local <- .master$copy(shallow=TRUE)
         .local$empty <- FALSE
+        .local$group <- .groups
 
         NULL
     })
@@ -719,7 +720,7 @@ slice <- function (.self, rows=NULL, start=NULL, end=NULL, each=FALSE, auto_comp
             .self$cluster_eval ({
                 if (.local$empty) { return (NULL) }
                 if (.local$grouped) {
-                    for (.g in 1:length(.groups)) {
+                    for (.g in 1:length(.local$group)) {
                         .grouped[[.g]]$filter_range (.start, .end)
                     }
                 } else {
@@ -732,7 +733,7 @@ slice <- function (.self, rows=NULL, start=NULL, end=NULL, each=FALSE, auto_comp
             .self$cluster_eval ({
                 if (.local$empty) { return (NULL) }
                 if (.local$grouped) {
-                    for (.g in 1:length(.groups)) {
+                    for (.g in 1:length(.local$group)) {
                         .grouped[[.g]]$filter_vector (.rows)
                     }
                 } else {
@@ -745,7 +746,7 @@ slice <- function (.self, rows=NULL, start=NULL, end=NULL, each=FALSE, auto_comp
             .self$cluster_eval ({
                 if (.local$empty) { return (NULL) }
                 if (.local$grouped) {
-                    for (.g in 1:length(.groups)) {
+                    for (.g in 1:length(.local$group)) {
                         .grouped[[.g]]$filter_rows (.rows)
                     }
                 } else {
@@ -877,7 +878,7 @@ transmute_ <- function (.self, ..., .dots) {
     .self$cluster_eval ({
         if (.local$empty) { return (NULL) }
         if (.local$grouped) {
-            for (.g in 1:length(.groups)) {
+            for (.g in 1:length(.local$group)) {
                 for (.i in 1:length(.dots)) {
                     .res <- lazyeval::lazy_eval (.dots[.i], .grouped[[.g]]$envir())
                     .grouped[[.g]]$set_data (, .rescols[.i], .res[[1]])
@@ -976,7 +977,7 @@ within_group <- function (.self, expr) {
     .self$cluster_export ("expr", ".expr")
     .self$cluster_eval({
         if (.local$empty) { return(NULL) }
-        for (.g in 1:length(.groups)) {
+        for (.g in 1:length(.local$group)) {
             eval (.expr, envir = .grouped[[.g]]$envir())
         }
         NULL

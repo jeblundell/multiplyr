@@ -626,8 +626,8 @@ rebuild_grouped = function () {
         if (.local$empty) { return(NULL) }
 
         .grouped <- list()
-        for (.g in 1:length(.groups)) {
-            .grp <- .local$group_restrict(.groups[.g])
+        for (.g in 1:length(.local$group)) {
+            .grp <- .local$group_restrict(.local$group[.g])
             .grouped <- append(.grouped, list(.grp))
         }
 
@@ -821,7 +821,7 @@ show = function (max.row=10) {
     if (group_partition) {
         res <- cluster_eval ({
             if (.local$empty) { return(0) }
-            return (length(.groups))
+            return (length(.local$group))
         })
         res <- do.call (c, res)
         cat (sprintf ("Group partioned over %d clusters\n", length(cls)))
