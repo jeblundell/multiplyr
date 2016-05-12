@@ -9,7 +9,7 @@
 \usage{
 reduce(.self, ...)
 
-summarise(.self, ..., auto_compact = auto_compact)
+summarise(.self, ..., auto_compact = NULL)
 
 reduce_(.self, ..., .dots, auto_compact = NULL)
 

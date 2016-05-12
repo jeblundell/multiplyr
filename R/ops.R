@@ -409,7 +409,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
 
     # Repartition by group if appropriate
     if (regroup_partition) {
-        .self$egrouped <- TRUE
+        .self$grouped <- TRUE
         return (partition_group_(.self))
     } else {
         .self$rebuild_grouped()

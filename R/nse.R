@@ -108,7 +108,7 @@ select <- function (.self, ...) {
 #' @param .dots Workaround for non-standard evaluation
 #' @param auto_compact Compact data after operation
 #' @export
-summarise <- function (.self, ..., auto_compact=auto_compact) {
+summarise <- function (.self, ..., auto_compact=NULL) {
     .dots <- lazyeval::lazy_dots (...)
     summarise_ (.self, .dots=.dots, auto_compact=auto_compact)
 }
