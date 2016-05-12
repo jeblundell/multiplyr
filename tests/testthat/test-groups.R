@@ -309,6 +309,18 @@ test_that ("regroup() works appropriately", {
     expect_equal (dat$group_sizes, rep(25, 4))
     expect_equal (dat$group_max, 4)
 
+    res <- do.call (c, dat$cluster_eval(.local$group))
+    expect_equal (sort(res), 1:4)
+
+    res <- do.call (c, dat$cluster_eval (length(.grouped)))
+    expect_equal (res, c(2, 2))
+
+    res <- do.call (c, dat$cluster_eval (c(nrow(.grouped[[1]]$bm), nrow(.grouped[[2]]$bm))))
+    expect_equal (res, rep(25, 4))
+
+    res <- do.call (c, dat$cluster_eval (.local$grouped))
+    expect_equal (res, c(TRUE, TRUE))
+
     dat %>% summarise (x=length(x))
     expect_equal (dat["x"], rep(25, 4))
 

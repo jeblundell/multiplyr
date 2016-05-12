@@ -39,6 +39,7 @@ test_that ("Multiplyr(x=..., y=...) creates the appropriate structure", {
     res <- do.call (c, dat$cluster_eval (123))
     expect_equal (res, rep(123, 2))
 
+    expect_equal (dat$group.cols, 0)
     expect_equal (dat$grouped, FALSE)
     expect_equal (dat$group, 0)
     expect_equal (dat$group_partition, FALSE)
@@ -46,7 +47,6 @@ test_that ("Multiplyr(x=..., y=...) creates the appropriate structure", {
 
     rm (dat)
 })
-# .filter, .group, alloc
 
 test_that ("Multiplyr() works on a data.frame", {
     dat.df <- data.frame(x=1:100,
@@ -87,6 +87,7 @@ test_that ("Multiplyr() works on a data.frame", {
     res <- do.call (c, dat$cluster_eval (123))
     expect_equal (res, rep(123, 2))
 
+    expect_equal (dat$group.cols, 0)
     expect_equal (dat$grouped, FALSE)
     expect_equal (dat$group, 0)
     expect_equal (dat$group_partition, FALSE)
@@ -133,6 +134,7 @@ test_that ("dat$copy(shallow=TRUE) creates the appropriate structure", {
     res <- do.call (c, dat$cluster_eval (123))
     expect_equal (res, rep(123, 2))
 
+    expect_equal (dat$group.cols, 0)
     expect_equal (dat$grouped, FALSE)
     expect_equal (dat$group, 0)
     expect_equal (dat$group_partition, FALSE)
@@ -146,8 +148,6 @@ dat.df <- data.frame (x=N:1,
              location=as.factor(rep(c("house", "field", "space"), length.out=N)),
              stringsAsFactors = FALSE)
 dat <- Multiplyr (dat.df, alloc=1, cl=cl2)
-
-### Getting
 
 test_that ("Multiplyr(x=...)[\"x\"] returns ...", {
     expect_equal (dat["x"], dat.df$x)
@@ -236,8 +236,6 @@ test_that ("with(dat$envir(), x) returns ...", {
     expect_false (is.character(with (dat$envir(), location)))
 })
 
-### Setting
-
 test_that ("dat[\"x\"] <- ... sets x to ...", {
     for (i in list(123, 1:100, 100:1, rep(0, 100))) {
         dat["x"] <- i
@@ -322,5 +320,326 @@ test_that ("with(dat$envir(), x <- ...) sets x to ...", {
 #         expect_equal (as.character(dat$location), as.character(dat.df$location))
 #     }
 # })
+
+test_that ("$alloc_col() can allocate new columns/throw errors if no space", {
+    dat <- Multiplyr(x=1:100, y=100:1, alloc=3, cl=cl2)
+
+    dat$alloc_col ("a")
+    expect_true ("a" %in% dat$col.names)
+
+    dat$alloc_col (c("b", "c"))
+    expect_true (all(c("b", "c") %in% dat$col.names))
+
+    expect_equal (dat["x"], 1:100)
+    expect_equal (dat["y"], 100:1)
+
+    expect_error (dat$alloc_col ("d"), "free columns")
+
+    rm (dat)
+})
+
+test_that ("$alloc_col() can return a mix of new and existing columns", {
+    dat <- Multiplyr(x=1:100, y=100:1, alloc=3, cl=cl2)
+
+    expect_equal (sum(is.na(dat$col.names)), 3)
+    expect_equal (dat$alloc_col("x"), 1)
+    expect_equal (dat$alloc_col("y"), 2)
+    expect_equal (sum(is.na(dat$col.names)), 3)
+
+    res <- dat$alloc_col(c("x", "a", "y", "b"))
+    expect_equal (res, c(1, 3, 2, 4))
+    expect_true (all(c("x", "y", "a", "b") %in% dat$col.names))
+
+    expect_equal (dat["x"], 1:100)
+    expect_equal (dat["y"], 100:1)
+
+    expect_error (dat$alloc_col (c("b", "c", "d")), "free columns")
+
+    rm (dat)
+})
+test_that ("$alloc_col(update=...) works appropriately", {
+    dat <- Multiplyr(x=1:100, G=rep(c("A", "B"), each=50), alloc=3, cl=cl2)
+    dat %>% group_by (G)
+    dat$alloc_col ("y")
+    expect_false ("y" %in% do.call (c, dat$cluster_eval (.local$col.names)))
+    expect_false ("y" %in% do.call (c, dat$cluster_eval (.grouped[[1]]$col.names)))
+    dat$alloc_col ("z", update=TRUE)
+    expect_true ("z" %in% do.call (c, dat$cluster_eval (.local$col.names)))
+    expect_true ("z" %in% do.call (c, dat$cluster_eval (.grouped[[1]]$col.names)))
+    rm (dat)
+})
+
+
+test_that ("$calc_group_sizes() works appropriately", {
+    dat <- Multiplyr(x=1:100,
+                     f=factor(rep(c("f1", "f2"), each=50), levels=c("f1", "f2")),
+                     G=rep(c("A", "B", "C", "D"), each=25),
+                     alloc=1,
+                     cl=cl2)
+    dat %>% group_by (G)
+
+    dat$calc_group_sizes (delay=FALSE)
+    expect_equal (dat$group_sizes, rep(25, 4))
+
+    dat$bm[, dat$filtercol] <- rep(c(rep(1, 10), rep(0, 15)), 4)
+    dat$filtered <- TRUE
+
+    #delay=TRUE should set stale, but not change group sizes
+    dat$group_sizes_stale <- FALSE
+    dat$calc_group_sizes(delay=TRUE)
+    expect_true (dat$group_sizes_stale)
+    expect_equal (dat$group_sizes, rep(25, 4))
+
+    #delay=TRUE should not change group sizes even when stale
+    dat$group_sizes_stale <- TRUE
+    dat$calc_group_sizes(delay=TRUE)
+    expect_equal (dat$group_sizes, rep(25, 4))
+
+    #delay=FALSE should not change sizes if not stale
+    dat$group_sizes_stale <- FALSE
+    dat$calc_group_sizes(delay=FALSE)
+    expect_equal (dat$group_sizes, rep(25, 4))
+
+    #delay=FALSE with stale=TRUE should update
+    dat$group_sizes_stale <- TRUE
+    dat$calc_group_sizes(delay=FALSE)
+    expect_equal (dat$group_sizes, rep(10, 4))
+
+    dat$empty <- TRUE
+    dat$group_sizes_stale <- TRUE
+    dat$calc_group_sizes (delay=FALSE)
+    expect_equal (dat$group_sizes, rep(0, 4))
+
+    rm (dat)
+})
+
+test_that ("$cluster_eval(...) evaluates ...", {
+    dat <- Multiplyr(x=1:100, cl=cl2)
+    expect_equal (do.call(c, dat$cluster_eval(123)), c(123, 123))
+    rm (dat)
+})
+
+test_that ("$cluster_export() works as expected", {
+    dat <- Multiplyr(x=1:100, cl=cl2)
+
+    y <- 123
+    z <- 456
+
+    dat$cluster_export ("y")
+    expect_equal (do.call (c, dat$cluster_eval(y)), c(123, 123))
+
+    dat$cluster_export ("y", ".y")
+    expect_equal (do.call (c, dat$cluster_eval(.y)), c(123, 123))
+
+    dat$cluster_export (c("y", "z"), c("a", "b"))
+    expect_equal (do.call (c, dat$cluster_eval(a)), c(123, 123))
+    expect_equal (do.call (c, dat$cluster_eval(b)), c(456, 456))
+
+    expect_error (dat$cluster_export (c("y", "z"), "q"), "same length")
+
+    rm (dat)
+})
+
+test_that ("$cluster_export_each(...) exports individual cells of ... to each node", {
+    dat <- Multiplyr (x=1:100, cl=cl2)
+
+    y <- c(123, 456)
+    z <- c(111, 222)
+    dat$cluster_export_each ("y")
+    expect_equal (dat$cluster_eval(y), list(123, 456))
+    expect_equal (dat$cluster_eval(length(y)), list(1, 1))
+
+    dat$cluster_export_each ("z", ".z")
+    expect_equal (dat$cluster_eval(.z), list(111, 222))
+    expect_equal (dat$cluster_eval(length(.z)), list(1, 1))
+
+    dat$cluster_export_each (c("y", "z"), c("a", "b"))
+    expect_equal (dat$cluster_eval(a), list(123, 456))
+    expect_equal (dat$cluster_eval(b), list(111, 222))
+    expect_equal (dat$cluster_eval(length(a)), list(1, 1))
+    expect_equal (dat$cluster_eval(length(b)), list(1, 1))
+
+    expect_error (dat$cluster_export (c("y", "z"), "c"), "same length")
+
+    rm (dat)
+})
+
+test_that ("$copy() works as expected", {
+    dat <- Multiplyr (x=1:100, cl=cl2)
+    expect_error (dat$copy(shallow=FALSE), "safely")
+    cpy <- dat$copy(shallow=TRUE)
+    skip.fields <- c("profile_names",
+                     "profile_user", "profile_sys", "profile_real",
+                     "profile_ruser", "profile_rsys", "profile_rreal")
+    fields <- ls(dat$.refClassDef@fieldPrototypes)
+    fields <- fields[!fields %in% skip.fields]
+    for (f in fields) {
+        expect_equal (dat$field(f), cpy$field(f), info=f)
+    }
+})
+
+test_that ("$describe() returns the appropriate structure", {
+    dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
+    dat %>% group_by (G)
+
+    res <- dat$describe()
+    skip.fields <- c("bm", "bm.master", "cls", "bindenv")
+    fields <- ls(dat$.refClassDef@fieldPrototypes)
+    fields <- fields[!fields %in% skip.fields]
+
+    expect_true ("Multiplyr.desc" %in% class(res))
+    expect_equal (sort(names(res)), sort(fields))
+    for (i in 1:length(fields)) {
+        nm <- names(res)[i]
+        expect_equal (res[[i]], dat$field(nm), info=nm)
+    }
+
+    rm (dat)
+})
+
+test_that ("$destroy_grouped() destroys .grouped on cluster", {
+    dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
+    dat %>% group_by (G)
+
+    expect_equal (dat$cluster_eval(length(.grouped)), list(1, 1))
+    dat$destroy_grouped()
+    expect_equal (dat$cluster_eval(exists(".grouped")), list(FALSE, FALSE))
+    rm (dat)
+})
+
+test_that ("$factor_map() works appropriately", {
+    dat <- Multiplyr (F=as.factor(rep(c("A", "B", "C", "D"), each=25)),
+                      G=as.factor(rep(c("C", "D"), each=50)), cl=cl2)
+    expect_equal (dat$factor_map ("F", c("D", "D", "A", "C", "B")),
+                  c(4, 4, 1, 3, 2))
+    expect_equal (dat$factor_map ("G", c("D", "D", "C", "D")),
+                  c(2, 2, 1, 2))
+    rm (dat)
+})
+
+test_that ("$filter_range() works appropriately", {
+    dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
+
+    #1:50
+    dat$filter_range (1, 50)
+    expect_equal (dat$bm[, dat$filtercol], rep(c(1, 0), each=50))
+    expect_equal (dat["x"], 1:50)
+
+    #1:10 (+ 1:50 effectively)
+    dat$filter_range (1, 10)
+    expect_equal (dat$bm[, dat$filtercol], c(rep(1, 10), rep(0, 90)))
+    expect_equal (dat["x"], 1:10)
+
+    #reset
+    dat$bm[, dat$filtercol] <- 1
+    dat$filtered <- FALSE
+
+    #11:20
+    dat$filter_range (11, 20)
+    expect_equal (dat$bm[, dat$filtercol], c(
+        rep(0, 10),
+        rep(1, 10),
+        rep(0, 80)
+        ))
+    expect_equal (dat["x"], 11:20)
+
+    #reset
+    dat$bm[, dat$filtercol] <- 1
+    dat$filtered <- FALSE
+
+    dat$filter_range (51, 100)
+    expect_equal (dat$bm[, dat$filtercol], rep(c(0, 1), each=50))
+    expect_equal (dat["x"], 51:100)
+
+    rm (dat)
+})
+test_that ("$filter_rows() works appropriately", {
+    dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
+
+    dat$filter_rows (1:50)
+    expect_equal (dat["x"], 1:50)
+
+    dat$filter_rows (41:50)
+    expect_equal (dat["x"], 41:50)
+
+    rm (dat)
+})
+test_that ("$filter_vector() works appropriately", {
+    dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
+
+    dat$filter_vector (rep(c(TRUE, FALSE), each=50))
+    expect_equal (dat["x"], 1:50)
+
+    dat$filter_vector (rep(c(TRUE, FALSE), length.out=100))
+    expect_equal (dat["x"], (1:50)[rep(c(TRUE, FALSE), length.out=50)])
+
+    rm (dat)
+})
+
+test_that ("$free_col() drops columns correctly", {
+    dat <- Multiplyr(x=1:100,
+                     f=factor(rep(c("f1", "f2"), each=50), levels=c("f1", "f2")),
+                     G=rep(c("A", "B", "C", "D"), each=25),
+                     alloc=1,
+                     cl=cl2)
+    dat %>% group_by (G)
+    expect_error (dat$free_col(dat$groupcol), "Attempted")
+    expect_error (dat$free_col(dat$tmpcol), "Attempted")
+    expect_error (dat$free_col(dat$filtercol), "Attempted")
+    expect_error (dat$free_col(3), "Attempted")
+
+    expect_equal (names(dat), c("x", "f", "G"))
+    dat$free_col (1)
+    expect_equal (names(dat), c("f", "G"))
+
+    expect_equal (dat$factor.cols, c(2, 3))
+    expect_equal (dat$factor.levels[[1]], c("f1", "f2"))
+    expect_equal (dat$factor.levels[[2]], c("A", "B", "C", "D"))
+    dat$free_col (2)
+    expect_equal (dat$factor.cols, 3)
+    expect_equal (dat$factor.levels[[1]], c("A", "B", "C", "D"))
+
+    rm (dat)
+})
+
+test_that ("$group_restrict(...) returns a group restricted data frame", {
+    dat <- Multiplyr(x=1:100,
+                     f=factor(rep(c("f1", "f2"), each=50), levels=c("f1", "f2")),
+                     G=rep(c("A", "B", "C", "D"), each=25),
+                     alloc=1,
+                     cl=cl2)
+    dat %>% group_by (G)
+    grp <- dat$group_restrict (3)
+    expect_equal (grp["x"], 51:75)
+    expect_equal (grp["G"], rep("C", 25))
+    expect_equal (dat["x"], 1:100)
+    expect_equal (dat["G"], rep(c("A", "B", "C", "D"), each=25))
+    rm (dat)
+})
+
+test_that ("$group_restrict(...) throws an error for no parameters or non-grouped data", {
+    dat <- Multiplyr(x=1:100,
+                     f=factor(rep(c("f1", "f2"), each=50), levels=c("f1", "f2")),
+                     G=rep(c("A", "B", "C", "D"), each=25),
+                     alloc=1,
+                     cl=cl2)
+    expect_error (dat$group_restrict(1), "grouped")
+    dat %>% group_by (G)
+    expect_error (dat$group_restrict(), "specify")
+    rm (dat)
+})
+
+test_that ("$group_restrict() for an empty group returns a frame with $empty=TRUE ", {
+    dat <- Multiplyr(x=1:100,
+                     f=factor(rep(c("f1", "f2"), each=50), levels=c("f1", "f2")),
+                     G=rep(c("A", "B", "C", "D"), each=25),
+                     alloc=1,
+                     cl=cl2)
+    dat %>% group_by (G)
+    dat %>% filter(x<50)
+    grp <- dat$group_restrict(3)
+    expect_true (grp$empty)
+    rm (dat)
+})
 
 parallel::stopCluster (cl2)
