@@ -44,6 +44,8 @@
 #'     \code{\link{undefine}}    \tab Delete variables \cr
 #' }
 #'
+#' @importFrom magrittr %>%
+#' @importClassesFrom bigmemory big.matrix big.matrix.descriptor
 #' @docType package
 #' @name multiplyr
 NULL

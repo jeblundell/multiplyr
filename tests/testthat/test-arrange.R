@@ -106,5 +106,5 @@ test_that ("arrange() throws an error for non-Multiplyr objects", {
     expect_error (data.frame(x=1:100) %>% arrange(x), "Multiplyr")
 })
 
-stopCluster (cl1)
-stopCluster (cl2)
+parallel::stopCluster (cl1)
+parallel::stopCluster (cl2)
