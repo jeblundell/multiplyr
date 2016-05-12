@@ -40,8 +40,10 @@ Multiplyr <- setRefClass("Multiplyr",
                 profile_names   = "character",
                 profile_user    = "numeric",
                 profile_sys     = "numeric",
+                profile_real    = "numeric",
                 profile_ruser   = "numeric",
                 profile_rsys    = "numeric",
+                profile_rreal   = "numeric",
                 profiling       = "logical"
                 ),
     methods=list(
@@ -375,6 +377,7 @@ copy = function (shallow = FALSE) {
         res$profile_names <- character(0)
         res$profile_rsys <- res$profile_sys <- numeric(0)
         res$profile_ruser <- res$profile_user <- numeric(0)
+        res$profile_rreal <- res$profile_real <- numeric(0)
         return (res)
     } else {
         callSuper (shallow)
@@ -626,9 +629,6 @@ group_restrict = function (group=0) {
         stop ("group_restrict may only be used on grouped data")
     }
     grp <- copy (shallow=TRUE)
-    grp$profile_names <- character(0)
-    grp$profile_sys <- grp$profile_user <- numeric(0)
-    grp$profile_rsys <- grp$profile_ruser <- numeric(0)
     grp$group_sizes <- grp$group_sizes[grp$group == group]
     grp$group <- group
 
@@ -731,6 +731,7 @@ profile = function (action=NULL, name=NULL) {
         return (data.frame(Profile=profile_names[m],
                            System=profile_sys[m],
                            User=profile_user[m],
+                           Real=profile_real[m],
                            stringsAsFactors = FALSE))
     } else if (action == "start") {
         m <- match (name, profile_names)
@@ -738,14 +739,17 @@ profile = function (action=NULL, name=NULL) {
             profile_names <<- c(profile_names, name)
             profile_ruser <<- c(profile_ruser, 0)
             profile_rsys <<- c(profile_rsys, 0)
+            profile_rreal <<- c(profile_rreal, 0)
             profile_user <<- c(profile_user, 0)
             profile_sys <<- c(profile_sys, 0)
+            profile_real <<- c(profile_real, 0)
             m <- length(profile_names)
         }
 
         res <- proc.time()
         profile_ruser[m] <<- res[1][[1]]
         profile_rsys[m] <<- res[2][[1]]
+        profile_rreal[m] <<- res[3][[1]]
     } else if (action == "stop") {
         res <- proc.time()
 
@@ -753,9 +757,11 @@ profile = function (action=NULL, name=NULL) {
 
         user.diff <- res[1][[1]] - profile_ruser[m]
         sys.diff <- res[2][[1]] - profile_rsys[m]
+        real.diff <- res[3][[1]] - profile_rreal[m]
 
         profile_user[m] <<- profile_user[m] + user.diff
         profile_sys[m] <<- profile_sys[m] + sys.diff
+        profile_real[m] <<- profile_real[m] + real.diff
     }
     return (invisible(res))
 },
@@ -768,12 +774,15 @@ profile_import = function (prof) {
         len <- sum(is.na(m))
         profile_sys <<- c(profile_sys, rep(0, len))
         profile_user <<- c(profile_user, rep(0, len))
+        profile_real <<- c(profile_real, rep(0, len))
         profile_rsys <<- c(profile_rsys, rep(0, len))
         profile_ruser <<- c(profile_ruser, rep(0, len))
+        profile_rreal <<- c(profile_rreal, rep(0, len))
         m <- match (prof$Profile, profile_names)
     }
     profile_sys[m] <<- profile_sys[m] + prof$System
     profile_user[m] <<- profile_user[m] + prof$User
+    profile_real[m] <<- profile_real[m] + prof$Real
 },
 reattach_slave = function (descres) {
     nm <- names(descres)
