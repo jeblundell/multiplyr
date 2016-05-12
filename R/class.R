@@ -458,6 +458,7 @@ factor_map = function (var, vals) {
 },
 filter_range = function (start, end) {
     if (empty) { return() }
+    profile ("start", "filter_range")
     if (start > 1) {
         bm[1:(start-1), filtercol] <<- 0
     }
@@ -465,21 +466,26 @@ filter_range = function (start, end) {
         bm[(end+1):nrow(bm), filtercol] <<- 0
     }
     filtered <<- TRUE
+    profile ("stop", "filter_range")
 },
 filter_rows = function (rows) {
     if (empty) { return() }
+    profile ("start", "filter_rows")
     bm[, tmpcol] <<- 0
     bm[rows, tmpcol] <<- 1
 
     bm[, filtercol] <<- bm[, filtercol] * bm[, tmpcol]
     empty <<- sum(bm[, filtercol]) == 0
     filtered <<- TRUE
+    profile ("stop", "filter_rows")
 },
 filter_vector = function (rows) {
     if (empty) { return() }
+    profile ("start", "filter_vector")
     bm[, filtercol] <<- bm[, filtercol] * rows
     empty <<- sum(bm[, filtercol]) == 0
     filtered <<- TRUE
+    profile ("stop", "filter_vector")
 },
 free_col = function (cols, update=FALSE) {
     fc <- type.cols[cols] > 0
@@ -632,6 +638,7 @@ group_restrict = function (group=0) {
         stop ("group_restrict may only be used on grouped data")
     }
     grp <- copy (shallow=TRUE)
+    grp$profile ("start", "group_restrict")
     grp$group_sizes <- grp$group_sizes[grp$group == group]
     grp$group <- group
 
@@ -639,6 +646,7 @@ group_restrict = function (group=0) {
     rows <- which (grp$bm[, grp$groupcol] == grp$group)
     if (length(rows) == 0) {
         grp$empty <- TRUE
+        grp$profile ("stop", "group_restrict")
         return (grp)
     }
     lims <- range(rows)
@@ -649,6 +657,7 @@ group_restrict = function (group=0) {
     grp$first <- lims[1]
     grp$last <- lims[2]
     grp$empty <- FALSE
+    grp$profile ("stop", "group_restrict")
     return (grp)
 },
 local_subset = function (first, last) {
@@ -661,6 +670,8 @@ local_subset = function (first, last) {
 partition_even = function (max.row = last) {
     if (empty || max.row == 0) { return() }
     N <- length(cls)
+
+    profile ("start", "partition_even")
 
     if (grouped) {
         destroy_grouped ()
@@ -679,6 +690,7 @@ partition_even = function (max.row = last) {
             }
             NULL
         })
+        profile ("stop", "partition_even")
         return()
     }
 
@@ -709,6 +721,7 @@ partition_even = function (max.row = last) {
         NULL
     })
 
+    profile ("stop", "partition_even")
     return()
 },
 profile = function (action=NULL, name=NULL) {
@@ -1018,6 +1031,7 @@ show = function (max.row=10) {
 },
 sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=TRUE) {
     if (empty) { return() }
+    profile ("start", "sort")
     if (is.null(cols)) {
         namelist <- .dots2names (dots)
         cols <- match(namelist, col.names)
@@ -1032,8 +1046,10 @@ sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=TRUE) {
         stop ("No sorting column(s) specified")
     }
     bigmemory::mpermute (bm, cols=cols)
+    profile ("stop", "sort")
 },
 update_fields = function (fieldnames) {
+    profile ("start", "update_fields")
     for (.fieldname in fieldnames) {
         .fieldval <- .self$field(name=.fieldname)
         cluster_export (c(".fieldname", ".fieldval"))
@@ -1049,6 +1065,7 @@ update_fields = function (fieldnames) {
             NULL
         })
     }
+    profile ("stop", "update_fields")
 },
 row_names = function () {
     if (empty) {
