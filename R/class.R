@@ -528,9 +528,14 @@ get_data = function (i=NULL, j=NULL, nsa=FALSE, drop=TRUE) {
 
     return (out)
 },
-group_restrict = function (group) {
-    if (group <= 0) { return (.self) }
-    grp <- .self$copy (shallow=TRUE)
+group_restrict = function (group=0) {
+    if (group <= 0) {
+        stop ("Need to specify a group number")
+    }
+    if (all(.self$group == 0) && !grouped) {
+        stop ("group_restrict may only be used on grouped data")
+    }
+    grp <- copy (shallow=TRUE)
     grp$group_sizes <- grp$group_sizes[grp$group == group]
     grp$group <- group
 
