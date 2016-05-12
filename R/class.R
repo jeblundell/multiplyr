@@ -578,7 +578,7 @@ get_data = function (i=NULL, j=NULL, nsa=FALSE, drop=TRUE) {
                 if (max(rowslice) > length(filtrows)) {
                     stop (sprintf("Invalid row reference: %d > %d", max(rowslice), length(filtrows)))
                 }
-                filtrows <- filtrows[-rowslice]
+                filtrows <- filtrows[rowslice]
             } else {
                 if (max(rowslice) > ((last-first+1))) {
                     stop (sprintf("Invalid row reference: %d > %d", max(rowslice), (last-first)+1))
@@ -591,7 +591,7 @@ get_data = function (i=NULL, j=NULL, nsa=FALSE, drop=TRUE) {
                 if (sum(filtrows) %% length(rowslice) != 0) {
                     stop ("Number of available rows needs to be an exact multiple of rowslice length")
                 }
-                filtrows <- filtrows[!rowslice]
+                filtrows <- filtrows[rowslice]
             } else {
                 if (((last-first)+1) %% length(rowslice) != 0) {
                     stop ("Number of available rows needs to be an exact multiple of rowslice length")

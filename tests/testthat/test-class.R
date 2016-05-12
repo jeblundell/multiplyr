@@ -602,6 +602,80 @@ test_that ("$free_col() drops columns correctly", {
     rm (dat)
 })
 
+dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
+test_that ("$get_data(NULL, NULL) returns entire data", {
+    expect_equal (dat$get_data(NULL, NULL), data.frame(x=1:100, G=rep(c("A", "B"), each=50)))
+})
+
+test_that ("$get_data(i, NULL) returns a row slice", {
+    expect_equal (dat$get_data(1:50, NULL), data.frame(x=1:50, G=rep("A", 50)))
+    expect_equal (dat$get_data(51:100, NULL), data.frame(x=51:100, G=rep("B", 50)))
+    v <- rep(c(TRUE, FALSE), length.out=100)
+    expect_equal (dat$get_data(v, NULL), data.frame(x=(1:100)[v], G=rep(c("A", "B"), each=50)[v]))
+    v <- rep(c(FALSE, TRUE, TRUE, FALSE), length.out=100)
+    expect_equal (dat$get_data(v, NULL), data.frame(x=(1:100)[v], G=rep(c("A", "B"), each=50)[v]))
+})
+
+test_that ("$get_data(NULL, j) returns specified columns", {
+    expect_equal (dat$get_data(NULL, "x"), 1:100)
+    expect_equal (dat$get_data(NULL, "G"), rep(c("A", "B"), each=50))
+    expect_equal (dat$get_data(NULL, c("x", "G")), data.frame(x=1:100, G=rep(c("A", "B"), each=50)))
+})
+
+test_that ("$get_data(i, j) returns row/column subset", {
+    expect_equal (dat$get_data(1:50, "x"), 1:50)
+    expect_equal (dat$get_data(51:100, "x"), 51:100)
+    v <- rep(c(TRUE, FALSE), length.out=100)
+    expect_equal (dat$get_data(v, "x"), (1:100)[v])
+    v <- rep(c(FALSE, TRUE, TRUE, FALSE), length.out=100)
+    expect_equal (dat$get_data(v, "x"), (1:100)[v])
+
+    expect_equal (dat$get_data(1:50, "G"), rep("A", 50))
+    expect_equal (dat$get_data(51:100, "G"), rep("B", 50))
+    v <- rep(c(TRUE, FALSE), length.out=100)
+    expect_equal (dat$get_data(v, "G"), rep(c("A", "B"), each=50)[v])
+    v <- rep(c(FALSE, TRUE, TRUE, FALSE), length.out=100)
+    expect_equal (dat$get_data(v, "G"), rep(c("A", "B"), each=50)[v])
+})
+
+test_that ("$get_data(drop=FALSE) works appropriately", {
+    expect_equal (dat$get_data(NULL, "x", drop=FALSE), data.frame(x=1:100))
+    expect_equivalent (dat$get_data(NULL, c("x", "G"), drop=FALSE), data.frame(x=1:100, G=rep(c("A", "B"), each=50)))
+})
+
+test_that ("$get_data() throws errors for invalid row/column references", {
+    expect_error (dat$get_data (0, "x"))
+    expect_error (dat$get_data (101, "x"))
+    expect_error (dat$get_data (1, "y"))
+    expect_error (dat$get_data (99:101, "x"))
+    expect_error (dat$get_data (99:100, c("x", "y")))
+
+    expect_error (dat$get_data (NULL, "y"))
+    expect_error (dat$get_data (NULL, c("x", "y")))
+    expect_error (dat$get_data (0, NULL))
+    expect_error (dat$get_data (101, NULL))
+    expect_error (dat$get_data (99:101, NULL))
+    expect_error (dat$get_data (0:10, NULL))
+})
+
+test_that ("$get_data() works on filtered data", {
+    v <- rep(c(TRUE, FALSE, FALSE, TRUE), length.out=100)
+    dat$filter_vector (v)
+
+    expect_equivalent (dat$get_data(NULL, NULL), data.frame(x=1:100, G=rep(c("A", "B"), each=50))[v, ])
+    expect_equal (dat$get_data(NULL, "x"), (1:100)[v])
+    expect_equal (dat$get_data(NULL, "G"), rep(c("A", "B"), each=50)[v])
+    expect_equivalent (dat$get_data(NULL, c("x", "G")), data.frame(x=1:100, G=rep(c("A", "B"), each=50))[v, ])
+
+    r <- 2:11
+    rv <- v; rv[which(rv)[-r]] <- FALSE
+    expect_equivalent (dat$get_data(r, NULL), data.frame(x=1:100, G=rep(c("A", "B"), each=50))[rv, ])
+    expect_equal (dat$get_data(r, "x"), (1:100)[rv])
+    expect_equal (dat$get_data(r, "G"), rep(c("A", "B"), each=50)[rv])
+    expect_equivalent (dat$get_data(r, c("x", "G")), data.frame(x=1:100, G=rep(c("A", "B"), each=50))[rv, ])
+})
+rm (dat)
+
 test_that ("$group_restrict(...) returns a group restricted data frame", {
     dat <- Multiplyr(x=1:100,
                      f=factor(rep(c("f1", "f2"), each=50), levels=c("f1", "f2")),
