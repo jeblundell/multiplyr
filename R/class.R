@@ -139,65 +139,54 @@ initialize = function (..., alloc=1, cl=NULL,
 
     partition_even()
 },
-cluster_export_self = function () {
-    #Replaces cluster_export (".master")
-    .res <- .self$describe()
-    cluster_export (".res")
-    cluster_eval({
-        .master <- Multiplyr(.res)
-        NULL
-    })
-},
-describe = function () {
-    fnames <- names(.refClassDef@fieldClasses)
-    fnames <- as.list(fnames[-match(c("bm", "bm.master", "cls"), fnames)])
-    out <- lapply(fnames, function (x, d) { d$field(x) }, .self)
-    names(out) <- fnames
-    class(out) <- "Multiplyr.desc"
-    return (out)
-},
-copy = function (shallow = FALSE) {
-    if (!shallow) {
-        stop ("Non-shallow copy not implemented safely yet")
+alloc_col = function (name=".tmp", update=FALSE) {
+    res <- match (name, col.names)
+    if (all(!is.na(res))) {
+        return (res)
     }
-    callSuper (shallow)
-},
-group_restrict = function (group) {
-    if (group <= 0) { return (.self) }
-    grp <- .self$copy (shallow=TRUE)
-    grp$group_sizes <- grp$group_sizes[grp$group == group]
-    grp$group <- group
-
-    #presumes that dat is sorted by grouping column first
-    rows <- which (grp$bm[, grp$groupcol] == grp$group)
-    if (length(rows) == 0) {
-        grp$empty <- TRUE
-        return (grp)
-    }
-    lims <- range(rows)
-    grp$bm <- bigmemory::sub.big.matrix(grp$desc,
-                                          firstRow=lims[1],
-                                          lastRow=lims[2])
-    grp$desc <- sm_desc_update (grp$desc, lims[1], lims[2])
-    grp$first <- lims[1]
-    grp$last <- lims[2]
-    grp$empty <- FALSE
-    return (grp)
-},
-reattach = function (descres) {
-    nm <- names(descres)
-    for (i in 1:length(descres)) {
-        field(nm[i], descres[[i]])
+    needalloc <- which (is.na(res))
+    avail <- which (is.na (col.names))
+    if (length(needalloc) > length(avail)) {
+        stop ("Insufficient free columns available")
     }
 
-    bm <<- bigmemory::attach.big.matrix(desc)
-    bm.master <<- bm
+    alloced <- avail[1:length(needalloc)]
+    res[needalloc] <- alloced
 
-    #horrible kludge so copy() doesn't complain about NULL
-    #as apparently R can't cope with assigning NULL to fields?
-    clsna <- NA
-    class(clsna) <- "SOCKcluster"
-    cls <<- clsna
+    col.names[alloced] <<- name[needalloc]
+    type.cols[alloced] <<- 0
+    order.cols[alloced] <<- max(order.cols) + 1:length(alloced)
+
+    if (update) {
+        update_fields (c("col.names", "type.cols", "order.cols"))
+    }
+    return (res)
+},
+calc_group_sizes = function (delay=TRUE) {
+    if (delay) {
+        group_sizes_stale <<- TRUE
+        return()
+    }
+    if (!group_sizes_stale) {
+        return()
+    }
+    #FIXME: make parallel/more efficient
+    if (empty) {
+        group_sizes <<- rep(0, group_max)
+    } else if (filtered) {
+        bm[, tmpcol] <<- bm[, groupcol] * bm[, filtercol]
+        group_sizes <<- sapply(seq_len(group_max), function (g) {
+            sum(.self$bm[, .self$tmpcol] == g)
+        })
+    } else {
+        group_sizes <<- sapply(seq_len(group_max), function (g) {
+            sum(.self$bm[, .self$groupcol] == g)
+        })
+    }
+    group_sizes_stale <<- FALSE
+},
+cluster_eval = function (...) {
+    parallel::clusterEvalQ (cls, ...)
 },
 cluster_export = function (var, var.as=NULL, envir=parent.frame()) {
     if (is.null(var.as)) {
@@ -225,93 +214,200 @@ cluster_export_each = function (var, var.as=var, envir=parent.frame()) {
         }
     }
 },
-cluster_eval = function (...) {
-    parallel::clusterEvalQ (cls, ...)
+cluster_export_self = function () {
+    #Replaces cluster_export (".master")
+    .res <- .self$describe()
+    cluster_export (".res")
+    cluster_eval({
+        .master <- Multiplyr(.res)
+        NULL
+    })
 },
-show = function (max.row=10) {
-    if (is.null(max.row) || max.row == 0 || max.row > nrow(bm)) {
-        max.row <- nrow(bm)
+compact = function () {
+    if (!filtered) { return() }
+    if (empty) {
+        filtered <<- FALSE
+        update_fields ("filtered")
+        return ()
     }
 
-    cols <- seq_len(length(order.cols))[order(order.cols)]
-    cols <- cols[order.cols[order(order.cols)] > 0]
+    rg_grouped <- grouped
+    rg_partion <- group_partition
+    rg_cols <- group.cols
 
-    cat (sprintf ("\n    Multiplyr data frame\n\n"))
-    pc <- pad
-    for (i in seq_len(ncol(bm))[pc==0 & order.cols > 0]) {
-        pc[i] <- max(nchar(as.character(bm[1:max.row,i])))
-    }
+    partition_even() #PROFME
+    N <- cluster_eval ({ #PROFME
+        #(1) Sort by filtercol decreasing
+        bigmemory::mpermute (.local$bm, cols=.local$filtercol, decreasing=TRUE)
 
-    out <- ""
-    for (i in cols) {
-        out <- .p(out,
-                  sprintf(.p("%",pc[i],"s "),
-                          col.names[i]))
-    }
-    cat (.p(out, "\n"))
+        #(2) Find the length of each included block
+        .N <- sum(.local$bm[, .local$filtercol])
+    })
+    N <- do.call (c, N)
 
-    rows <- bigmemory::mwhich (bm,
-                               cols=match(".filter", col.names),
-                               vals=1,
-                               comps=list("eq"))
-    rows.avail <- length(rows)
-    if (is.null(max.row) || max.row == 0) {
-        max.row <- nrow(bm)
-    }
-    if (rows.avail > max.row) {
-        rows <- rows[1:max.row]
-    }
+    #(3) Assign each node a target range
+    dest <- cumsum(N)
+    last <<- dest[length(dest)]
+    dest <- dest[-length(dest)]
+    dest <- c(0, dest) + 1
+    cluster_export_each ("dest", ".dest")
 
-    for (i in rows) {
-        out <- ""
-        for (j in cols) {
-            v <- bm[i,j]
-            if (type.cols[j] > 0) {
-                f <- match (j, factor.cols)
-                v <- factor.levels[[f]][v]
-            }
-            out <- .p(out,
-                      sprintf(.p("%",pc[j],"s "),
-                              v))
-        }
-        cat (.p(out, "\n"))
-    }
-    if (rows.avail > max.row) {
-        cat (sprintf ("\n... %d of %d rows omitted ...\n",
-                      rows.avail - max.row,
-                      rows.avail))
-    }
-    if (grouped) {
-        cat (sprintf ("\nGrouped by: %s\n",
-                      paste(col.names[group.cols], collapse=", ")))
-        .self$calc_group_sizes (delay=FALSE)
-        cat (sprintf ("Groups: %d\nGroup sizes: %s\n", group_max,
-                      paste(group_sizes, collapse=", ")))
-    }
-    if (group_partition) {
-        res <- cluster_eval ({
-            if (.local$empty) { return(0) }
-            return (length(.groups))
+    #(4) Within each node/group, move data to target range
+    cluster_eval ({
+        if (.N == 0) { return(NULL) }
+        .local$bm.master[.dest:(.dest+.N-1),] <- .local$bm[1:.N,]
+        NULL
+    })
+
+    #(5) Submatrix master, propagate to local
+    filtered <<- FALSE
+    if (last > 0) {
+        bm <<- bigmemory::sub.big.matrix (desc, firstRow=1, lastRow=last)
+        desc <<- sm_desc_update (desc, 1, last)
+        cluster_export ("last", ".last")
+        cluster_eval ({
+            .master$last <- .last
+            .master$filtered <- FALSE
+            .master$bm <- bigmemory::sub.big.matrix (.master$desc, firstRow=1, lastRow=.master$last)
+            .master$desc <- sm_desc_update (.master$desc, 1, .master$last)
+            rm (.local)
+            NULL
         })
-        res <- do.call (c, res)
-        cat (sprintf ("Group partioned over %d clusters\n", length(cls)))
-        cat (sprintf ("Groups per cluster: %s\n", paste(res, collapse=", ")))
     } else {
-        res <- cluster_eval ({
-            if (.local$empty) { return(0) }
-            return (nrow(.local$bm))
+        empty <<- TRUE
+        cluster_eval ({
+            .master$empty <- TRUE
+            NULL
         })
-        cat (sprintf ("\nData partitioned over %d clusters\n", length(cls)))
-        if (grouped) {
-            cat ("Warning: You may want to run partition_group() as each cluster has partial groups\n")
+    }
+
+    #(6) Regroup/partition
+    partition_even()
+
+    grouped <<- rg_grouped
+    group_partition <<- rg_partion
+    group.cols <<- rg_cols
+
+    #(group_by_ will call rebuild_grouped and partition_group)
+    if (grouped) {
+        group_by_ (.self, .cols=rg_cols)
+    }
+},
+copy = function (shallow = FALSE) {
+    if (!shallow) {
+        stop ("Non-shallow copy not implemented safely yet")
+    }
+    callSuper (shallow)
+},
+describe = function () {
+    fnames <- names(.refClassDef@fieldClasses)
+    fnames <- as.list(fnames[-match(c("bm", "bm.master", "cls"), fnames)])
+    out <- lapply(fnames, function (x, d) { d$field(x) }, .self)
+    names(out) <- fnames
+    class(out) <- "Multiplyr.desc"
+    return (out)
+},
+envir = function (nsa=FALSE) {
+    if (is.null(bindenv)) {
+        bindenv <<- new.env()
+    }
+
+    #Remove existing active bindings
+    vars.active <- names (which (vapply (ls(envir=bindenv),
+                                         bindingIsActive,
+                                         FALSE, bindenv)))
+    if (length(vars.active) > 0) {
+        rm (list=vars.active, envir=bindenv)
+    }
+
+    #Allow . to refer to data frame
+    makeActiveBinding (".", local({
+        .dat <- .self
+        function (x) {
+            .dat
+        }
+    }), env=bindenv)
+
+    #Set bindings for remainder of vars
+    for (var in col.names) {
+        f <- local ({
+            .var<-var
+            .dat<-.self
+            .nsa<-nsa
+            function (x) {
+                if (missing(x)) {
+                    .dat$get_data(NULL, .var, nsa=.nsa, drop=TRUE)
+                } else {
+                    .dat$set_data(NULL, .var, x, nsa=.nsa)
+                }
+            }
+        })
+        makeActiveBinding(var, f, env=bindenv)
+    }
+    return (bindenv)
+},
+factor_map = function (var, vals) {
+    if (is.numeric(var)) {
+        col <- var
+    } else {
+        col <- match (var, col.names)
+    }
+
+    if (type.cols[col] == 0) {
+        return (vals)
+    }
+
+    f <- match (col, factor.cols)
+    return (match (vals, factor.levels[[f]]))
+},
+filter_range = function (start, end) {
+    if (empty) { return() }
+    if (start > 1) {
+        bm[1:(start-1), filtercol] <<- 0
+    }
+    if (end < nrow(bm)) {
+        bm[(end+1):nrow(bm), filtercol] <<- 0
+    }
+    filtered <<- TRUE
+},
+filter_rows = function (rows) {
+    if (empty) { return() }
+    bm[, tmpcol] <<- 0
+    bm[rows, tmpcol] <<- 1
+
+    bm[, filtercol] <<- bm[, filtercol] * bm[, tmpcol]
+    empty <<- sum(bm[, filtercol]) == 0
+    filtered <<- TRUE
+},
+filter_vector = function (rows) {
+    if (empty) { return() }
+    bm[, filtercol] <<- bm[, filtercol] * rows
+    empty <<- sum(bm[, filtercol]) == 0
+    filtered <<- TRUE
+},
+free_col = function (cols, update=FALSE) {
+    fc <- type.cols[cols] > 0
+    if (any(fc)) {
+        fc <- cols[fc]
+        if (length(fc) == 1) {
+            idx <- -match (fc, factor.cols)
         } else {
-            cat (sprintf ("N per cluster: %s\n", paste(res, collapse=", ")))
+            keep <- setdiff (factor.cols, fc)
+            idx <- match (keep, factor.cols)
+        }
+        factor.cols <<- factor.cols[idx]
+        factor.levels <<- factor.levels[idx]
+        if (update) {
+            #FIXME: do factor.levels drop rather than resend
+            update_fields (c("factor.cols", "factor.levels"))
         }
     }
-    if (filtered) {
-        cat ("\nData filtering is in place: you may want to compact (or enable auto_compact)\n")
+    col.names[cols] <<- NA
+    type.cols[cols] <<- 0
+    order.cols[cols] <<- 0
+    if (update) {
+        update_fields (c("col.names", "type.cols", "order.cols"))
     }
-    cat ("\n")
 },
 get_data = function (i=NULL, j=NULL, nsa=FALSE, drop=TRUE) {
     if (is.null(i)) {
@@ -406,8 +502,8 @@ get_data = function (i=NULL, j=NULL, nsa=FALSE, drop=TRUE) {
         } else if (itype == 1) {
             f <- match (i, factor.cols)
             o <- factor(bm[,i],
-                         levels=seq_len(length(factor.levels[[f]])),
-                         labels=factor.levels[[f]])
+                        levels=seq_len(length(factor.levels[[f]])),
+                        labels=factor.levels[[f]])
         } else if (itype == 2) {
             f <- match (i, factor.cols)
             o <- factor.levels[[f]][bm[,i]]
@@ -431,6 +527,112 @@ get_data = function (i=NULL, j=NULL, nsa=FALSE, drop=TRUE) {
     }
 
     return (out)
+},
+group_restrict = function (group) {
+    if (group <= 0) { return (.self) }
+    grp <- .self$copy (shallow=TRUE)
+    grp$group_sizes <- grp$group_sizes[grp$group == group]
+    grp$group <- group
+
+    #presumes that dat is sorted by grouping column first
+    rows <- which (grp$bm[, grp$groupcol] == grp$group)
+    if (length(rows) == 0) {
+        grp$empty <- TRUE
+        return (grp)
+    }
+    lims <- range(rows)
+    grp$bm <- bigmemory::sub.big.matrix(grp$desc,
+                                          firstRow=lims[1],
+                                          lastRow=lims[2])
+    grp$desc <- sm_desc_update (grp$desc, lims[1], lims[2])
+    grp$first <- lims[1]
+    grp$last <- lims[2]
+    grp$empty <- FALSE
+    return (grp)
+},
+local_subset = function (first, last) {
+    if (empty) { return() }
+    first <<- first
+    last <<- last
+    bm <<- bigmemory::sub.big.matrix (desc, firstRow=first, lastRow=last)
+    desc <<- sm_desc_update (desc, first, last)
+},
+partition_even = function (max.row = last) {
+    if (empty || max.row == 0) { return() }
+    N <- length(cls)
+
+    if (max.row == 0) {
+        cluster_eval ({
+            if (exists(".master")) {
+                .master$empty <- TRUE
+            }
+            if (exists(".local")) {
+                .local$empty <- TRUE
+            }
+            NULL
+        })
+        return()
+    }
+
+    nr <- distribute (max.row, N)
+    if (max.row < N) {
+        nr[nr != 0] <- 1:max.row
+        cluster_export_each ("nr", ".first")
+        cluster_export_each ("nr", ".last")
+    } else {
+        .last <- cumsum(nr)
+        .first <- c(0, .last)[1:N] + 1
+        cluster_export_each (".first")
+        cluster_export_each (".last")
+    }
+
+    grouped <<- group_partition <<- FALSE
+
+    cluster_eval ({
+        if (!exists(".local")) {
+            .local <- .master$copy (shallow=TRUE)
+        }
+        .local$desc <- .master$desc
+
+        .master$grouped <- .local$grouped <- FALSE
+        .master$group_partition <- .local$group_partition <- FALSE
+
+        .local$empty <- (.last < .first || .last == 0)
+        if (.local$empty) { return(NULL) }
+        .local$local_subset (.first, .last)
+        NULL
+    })
+
+    return()
+},
+reattach = function (descres) {
+    nm <- names(descres)
+    for (i in 1:length(descres)) {
+        field(nm[i], descres[[i]])
+    }
+
+    bm <<- bigmemory::attach.big.matrix(desc)
+    bm.master <<- bm
+
+    #horrible kludge so copy() doesn't complain about NULL
+    #as apparently R can't cope with assigning NULL to fields?
+    clsna <- NA
+    class(clsna) <- "SOCKcluster"
+    cls <<- clsna
+},
+rebuild_grouped = function () {
+    if (empty) { return() }
+    cluster_eval ({
+        if (.local$empty) { return(NULL) }
+
+        .grouped <- list()
+        for (.g in 1:length(.groups)) {
+            .grp <- .local$group_restrict(.groups[.g])
+            .grouped <- append(.grouped, list(.grp))
+        }
+
+        NULL
+    })
 },
 set_data = function (i=NULL, j=NULL, value, nsa=FALSE) {
     if (is.null(i)) {
@@ -556,58 +758,90 @@ set_data = function (i=NULL, j=NULL, value, nsa=FALSE) {
     }
     invisible (value)
 },
-factor_map = function (var, vals) {
-    if (is.numeric(var)) {
-        col <- var
-    } else {
-        col <- match (var, col.names)
+show = function (max.row=10) {
+    if (is.null(max.row) || max.row == 0 || max.row > nrow(bm)) {
+        max.row <- nrow(bm)
     }
 
-    if (type.cols[col] == 0) {
-        return (vals)
+    cols <- seq_len(length(order.cols))[order(order.cols)]
+    cols <- cols[order.cols[order(order.cols)] > 0]
+
+    cat (sprintf ("\n    Multiplyr data frame\n\n"))
+    pc <- pad
+    for (i in seq_len(ncol(bm))[pc==0 & order.cols > 0]) {
+        pc[i] <- max(nchar(as.character(bm[1:max.row,i])))
     }
 
-    f <- match (col, factor.cols)
-    return (match (vals, factor.levels[[f]]))
-},
-envir = function (nsa=FALSE) {
-    if (is.null(bindenv)) {
-        bindenv <<- new.env()
+    out <- ""
+    for (i in cols) {
+        out <- .p(out,
+                  sprintf(.p("%",pc[i],"s "),
+                          col.names[i]))
+    }
+    cat (.p(out, "\n"))
+
+    rows <- bigmemory::mwhich (bm,
+                               cols=match(".filter", col.names),
+                               vals=1,
+                               comps=list("eq"))
+    rows.avail <- length(rows)
+    if (is.null(max.row) || max.row == 0) {
+        max.row <- nrow(bm)
+    }
+    if (rows.avail > max.row) {
+        rows <- rows[1:max.row]
     }
 
-    #Remove existing active bindings
-    vars.active <- names (which (vapply (ls(envir=bindenv),
-                                         bindingIsActive,
-                                         FALSE, bindenv)))
-    if (length(vars.active) > 0) {
-        rm (list=vars.active, envir=bindenv)
-    }
-
-    #Allow . to refer to data frame
-    makeActiveBinding (".", local({
-        .dat <- .self
-        function (x) {
-            .dat
-        }
-    }), env=bindenv)
-
-    #Set bindings for remainder of vars
-    for (var in col.names) {
-        f <- local ({
-            .var<-var
-            .dat<-.self
-            .nsa<-nsa
-            function (x) {
-                if (missing(x)) {
-                    .dat$get_data(NULL, .var, nsa=.nsa, drop=TRUE)
-                } else {
-                    .dat$set_data(NULL, .var, x, nsa=.nsa)
-                }
+    for (i in rows) {
+        out <- ""
+        for (j in cols) {
+            v <- bm[i,j]
+            if (type.cols[j] > 0) {
+                f <- match (j, factor.cols)
+                v <- factor.levels[[f]][v]
             }
-        })
-        makeActiveBinding(var, f, env=bindenv)
+            out <- .p(out,
+                      sprintf(.p("%",pc[j],"s "),
+                              v))
+        }
+        cat (.p(out, "\n"))
     }
-    return (bindenv)
+    if (rows.avail > max.row) {
+        cat (sprintf ("\n... %d of %d rows omitted ...\n",
+                      rows.avail - max.row,
+                      rows.avail))
+    }
+    if (grouped) {
+        cat (sprintf ("\nGrouped by: %s\n",
+                      paste(col.names[group.cols], collapse=", ")))
+        .self$calc_group_sizes (delay=FALSE)
+        cat (sprintf ("Groups: %d\nGroup sizes: %s\n", group_max,
+                      paste(group_sizes, collapse=", ")))
+    }
+    if (group_partition) {
+        res <- cluster_eval ({
+            if (.local$empty) { return(0) }
+            return (length(.groups))
+        })
+        res <- do.call (c, res)
+        cat (sprintf ("Group partioned over %d clusters\n", length(cls)))
+        cat (sprintf ("Groups per cluster: %s\n", paste(res, collapse=", ")))
+    } else {
+        res <- cluster_eval ({
+            if (.local$empty) { return(0) }
+            return (nrow(.local$bm))
+        })
+        cat (sprintf ("\nData partitioned over %d clusters\n", length(cls)))
+        if (grouped) {
+            cat ("Warning: You may want to run partition_group() as each cluster has partial groups\n")
+        } else {
+            cat (sprintf ("N per cluster: %s\n", paste(res, collapse=", ")))
+        }
+    }
+    if (filtered) {
+        cat ("\nData filtering is in place: you may want to compact (or enable auto_compact)\n")
+    }
+    cat ("\n")
 },
 sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=TRUE) {
     if (empty) { return() }
@@ -625,53 +859,6 @@ sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=TRUE) {
         stop ("No sorting column(s) specified")
     }
     bigmemory::mpermute (bm, cols=cols)
-},
-alloc_col = function (name=".tmp", update=FALSE) {
-    res <- match (name, col.names)
-    if (all(!is.na(res))) {
-        return (res)
-    }
-    needalloc <- which (is.na(res))
-    avail <- which (is.na (col.names))
-    if (length(needalloc) > length(avail)) {
-        stop ("Insufficient free columns available")
-    }
-
-    alloced <- avail[1:length(needalloc)]
-    res[needalloc] <- alloced
-
-    col.names[alloced] <<- name[needalloc]
-    type.cols[alloced] <<- 0
-    order.cols[alloced] <<- max(order.cols) + 1:length(alloced)
-
-    if (update) {
-        update_fields (c("col.names", "type.cols", "order.cols"))
-    }
-    return (res)
-},
-free_col = function (cols, update=FALSE) {
-    fc <- type.cols[cols] > 0
-    if (any(fc)) {
-        fc <- cols[fc]
-        if (length(fc) == 1) {
-            idx <- -match (fc, factor.cols)
-        } else {
-            keep <- setdiff (factor.cols, fc)
-            idx <- match (keep, factor.cols)
-        }
-        factor.cols <<- factor.cols[idx]
-        factor.levels <<- factor.levels[idx]
-        if (update) {
-            #FIXME: do factor.levels drop rather than resend
-            update_fields (c("factor.cols", "factor.levels"))
-        }
-    }
-    col.names[cols] <<- NA
-    type.cols[cols] <<- 0
-    order.cols[cols] <<- 0
-    if (update) {
-        update_fields (c("col.names", "type.cols", "order.cols"))
-    }
 },
 update_fields = function (fieldnames) {
     idx <- match ("grouped", fieldnames)
@@ -701,193 +888,6 @@ update_fields = function (fieldnames) {
         cluster_export (".i")
         cluster_eval ({.master$grouped <- .local$grouped <- .i})
     }
-},
-partition_even = function (max.row = last) {
-    if (empty || max.row == 0) { return() }
-    N <- length(cls)
-
-    if (max.row == 0) {
-        cluster_eval ({
-            if (exists(".master")) {
-                .master$empty <- TRUE
-            }
-            if (exists(".local")) {
-                .local$empty <- TRUE
-            }
-            NULL
-        })
-        return()
-    }
-
-    nr <- distribute (max.row, N)
-    if (max.row < N) {
-        nr[nr != 0] <- 1:max.row
-        cluster_export_each ("nr", ".first")
-        cluster_export_each ("nr", ".last")
-    } else {
-        .last <- cumsum(nr)
-        .first <- c(0, .last)[1:N] + 1
-        cluster_export_each (".first")
-        cluster_export_each (".last")
-    }
-
-    grouped <<- group_partition <<- FALSE
-
-    cluster_eval ({
-        if (!exists(".local")) {
-            .local <- .master$copy (shallow=TRUE)
-        }
-        .local$desc <- .master$desc
-
-        .master$grouped <- .local$grouped <- FALSE
-        .master$group_partition <- .local$group_partition <- FALSE
-
-        .local$empty <- (.last < .first || .last == 0)
-        if (.local$empty) { return(NULL) }
-        .local$local_subset (.first, .last)
-        NULL
-    })
-
-    return()
-},
-local_subset = function (first, last) {
-    if (empty) { return() }
-    first <<- first
-    last <<- last
-    bm <<- bigmemory::sub.big.matrix (desc, firstRow=first, lastRow=last)
-    desc <<- sm_desc_update (desc, first, last)
-},
-rebuild_grouped = function () {
-    if (empty) { return() }
-    cluster_eval ({
-        if (.local$empty) { return(NULL) }
-
-        .grouped <- list()
-        for (.g in 1:length(.groups)) {
-            .grp <- .local$group_restrict(.groups[.g])
-            .grouped <- append(.grouped, list(.grp))
-        }
-
-        NULL
-    })
-},
-filter_rows = function (rows) {
-    if (empty) { return() }
-    bm[, tmpcol] <<- 0
-    bm[rows, tmpcol] <<- 1
-
-    bm[, filtercol] <<- bm[, filtercol] * bm[, tmpcol]
-    empty <<- sum(bm[, filtercol]) == 0
-    filtered <<- TRUE
-},
-filter_vector = function (rows) {
-    if (empty) { return() }
-    bm[, filtercol] <<- bm[, filtercol] * rows
-    empty <<- sum(bm[, filtercol]) == 0
-    filtered <<- TRUE
-},
-filter_range = function (start, end) {
-    if (empty) { return() }
-    if (start > 1) {
-        bm[1:(start-1), filtercol] <<- 0
-    }
-    if (end < nrow(bm)) {
-        bm[(end+1):nrow(bm), filtercol] <<- 0
-    }
-    filtered <<- TRUE
-},
-compact = function () {
-    if (!filtered) { return() }
-    if (empty) {
-        filtered <<- FALSE
-        update_fields ("filtered")
-        return ()
-    }
-
-    rg_grouped <- grouped
-    rg_partion <- group_partition
-    rg_cols <- group.cols
-
-    partition_even() #PROFME
-    N <- cluster_eval ({ #PROFME
-        #(1) Sort by filtercol decreasing
-        bigmemory::mpermute (.local$bm, cols=.local$filtercol, decreasing=TRUE)
-
-        #(2) Find the length of each included block
-        .N <- sum(.local$bm[, .local$filtercol])
-    })
-    N <- do.call (c, N)
-
-    #(3) Assign each node a target range
-    dest <- cumsum(N)
-    last <<- dest[length(dest)]
-    dest <- dest[-length(dest)]
-    dest <- c(0, dest) + 1
-    cluster_export_each ("dest", ".dest")
-
-    #(4) Within each node/group, move data to target range
-    cluster_eval ({
-        if (.N == 0) { return(NULL) }
-        .local$bm.master[.dest:(.dest+.N-1),] <- .local$bm[1:.N,]
-        NULL
-    })
-
-    #(5) Submatrix master, propagate to local
-    filtered <<- FALSE
-    if (last > 0) {
-        bm <<- bigmemory::sub.big.matrix (desc, firstRow=1, lastRow=last)
-        desc <<- sm_desc_update (desc, 1, last)
-        cluster_export ("last", ".last")
-        cluster_eval ({
-            .master$last <- .last
-            .master$filtered <- FALSE
-            .master$bm <- bigmemory::sub.big.matrix (.master$desc, firstRow=1, lastRow=.master$last)
-            .master$desc <- sm_desc_update (.master$desc, 1, .master$last)
-            rm (.local)
-            NULL
-        })
-    } else {
-        empty <<- TRUE
-        cluster_eval ({
-            .master$empty <- TRUE
-            NULL
-        })
-    }
-
-    #(6) Regroup/partition
-    partition_even()
-
-    grouped <<- rg_grouped
-    group_partition <<- rg_partion
-    group.cols <<- rg_cols
-
-    #(group_by_ will call rebuild_grouped and partition_group)
-    if (grouped) {
-        group_by_ (.self, .cols=rg_cols)
-    }
-},
-calc_group_sizes = function (delay=TRUE) {
-    if (delay) {
-        group_sizes_stale <<- TRUE
-        return()
-    }
-    if (!group_sizes_stale) {
-        return()
-    }
-    #FIXME: make parallel/more efficient
-    if (empty) {
-        group_sizes <<- rep(0, group_max)
-    } else if (filtered) {
-        bm[, tmpcol] <<- bm[, groupcol] * bm[, filtercol]
-        group_sizes <<- sapply(seq_len(group_max), function (g) {
-            sum(.self$bm[, .self$tmpcol] == g)
-        })
-    } else {
-        group_sizes <<- sapply(seq_len(group_max), function (g) {
-            sum(.self$bm[, .self$groupcol] == g)
-        })
-    }
-    group_sizes_stale <<- FALSE
 },
 row_names = function () {
     if (empty) {
