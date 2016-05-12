@@ -35,11 +35,19 @@ Multiplyr <- setRefClass("Multiplyr",
                 filtered        = "logical",
                 auto_compact    = "logical",
                 auto_partition  = "logical",
-                group_sizes_stale = "logical"
+                group_sizes_stale = "logical",
+                profile_names   = "character",
+                profile_user    = "numeric",
+                profile_sys     = "numeric",
+                profile_ruser   = "numeric",
+                profile_rsys    = "numeric",
+                profiling       = "logical"
                 ),
     methods=list(
 initialize = function (..., alloc=1, cl=NULL,
-                       auto_compact=TRUE, auto_partition=TRUE) {
+                       auto_compact=TRUE,
+                       auto_partition=TRUE,
+                       profiling=TRUE) {
     vars <- list(...)
 
     if (length(vars) == 0) {
@@ -131,6 +139,7 @@ initialize = function (..., alloc=1, cl=NULL,
     filtered <<- FALSE
     auto_compact <<- auto_compact
     auto_partition <<- auto_partition
+    profiling <<- profiling
     group_sizes_stale <<- FALSE
 
     desc <<- bigmemory.sri::describe (bm)
@@ -609,6 +618,53 @@ partition_even = function (max.row = last) {
     })
 
     return()
+},
+profile = function (action=NULL, name=NULL) {
+    if (!profiling) {
+        return()
+    }
+
+    if (is.null(action)) {
+        if (length(profile_names) == 0) {
+            cat ("No profiles defined\n")
+            return
+        }
+
+        if (is.null(name)) {
+            m <- seq_len(length(profile_names))
+        } else {
+            m <- match (name, profile_names)
+        }
+
+        return (data.frame(Profile=profile_names[m],
+                           System=profile_sys[m],
+                           User=profile_user[m],
+                           stringsAsFactors = FALSE))
+    } else if (action == "start") {
+        m <- match (name, profile_names)
+        if (is.na(m)) {
+            profile_names <<- c(profile_names, name)
+            profile_ruser <<- c(profile_ruser, 0)
+            profile_rsys <<- c(profile_rsys, 0)
+            profile_user <<- c(profile_user, 0)
+            profile_sys <<- c(profile_sys, 0)
+            m <- length(profile_names)
+        }
+
+        res <- proc.time()
+        profile_ruser[m] <<- res[1][[1]]
+        profile_rsys[m] <<- res[2][[1]]
+    } else if (action == "stop") {
+        res <- proc.time()
+
+        m <- match (name, profile_names)
+
+        user.diff <- res[1][[1]] - profile_ruser[m]
+        sys.diff <- res[2][[1]] - profile_rsys[m]
+
+        profile_user[m] <<- profile_user[m] + user.diff
+        profile_sys[m] <<- profile_sys[m] + sys.diff
+    }
 },
 reattach = function (descres) {
     nm <- names(descres)
