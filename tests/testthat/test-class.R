@@ -369,6 +369,7 @@ test_that ("$alloc_col(update=...) works appropriately", {
     rm (dat)
 })
 
+#FIXME: build_grouped
 
 test_that ("$calc_group_sizes() works appropriately", {
     dat <- Multiplyr(x=1:100,
@@ -727,6 +728,12 @@ test_that ("$local_subset() works appropriately", {
     rm (dat)
 })
 
+#$partition_even -> test_partition.R
+
+#FIXME: profile, profile_import
+#FIXME: reattach_slave
+#FIXME: rebuild_grouped
+
 test_that ("$row_names() works appropriately", {
     dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
     expect_equal (dat$row_names(), 1:100)
@@ -736,6 +743,84 @@ test_that ("$row_names() works appropriately", {
     expect_equal (dat$row_names(), character(0))
     rm (dat)
 })
+
+test_that ("$set_data(NULL, NULL) sets entire dataset", {
+    dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
+    dat.df <- data.frame (x=100:1, G=rep(c("A", "B"), length.out=100), stringsAsFactors = FALSE)
+    dat$set_data(NULL, NULL, dat.df)
+    expect_equivalent (dat$get_data(NULL, NULL), dat.df)
+    rm (dat)
+})
+test_that ("$set_data(i, NULL) sets a row slice", {
+    dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
+    dat$set_data (1:10, NULL, data.frame(x=10:1, G=rep("B", 10)))
+    expect_equal (dat["x"], c(10:1, 11:100))
+    expect_equal (dat["G"], c(rep("B", 10), rep("A", 40), rep("B", 50)))
+    rm (dat)
+})
+test_that ("$set_data(NULL, j) sets specified columns", {
+    dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
+    dat$set_data (NULL, "x", 100:1)
+    expect_equal (dat["x"], 100:1)
+    expect_equal (dat["G"], rep(c("A", "B"), each=50))
+    rm (dat)
+})
+test_that ("$set_data(i, j) sets row/column subset", {
+    dat <- Multiplyr (x=1:100, y=100:1, G=rep(c("A", "B"), each=50), cl=cl2)
+    dat$set_data (1:10, "x", 10:1)
+    expect_equal (dat["x"], c(10:1, 11:100))
+    expect_equal (dat["y"], 100:1)
+    expect_equal (dat["G"], rep(c("A", "B"), each=50))
+    dat$set_data (11:20, c("x", "y"), matrix(c(10:1, 1:10), ncol=2))
+    expect_equal (dat["x"], c(10:1, 10:1, 21:100))
+    expect_equal (dat["y"], c(100:91, 1:10, 80:1))
+    expect_equal (dat["G"], rep(c("A", "B"), each=50))
+    rm (dat)
+})
+test_that ("$set_data() works on filtered data", {
+    v <- rep(c(TRUE, FALSE, FALSE, TRUE), length.out=100)
+    dat.df <- data.frame (x=1:100, y=100:1, G=rep(c("A", "B"), each=50), stringsAsFactors = FALSE)
+    dat <- Multiplyr (dat.df, cl=cl2)
+    dat$filter_vector (v)
+
+    r <- 2:11
+    rv <- v; rv[which(rv)[-r]] <- FALSE
+    dat$set_data (r, c("x", "G"), data.frame(x=10:1, G=rep("B", 10), stringsAsFactors = FALSE))
+    dat.df[rv, "x"] <- 10:1
+    dat.df[rv, "G"] <- rep("B", 10)
+    expect_equal (dat["x"], dat.df[v, "x"])
+    expect_equal (dat["y"], dat.df[v, "y"])
+    expect_equal (dat["G"], dat.df[v, "G"])
+
+    rm (dat)
+})
+
+dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
+test_that ("$set_data() throws errors for invalid row/column references", {
+    expect_error (dat$set_data (NULL, "y", 1:100), "Undefined")
+    expect_error (dat$set_data (NULL, 10, 1:100), "Invalid")
+    expect_error (dat$set_data (NULL, 0, 1:100), "Invalid")
+    expect_error (dat$set_data (NULL, c("x", "y"), data.frame(x=1:100, y=1:100)), "Undefined")
+    expect_error (dat$set_data (NULL, c(1, 0), matrix(1, nrow=100, ncol=2)), "Invalid")
+
+    expect_error (dat$set_data (0, NULL, data.frame(x=1, G="A", stringsAsFactors=FALSE)), "Invalid")
+    expect_error (dat$set_data (101, NULL, data.frame(x=1, G="A", stringsAsFactors=FALSE)), "Invalid")
+    expect_error (dat$set_data (99:101, NULL, data.frame(x=1:3, G=rep("A", 3), stringsAsFactors=FALSE)), "Invalid")
+    expect_error (dat$set_data (99:101, "x", 1:10), "Invalid")
+    expect_error (dat$set_data (1:10, "y", 1:10), "Undefined")
+})
+test_that ("$set_data() throws error for mismatched lengths", {
+    expect_error (dat$set_data (NULL, "x", 1:101), "replacement")
+    expect_error (dat$set_data (NULL, "x", 1:99), "replacement")
+    expect_error (dat$set_data (1:10, "x", 1:11), "replacement")
+    expect_error (dat$set_data (1:10, "x", 1:9), "replacement")
+
+    expect_error (dat$set_data (NULL, c("x", "G"), 1:100), "replacement")
+    expect_error (dat$set_data (NULL, c("x", "G"), data.frame(x=1:101, G=rep("A", 101), stringsAsFactors=FALSE)), "replacement")
+})
+rm (dat)
+
+#FIXME: show
 
 test_that ("$sort() returns sorted data", {
     dat <- Multiplyr (x=1:100, y=100:1, G=rep(c("A", "B"), length.out=100), cl=cl2)
