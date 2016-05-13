@@ -444,17 +444,39 @@ envir = function (nsa=FALSE) {
 },
 factor_map = function (var, vals) {
     if (is.numeric(var)) {
-        col <- var
+        cols <- var
     } else {
-        col <- match (var, col.names)
+        cols <- match (var, col.names)
     }
 
-    if (type.cols[col] == 0) {
-        return (vals)
-    }
+    if (length(var) == 1) {
+        if (type.cols[cols] == 0) {
+            return (vals)
+        }
 
-    f <- match (col, factor.cols)
-    return (match (vals, factor.levels[[f]]))
+        f <- match (cols, factor.cols)
+        return (match (vals, factor.levels[[f]]))
+    } else {
+        if (all(type.cols[cols] == 0)) {
+            return (vals)
+        }
+
+        fmap <- match (cols, factor.cols)
+
+        if (is.data.frame(vals)) {
+            cmap <- match (col.names[cols], colnames(vals))
+        }
+
+        out <- matrix(nrow=nrow(vals), ncol=length(var))
+        for (i in 1:length(var)) {
+            if (is.na(fmap[i])) {
+                out[, cols[i]] <- vals[, cmap[i]]
+            } else {
+                out[, cols[i]] <- match(vals[, cmap[i]], factor.levels[[fmap[i]]])
+            }
+        }
+        return (out)
+    }
 },
 filter_range = function (start, end) {
     if (empty) { return() }
