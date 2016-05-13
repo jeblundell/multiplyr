@@ -651,12 +651,12 @@ get_data = function (i=NULL, j=NULL, nsa=FALSE, drop=TRUE) {
         if (is.null(out)) {
             out <- o
         } else {
-            out <- cbind (data.frame(out), data.frame(o))
+            out <- cbind (data.frame(out, stringsAsFactors = FALSE), data.frame(o, stringsAsFactors = FALSE))
         }
     }
 
-    if (!drop) {
-        out <- data.frame(out)
+    if (!drop && length(cols) == 1) {
+        out <- data.frame(out, stringsAsFactors = FALSE)
     }
 
     if (length(cols) > 1 || !drop) {
