@@ -44,7 +44,11 @@
 #'     \code{\link{undefine}}    \tab Delete variables \cr
 #' }
 #'
+#' @importFrom bigmemory sub.big.matrix attach.big.matrix mwhich mpermute
+#' @importFrom bigmemory.sri describe
+#' @importFrom lazyeval all_dots lazy_dots lazy_eval
 #' @importFrom magrittr %>%
+#' @importFrom parallel makeCluster stopCluster clusterExport clusterEvalQ
 #' @importClassesFrom bigmemory big.matrix big.matrix.descriptor
 #' @docType package
 #' @name multiplyr
