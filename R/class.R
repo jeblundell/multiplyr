@@ -1145,19 +1145,27 @@ setMethod ("[<-", "Multiplyr", function (x, i, j, ..., value) {
     invisible (x)
 })
 
+#' @method as.data.frame Multiplyr
+#' @export
 setMethod ("as.data.frame", "Multiplyr", function (x) {
     x[]
 })
 
+#' @method dimnames Multiplyr
+#' @export
 setMethod ("dimnames", "Multiplyr", function (x) {
     list(row.names(x), names(x))
 })
 
+#' @method names Multiplyr
+#' @export
 setMethod("names", "Multiplyr", function(x) {
     m <- x$order.cols > 0
     (x$col.names[m])[order(x$order.cols[m])]
 })
 
+#' @method row.names Multiplyr
+#' @export
 setMethod("row.names", "Multiplyr", function (x) {
     x$row_names()
 })
