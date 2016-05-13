@@ -888,6 +888,10 @@ set_data = function (i=NULL, j=NULL, value, nsa=FALSE) {
                 stop (.p("Undefined column(s): ", paste0(j[cols.na], collapse=", ")))
             }
         }
+    } else {
+        # [i, ] <-
+        # [] <-
+        cols <- which (order.cols > 0)
     }
 
     if (is.null(rowslice)) {
@@ -909,7 +913,7 @@ set_data = function (i=NULL, j=NULL, value, nsa=FALSE) {
                 if (max(rowslice) > nr) {
                     stop (sprintf("Invalid row reference: %d > %d", max(rowslice), nr))
                 }
-                filtrows <- filtrows[-rowslice]
+                filtrows <- filtrows[rowslice]
             } else {
                 nr <- (last - first) + 1
                 if (max(rowslice) > nr) {
@@ -917,6 +921,7 @@ set_data = function (i=NULL, j=NULL, value, nsa=FALSE) {
                 }
                 filtrows <- rowslice
             }
+            nr <- length(filtrows)
         } else if (is.logical(rowslice)) {
             if (filtered) {
                 filtrows <- bm[, filtercol] == 1
@@ -924,7 +929,7 @@ set_data = function (i=NULL, j=NULL, value, nsa=FALSE) {
                 if (nr %% length(rowslice) != 0) {
                     stop ("Number of available rows needs to be an exact multiple of rowslice length")
                 }
-                filtrows <- filtrows[!rowslice]
+                filtrows <- filtrows[rowslice]
             } else {
                 nr <- (last - first) + 1
                 if (nr %% length(rowslice) != 0) {
@@ -932,35 +937,76 @@ set_data = function (i=NULL, j=NULL, value, nsa=FALSE) {
                 }
                 filtrows <- rowslice
             }
+            nr <- sum(filtrows)
         }
     }
 
-    if (is.null(i)) {
-        # [, j] <-
-        # [j] <-
-        len <- length(value)
-        if (len == 1 || len == nr) {
-            if (is.null(filtrows)) {
-                if (nsa) {
-                    bm[, cols] <<- value
-                } else {
-                    bm[, cols] <<- factor_map (cols, value)
-                }
-            } else {
-                if (nsa) {
-                    bm[filtrows, cols] <<- value
-                } else {
-                    bm[filtrows, cols] <<- factor_map (cols, value)
-                }
-            }
-        } else {
-            stop (sprintf("replacement data has %d rows to replace %d", len, nr))
+    dims <- dim(value)
+    if (!is.null(dims)) {
+        if (dims[1] != nr) {
+            stop (sprintf("replacement data has %d rows to replace %d", dims[1], nr))
+        }
+        if (dims[2] != length(cols)) {
+            stop (sprintf("replacement data has %d cols to replace %d", dims[2], length(cols)))
+        }
+        if ("data.frame" %in% class(value) && nsa) {
+            stop ("data.frame not allowed as replacement when in NSA mode")
         }
     } else {
-        if (is.null(j)) {
-            # [i, ] <-
-            cols <- which (order.cols > 0)
+        if (length(value) != 1 && length(value) != nr) {
+            stop (sprintf("replacement data has %d rows to replace %d", length(value), nr))
         }
+    }
+
+    if (is.null(i) && is.null(j)) {
+        # [] <-
+        if (is.null(dims)) {
+            stop ("replacement data needs to be specified as a matrix or a data.frame")
+        }
+
+        if (is.null(filtrows)) {
+            if (nsa) {
+                bm[, cols] <<- value
+            } else {
+                bm[, cols] <<- factor_map (cols, value)
+            }
+        } else {
+            if (nsa) {
+                bm[filtrows, cols] <<- value
+            } else {
+                bm[filtrows, cols] <<- factor_map (cols, value)
+            }
+        }
+    } else if (is.null(i)) {
+        # [, j] <-
+        # [j] <-
+
+        if (is.null(dims)) {
+            if (length(cols) > 1 && length(value) != 1) {
+                stop ("replacement data needs to be specified as a matrix or a data.frame")
+            }
+        }
+
+        if (is.null(filtrows)) {
+            if (nsa) {
+                bm[, cols] <<- value
+            } else {
+                bm[, cols] <<- factor_map (cols, value)
+            }
+        } else {
+            if (nsa) {
+                bm[filtrows, cols] <<- value
+            } else {
+                bm[filtrows, cols] <<- factor_map (cols, value)
+            }
+        }
+    } else {
+        if (is.null(dims)) {
+            if (length(cols) > 1 && length(value) != 1) {
+                stop ("replacement data needs to be specified as a matrix or a data.frame")
+            }
+        }
+
         # [i, j] <-
         if (nsa) {
             if (is.null(filtrows)) {
@@ -970,21 +1016,9 @@ set_data = function (i=NULL, j=NULL, value, nsa=FALSE) {
             }
         } else {
             if (is.null(filtrows)) {
-                if (length(cols) == 1) {
-                    bm[, cols] <<- factor_map(cols, value)
-                } else {
-                    for (c in 1:length(cols)) {
-                        bm[, cols[c]] <<- factor_map(cols[c], value[, c])
-                    }
-                }
+                bm[, cols] <<- factor_map(cols, value)
             } else {
-                if (length(cols) == 1) {
-                    bm[filtrows, cols] <<- factor_map(cols, value)
-                } else {
-                    for (c in cols) {
-                        bm[filtrows, cols[c]] <<- factor_map(cols[c], value[, c])
-                    }
-                }
+                bm[filtrows, cols] <<- factor_map(cols, value)
             }
         }
     }
