@@ -19,7 +19,7 @@ Multiplyr <- setRefClass("Multiplyr",
                 order.cols      = "numeric",
                 pad             = "numeric",
                 col.names       = "character",
-                nsa             = "logical",
+                nsamode         = "logical",
                 grouped         = "logical",
                 group           = "numeric",
                 group_partition = "logical",
@@ -147,7 +147,7 @@ initialize = function (..., alloc=1, cl=NULL,
     profile ("stop", "initialize.load")
     profile ("stop", "initialize.data")
 
-    nsa <<- FALSE
+    nsamode <<- FALSE
     group.cols <<- 0
     grouped <<- FALSE
     group <<- 0
@@ -403,9 +403,13 @@ destroy_grouped = function () {
         NULL
     })
 },
-envir = function (nsa=FALSE) {
+envir = function (nsa=NULL) {
     if (is.null(bindenv)) {
         bindenv <<- new.env()
+    }
+
+    if (is.null(nsa)) {
+        nsa <- nsamode
     }
 
     #Remove existing active bindings
@@ -546,11 +550,15 @@ free_col = function (cols, update=FALSE) {
         update_fields (c("col.names", "type.cols", "order.cols"))
     }
 },
-get_data = function (i=NULL, j=NULL, nsa=FALSE, drop=TRUE) {
+get_data = function (i=NULL, j=NULL, nsa=NULL, drop=TRUE) {
     if (is.null(i)) {
         rowslice <- NULL
     } else {
         rowslice <- i
+    }
+
+    if (is.null(nsa)) {
+        nsa <- nsamode
     }
 
     if (is.null(j)) {
@@ -866,11 +874,15 @@ row_names = function () {
         return (seq_len((last - first)+1))
     }
 },
-set_data = function (i=NULL, j=NULL, value, nsa=FALSE) {
+set_data = function (i=NULL, j=NULL, value, nsa=NULL) {
     if (is.null(i)) {
         rowslice <- NULL
     } else {
         rowslice <- i
+    }
+
+    if (is.null(nsa)) {
+        nsa <- nsamode
     }
 
     if (!is.null(j)) {

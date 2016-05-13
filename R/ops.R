@@ -478,6 +478,24 @@ mutate_ <- function (.self, ..., .dots) {
     return (.self)
 }
 
+#' No strings attached mode
+#' @param .self Data frame
+#' @param enabled TRUE/FALSE
+#' @export
+nsa <- function (.self, enabled=TRUE) {
+    if (!is(.self, "Multiplyr")) {
+        stop ("nsa operation only valid for Multiplyr objects")
+    }
+    if (.self$nsamode && enabled) {
+        warning ("nsa() operation applied when data frame already in NSA-mode")
+    } else if (!.self$nsamode && !enabled) {
+        warning ("nsa(FALSE) operation applied when data frame already not in NSA-mode")
+    }
+    .self$nsamode <- enabled
+    .self$update_fields ("nsamode")
+    return (.self)
+}
+
 #' Partition data evenly amongst cluster nodes
 #' @param .self Data frame
 #' @export
