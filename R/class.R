@@ -470,9 +470,9 @@ factor_map = function (var, vals) {
         out <- matrix(nrow=nrow(vals), ncol=length(var))
         for (i in 1:length(var)) {
             if (is.na(fmap[i])) {
-                out[, cols[i]] <- vals[, cmap[i]]
+                out[, i] <- vals[, cmap[i]]
             } else {
-                out[, cols[i]] <- match(vals[, cmap[i]], factor.levels[[fmap[i]]])
+                out[, i] <- match(vals[, cmap[i]], factor.levels[[fmap[i]]])
             }
         }
         return (out)

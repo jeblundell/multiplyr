@@ -512,8 +512,10 @@ test_that ("$factor_map() works appropriately", {
                       G=as.factor(rep(c("C", "D"), each=50)), cl=cl2)
     expect_equal (dat$factor_map ("F", c("D", "D", "A", "C", "B")),
                   c(4, 4, 1, 3, 2))
-    expect_equal (dat$factor_map ("G", c("D", "D", "C", "D")),
-                  c(2, 2, 1, 2))
+    expect_equal (dat$factor_map ("G", c("D", "D", "C", "D", "C")),
+                  c(2, 2, 1, 2, 1))
+    expect_equal (dat$factor_map (c("G", "F"), data.frame(G=c("D", "D", "C", "D", "C"), F=c("D", "D", "A", "C", "B"), stringsAsFactors=FALSE)),
+                  matrix (c(c(2, 2, 1, 2, 1), c(4, 4, 1, 3, 2)), ncol=2))
     rm (dat)
 })
 
