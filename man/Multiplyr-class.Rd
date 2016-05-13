@@ -4,13 +4,170 @@
 \name{Multiplyr-class}
 \alias{Multiplyr}
 \alias{Multiplyr-class}
-\title{Create new parallel data frame}
+\title{Parallel-processing data frame}
 \arguments{
+\item{...}{Either a data frame or a list of name=value pairs}
+
 \item{cl}{Cluster object, number of nodes or NULL (default)}
 
-\item{alloc}{Allocate additional space}
+\item{alloc}{Allocate additional columns}
+
+\item{auto_compact}{Automatically compact data after filter operations}
+
+\item{auto_partition}{Automatically re-partition after group_by}
+
+\item{profiling}{Enable internal profiling code}
+}
+\value{
+Object of class Multiplyr
 }
 \description{
-Create new parallel data frame
+Parallel-processing data frame
+}
+\section{Fields}{
+
+\describe{
+\item{\code{bm}}{big.matrix (internal representation of data)}
+
+\item{\code{bm.master}}{big.matrix for certain operations that need non-subsetted data}
+
+\item{\code{desc}}{big.matrix.descriptor for setting up shared memory access}
+
+\item{\code{cls}}{SOCKcluster created by parallel package}
+
+\item{\code{slave}}{Flag indicating whether cluster_* operations are valid}
+
+\item{\code{factor.cols}}{Which columns are factors/character}
+
+\item{\code{factor.levels}}{List (same length as factor.cols) containing corresponding factor levels}
+
+\item{\code{type.cols}}{Column type (0=numeric, 1=character, 2=factor)}
+
+\item{\code{order.cols}}{Display order of columns}
+
+\item{\code{pad}}{Number of spaces to pad each column or 0 for dynamic}
+
+\item{\code{col.names}}{Name of each column; names starting "." are special and NA is a free column}
+
+\item{\code{nsamode}}{Flag indicating whether data frame is in no-strings-attached mode}
+
+\item{\code{grouped}}{Flag indicating whether grouped}
+
+\item{\code{group}}{Which group IDs are assigned to this data frame}
+
+\item{\code{group_partition}}{Flag indicating that \code{partition_group()} has been used}
+
+\item{\code{group.cols}}{Which columns are involved in grouping}
+
+\item{\code{group_sizes}}{Size of each group (NB not necessarily current: see \code{calc_group_sizes})}
+
+\item{\code{group_max}}{Number of groups}
+
+\item{\code{bindenv}}{Environment for \code{within_group} etc. operations}
+
+\item{\code{first}}{Subsetting: first row}
+
+\item{\code{last}}{Subsetting: last row}
+
+\item{\code{filtercol}}{Which column in bm indicates filtering (1=included, 0=excluded)}
+
+\item{\code{groupcol}}{Which column in bm contains the group ID}
+
+\item{\code{tmpcol}}{Which column may be used for temporary calculations}
+
+\item{\code{empty}}{Flag indicating that this data frame is empty}
+
+\item{\code{filtered}}{Flag indicating that this data frame has had filtering applied}
+
+\item{\code{auto_compact}}{Compact data after each filtering etc. operation}
+
+\item{\code{auto_partition}}{Re-partition after group_by}
+
+\item{\code{group_sizes_stale}}{Flag indicating that group_sizes need to be re-calculated}
+
+\item{\code{profile_names}}{Profile names}
+
+\item{\code{profile_user}}{Total user time for each profile}
+
+\item{\code{profile_sys}}{Total system time for each profile}
+
+\item{\code{profile_real}}{Total elapsed time for each profile}
+
+\item{\code{profile_ruser}}{Reference time for user}
+
+\item{\code{profile_rsys}}{Reference time for system}
+
+\item{\code{profile_rreal}}{Reference time for total elapsed}
+
+\item{\code{profiling}}{Flag indicating that profiling is to be used}
+}}
+\section{Methods}{
+
+\describe{
+\item{\code{alloc_col(name = ".tmp", update = FALSE)}}{Allocate a new column and optionally update cluster nodes to do the same. Returns the column number}
+
+\item{\code{build_grouped()}}{Build data frames on the cluster (a list called .grouped) with its data subsetted to the appropriate group}
+
+\item{\code{calc_group_sizes(delay = TRUE)}}{Calculate group sizes (if delay=TRUE then this will just mark group sizes as being stale)}
+
+\item{\code{cluster_eval(...)}}{Executes specified expression on cluster}
+
+\item{\code{cluster_export(var, var.as = NULL, envir = parent.frame())}}{Exports a variable from current environment to the cluster, optionally with a different name}
+
+\item{\code{cluster_export_each(var, var.as = var, envir = parent.frame())}}{Like cluster_export, but exports only one element of each variable to each node}
+
+\item{\code{cluster_export_self()}}{Exports this data frame to the cluster (naming it .master)}
+
+\item{\code{cluster_profile()}}{Update profile totals to include all nodes' totals (also resets nodes' totals to 0)}
+
+\item{\code{compact()}}{Re-sorts data so all rows included after filtering are contiguous (and calls sub.big.matrix in the process)}
+
+\item{\code{describe()}}{Describes data frame (for later use by reattach_slave)}
+
+\item{\code{destroy_grouped()}}{Removes .grouped data frame on remote nodes}
+
+\item{\code{envir(nsa = NULL)}}{Returns an environment with active bindings to columns (may also temporarily set no strings attached mode)}
+
+\item{\code{factor_map(var, vals)}}{For a given set of values (numeric or character), map it to be numeric: this is used to store data in big.matrix}
+
+\item{\code{filter_range(start, end)}}{Only include specified rows. Note that start and end are relative to all rows in the big.matrix, filtered or otherwise}
+
+\item{\code{filter_rows(rows)}}{Only include specified numeric rows. Note that rows refer to all rows in the big.matrix, filtered or otherwise}
+
+\item{\code{filter_vector(rows)}}{Only include these rows (given as a vector of TRUE/FALSE values). Note that this applies to all rows in the big.matrix, filtered or otherwise}
+
+\item{\code{free_col(cols, update = FALSE)}}{Free specified (numeric) column and optionally update cluster}
+
+\item{\code{get_data(i = NULL, j = NULL, nsa = NULL, drop = TRUE)}}{Retrieve given rows (i), columns (j). drop=TRUE with 1 column will return a vector, otherwise a standard data.frame. If no strings attached mode is enabled, this will only return a vector or a matrix}
+
+\item{\code{group_restrict(group = 0)}}{Returns a new Multiplyr data frame with data restricted to specified group ID}
+
+\item{\code{initialize(..., alloc = 1, cl = NULL, auto_compact = TRUE,
+  auto_partition = TRUE, profiling = TRUE)}}{Constructor}
+
+\item{\code{local_subset(first, last)}}{Applies sub.big.matrix to bm}
+
+\item{\code{partition_even(max.row = last)}}{Partitions data evenly across cluster, irrespective of grouping boundaries}
+
+\item{\code{profile(action = NULL, name = NULL)}}{Profiling function: action may be start or stop. If no parameters, this returns a data.frame of profiling timings}
+
+\item{\code{profile_import(prof)}}{Adds totals from provided profile to this data frame's profiling data}
+
+\item{\code{reattach_slave(descres)}}{Used for nodes to reattach to a specified shared memory object}
+
+\item{\code{rebuild_grouped()}}{Executes destroy_grouped(), followed by build_grouped()}
+
+\item{\code{row_names()}}{Returns some entirely arbitrary row names}
+
+\item{\code{set_data(i = NULL, j = NULL, value, nsa = NULL)}}{Set data in given rows (i) and columns (j). If in no strings attached mode, then value must be entirely numeric}
+
+\item{\code{sort(decreasing = FALSE, dots = NULL, cols = NULL, with.group = TRUE)}}{Sorts data by specified (numeric) columns or by translating from a lazy_dots object. with.group is used to ensure that the sort is by grouping columns first to ensure contiguity}
+
+\item{\code{update_fields(fieldnames)}}{Update specified cluster data frames' field names to be the same as this one's}
+}}
+\examples{
+dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=2)
+dat.df <- data.frame (x=1:100, G=rep(c("A", "B"), each=50))
+dat <- Multiplyr (dat.df, cl=2)
 }
 

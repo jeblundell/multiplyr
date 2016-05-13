@@ -1,12 +1,60 @@
 # fastdf class functions
 
 setOldClass (c("cluster", "SOCKcluster"))
-#' Create new parallel data frame
+#' Parallel-processing data frame
+#'
+#' @docType class
+#' @param ... Either a data frame or a list of name=value pairs
 #' @param cl Cluster object, number of nodes or NULL (default)
-#' @param alloc Allocate additional space
+#' @param alloc Allocate additional columns
+#' @param auto_compact Automatically compact data after filter operations
+#' @param auto_partition Automatically re-partition after group_by
+#' @param profiling Enable internal profiling code
+#' @return Object of class Multiplyr
 #' @import methods
 #' @exportClass Multiplyr
 #' @export Multiplyr
+#' @examples
+#' dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=2)
+#' dat.df <- data.frame (x=1:100, G=rep(c("A", "B"), each=50))
+#' dat <- Multiplyr (dat.df, cl=2)
+#' @field bm                big.matrix (internal representation of data)
+#' @field bm.master         big.matrix for certain operations that need non-subsetted data
+#' @field desc              big.matrix.descriptor for setting up shared memory access
+#' @field cls               SOCKcluster created by parallel package
+#' @field slave             Flag indicating whether cluster_* operations are valid
+#' @field factor.cols       Which columns are factors/character
+#' @field factor.levels     List (same length as factor.cols) containing corresponding factor levels
+#' @field type.cols         Column type (0=numeric, 1=character, 2=factor)
+#' @field order.cols        Display order of columns
+#' @field pad               Number of spaces to pad each column or 0 for dynamic
+#' @field col.names         Name of each column; names starting "." are special and NA is a free column
+#' @field nsamode           Flag indicating whether data frame is in no-strings-attached mode
+#' @field grouped           Flag indicating whether grouped
+#' @field group             Which group IDs are assigned to this data frame
+#' @field group_partition   Flag indicating that \code{partition_group()} has been used
+#' @field group.cols        Which columns are involved in grouping
+#' @field group_sizes       Size of each group (NB not necessarily current: see \code{calc_group_sizes})
+#' @field group_max         Number of groups
+#' @field bindenv           Environment for \code{within_group} etc. operations
+#' @field first             Subsetting: first row
+#' @field last              Subsetting: last row
+#' @field filtercol         Which column in bm indicates filtering (1=included, 0=excluded)
+#' @field groupcol          Which column in bm contains the group ID
+#' @field tmpcol            Which column may be used for temporary calculations
+#' @field empty             Flag indicating that this data frame is empty
+#' @field filtered          Flag indicating that this data frame has had filtering applied
+#' @field auto_compact      Compact data after each filtering etc. operation
+#' @field auto_partition    Re-partition after group_by
+#' @field group_sizes_stale Flag indicating that group_sizes need to be re-calculated
+#' @field profile_names     Profile names
+#' @field profile_user      Total user time for each profile
+#' @field profile_sys       Total system time for each profile
+#' @field profile_real      Total elapsed time for each profile
+#' @field profile_ruser     Reference time for user
+#' @field profile_rsys      Reference time for system
+#' @field profile_rreal     Reference time for total elapsed
+#' @field profiling         Flag indicating that profiling is to be used
 Multiplyr <- setRefClass("Multiplyr",
     fields=list(bm              = "big.matrix",
                 bm.master       = "big.matrix",
@@ -51,6 +99,7 @@ initialize = function (..., alloc=1, cl=NULL,
                        auto_compact=TRUE,
                        auto_partition=TRUE,
                        profiling=TRUE) {
+    "Constructor"
     vars <- list(...)
 
     if (length(vars) == 0) {
@@ -166,6 +215,7 @@ initialize = function (..., alloc=1, cl=NULL,
     profile ("stop", "initialize")
 },
 alloc_col = function (name=".tmp", update=FALSE) {
+    "Allocate a new column and optionally update cluster nodes to do the same. Returns the column number"
     res <- match (name, col.names)
     if (all(!is.na(res))) {
         return (res)
@@ -189,6 +239,7 @@ alloc_col = function (name=".tmp", update=FALSE) {
     return (res)
 },
 build_grouped = function () {
+    "Build data frames on the cluster (a list called .grouped) with its data subsetted to the appropriate group"
     if (empty) { return() }
     cluster_eval ({
         if (.local$empty) { return(NULL) }
@@ -203,6 +254,7 @@ build_grouped = function () {
     })
 },
 calc_group_sizes = function (delay=TRUE) {
+    "Calculate group sizes (if delay=TRUE then this will just mark group sizes as being stale)"
     if (delay) {
         group_sizes_stale <<- TRUE
         return()
@@ -226,6 +278,7 @@ calc_group_sizes = function (delay=TRUE) {
     group_sizes_stale <<- FALSE
 },
 cluster_eval = function (...) {
+    "Executes specified expression on cluster"
     if (profiling) {
         profile ("start", "cluster_eval")
         res <- parallel::clusterEvalQ (cls, ...)
@@ -235,6 +288,7 @@ cluster_eval = function (...) {
     parallel::clusterEvalQ (cls, ...)
 },
 cluster_export = function (var, var.as=NULL, envir=parent.frame()) {
+    "Exports a variable from current environment to the cluster, optionally with a different name"
     profile ("start", "cluster_export")
     if (is.null(var.as)) {
         parallel::clusterExport (cls, var, envir) #PROFME
@@ -251,6 +305,7 @@ cluster_export = function (var, var.as=NULL, envir=parent.frame()) {
     profile ("stop", "cluster_export")
 },
 cluster_export_each = function (var, var.as=var, envir=parent.frame()) {
+    "Like cluster_export, but exports only one element of each variable to each node"
     profile ("start", "cluster_export_each")
     if (length(var) != length(var.as)) {
         stop ("var.as needs to be same length as var: did you mean to do cluster_export_each(c(...))?")
@@ -265,6 +320,7 @@ cluster_export_each = function (var, var.as=var, envir=parent.frame()) {
     profile ("stop", "cluster_export_each")
 },
 cluster_export_self = function () {
+    "Exports this data frame to the cluster (naming it .master)"
     #Replaces cluster_export (".master")
     .res <- .self$describe()
     cluster_export (".res")
@@ -274,6 +330,7 @@ cluster_export_self = function () {
     })
 },
 cluster_profile = function () {
+    "Update profile totals to include all nodes' totals (also resets nodes' totals to 0)"
     if (!profiling || slave) { return() }
     res <- cluster_eval({
         if (exists(".grouped")) {
@@ -299,6 +356,7 @@ cluster_profile = function () {
     }
 },
 compact = function () {
+    "Re-sorts data so all rows included after filtering are contiguous (and calls sub.big.matrix in the process)"
     if (!filtered) { return() }
     if (empty) {
         filtered <<- FALSE
@@ -369,6 +427,7 @@ compact = function () {
     }
 },
 copy = function (shallow = FALSE) {
+    "Create a copy of the data frame"
     if (!shallow) {
         stop ("Non-shallow copy not implemented safely yet")
     }
@@ -387,6 +446,7 @@ copy = function (shallow = FALSE) {
     }
 },
 describe = function () {
+    "Describes data frame (for later use by reattach_slave)"
     fnames <- names(.refClassDef@fieldClasses)
     fnames <- as.list(fnames[-match(c("bm", "bm.master", "cls", "bindenv"), fnames)])
     out <- lapply(fnames, function (x, d) { d$field(x) }, .self)
@@ -395,6 +455,7 @@ describe = function () {
     return (out)
 },
 destroy_grouped = function () {
+    "Removes .grouped data frame on remote nodes"
     cluster_profile ()
     cluster_eval ({
         if (exists(".grouped")) {
@@ -404,6 +465,7 @@ destroy_grouped = function () {
     })
 },
 envir = function (nsa=NULL) {
+    "Returns an environment with active bindings to columns (may also temporarily set no strings attached mode)"
     if (is.null(bindenv)) {
         bindenv <<- new.env()
     }
@@ -447,6 +509,7 @@ envir = function (nsa=NULL) {
     return (bindenv)
 },
 factor_map = function (var, vals) {
+    "For a given set of values (numeric or character), map it to be numeric: this is used to store data in big.matrix"
     if (is.numeric(var)) {
         cols <- var
     } else {
@@ -483,6 +546,7 @@ factor_map = function (var, vals) {
     }
 },
 filter_range = function (start, end) {
+    "Only include specified rows. Note that start and end are relative to all rows in the big.matrix, filtered or otherwise"
     if (empty) { return() }
     profile ("start", "filter_range")
     if (start > 1) {
@@ -495,6 +559,7 @@ filter_range = function (start, end) {
     profile ("stop", "filter_range")
 },
 filter_rows = function (rows) {
+    "Only include specified numeric rows. Note that rows refer to all rows in the big.matrix, filtered or otherwise"
     if (empty) { return() }
     profile ("start", "filter_rows")
     bm[, tmpcol] <<- 0
@@ -506,6 +571,7 @@ filter_rows = function (rows) {
     profile ("stop", "filter_rows")
 },
 filter_vector = function (rows) {
+    "Only include these rows (given as a vector of TRUE/FALSE values). Note that this applies to all rows in the big.matrix, filtered or otherwise"
     if (empty) { return() }
     profile ("start", "filter_vector")
     bm[, filtercol] <<- bm[, filtercol] * rows
@@ -514,6 +580,7 @@ filter_vector = function (rows) {
     profile ("stop", "filter_vector")
 },
 free_col = function (cols, update=FALSE) {
+    "Free specified (numeric) column and optionally update cluster"
     if (grouped) {
         if (any(cols %in% group.cols)) {
             stop ("Attempted to drop columns currently in use by grouping")
@@ -551,6 +618,7 @@ free_col = function (cols, update=FALSE) {
     }
 },
 get_data = function (i=NULL, j=NULL, nsa=NULL, drop=TRUE) {
+    "Retrieve given rows (i), columns (j). drop=TRUE with 1 column will return a vector, otherwise a standard data.frame. If no strings attached mode is enabled, this will only return a vector or a matrix"
     if (is.null(i)) {
         rowslice <- NULL
     } else {
@@ -674,6 +742,7 @@ get_data = function (i=NULL, j=NULL, nsa=NULL, drop=TRUE) {
     return (out)
 },
 group_restrict = function (group=0) {
+    "Returns a new Multiplyr data frame with data restricted to specified group ID"
     if (group <= 0) {
         stop ("Need to specify a group number")
     }
@@ -704,6 +773,7 @@ group_restrict = function (group=0) {
     return (grp)
 },
 local_subset = function (first, last) {
+    "Applies sub.big.matrix to bm"
     if (empty) { return() }
     first <<- first
     last <<- last
@@ -711,6 +781,7 @@ local_subset = function (first, last) {
     desc <<- sm_desc_update (desc, first, last)
 },
 partition_even = function (max.row = last) {
+    "Partitions data evenly across cluster, irrespective of grouping boundaries"
     if (empty || max.row == 0) { return() }
     N <- length(cls)
 
@@ -768,6 +839,7 @@ partition_even = function (max.row = last) {
     return()
 },
 profile = function (action=NULL, name=NULL) {
+    "Profiling function: action may be start or stop. If no parameters, this returns a data.frame of profiling timings"
     if (!profiling) {
         return(data.frame())
     }
@@ -825,6 +897,7 @@ profile = function (action=NULL, name=NULL) {
     return (invisible(res))
 },
 profile_import = function (prof) {
+    "Adds totals from provided profile to this data frame's profiling data"
     if (!profiling) { return() }
     if (nrow(prof) == 0) { return() }
     m <- match (prof$Profile, profile_names)
@@ -844,6 +917,7 @@ profile_import = function (prof) {
     profile_real[m] <<- profile_real[m] + prof$Real
 },
 reattach_slave = function (descres) {
+    "Used for nodes to reattach to a specified shared memory object"
     nm <- names(descres)
     for (i in 1:length(descres)) {
         field(nm[i], descres[[i]])
@@ -861,10 +935,12 @@ reattach_slave = function (descres) {
     cls <<- clsna
 },
 rebuild_grouped = function () {
+    "Executes destroy_grouped(), followed by build_grouped()"
     destroy_grouped()
     build_grouped()
 },
 row_names = function () {
+    "Returns some entirely arbitrary row names"
     if (empty) {
         return(character(0))
     }
@@ -875,6 +951,7 @@ row_names = function () {
     }
 },
 set_data = function (i=NULL, j=NULL, value, nsa=NULL) {
+    "Set data in given rows (i) and columns (j). If in no strings attached mode, then value must be entirely numeric"
     if (is.null(i)) {
         rowslice <- NULL
     } else {
@@ -1037,6 +1114,7 @@ set_data = function (i=NULL, j=NULL, value, nsa=NULL) {
     invisible (value)
 },
 show = function (max.row=10) {
+    "Displays content of data frame; use max.row=0 to not limit number of rows displayed"
     if (is.null(max.row) || max.row == 0 || max.row > nrow(bm)) {
         max.row <- nrow(bm)
     }
@@ -1122,6 +1200,7 @@ show = function (max.row=10) {
     cat ("\n")
 },
 sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=TRUE) {
+    "Sorts data by specified (numeric) columns or by translating from a lazy_dots object. with.group is used to ensure that the sort is by grouping columns first to ensure contiguity"
     if (empty) { return() }
     profile ("start", "sort")
     if (is.null(cols)) {
@@ -1144,6 +1223,7 @@ sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=TRUE) {
     profile ("stop", "sort")
 },
 update_fields = function (fieldnames) {
+    "Update specified cluster data frames' field names to be the same as this one's"
     profile ("start", "update_fields")
     for (.fieldname in fieldnames) {
         .fieldval <- .self$field(name=.fieldname)
@@ -1164,6 +1244,19 @@ update_fields = function (fieldnames) {
 }
 ))
 
+#' Data access methods for Multiplyr
+#'
+#' @rdname Multiplyr-methods
+#' @name Multiplyr-methods
+NULL
+
+#' Get data
+#'
+#' @rdname Multiplyr-methods
+#' @name [<-
+#' @method [<- Multiplyr
+#' @docType methods
+#' @export
 setMethod ("[", "Multiplyr", function (x, i, j, ..., drop=TRUE) {
     N <- nargs() - !missing(drop) - !missing(...)
     if (N < 3) {
@@ -1188,6 +1281,14 @@ setMethod ("[", "Multiplyr", function (x, i, j, ..., drop=TRUE) {
     }
 })
 
+
+#' Set data
+#'
+#' @rdname Multiplyr-methods
+#' @name [<-
+#' @method [<- Multiplyr
+#' @docType methods
+#' @export
 setMethod ("[<-", "Multiplyr", function (x, i, j, ..., value) {
     N <- nargs() - !missing(...)
     if (N < 4) {
@@ -1213,26 +1314,46 @@ setMethod ("[<-", "Multiplyr", function (x, i, j, ..., value) {
     invisible (x)
 })
 
+#' Coerce Multiplyr object to be a standard data.frame
+#'
+#' @rdname Multiplyr-methods
+#' @name as.data.frame
 #' @method as.data.frame Multiplyr
+#' @docType methods
 #' @export
 setMethod ("as.data.frame", "Multiplyr", function (x) {
     x[]
 })
 
+#' List containing row and column names
+#'
+#' @rdname Multiplyr-methods
+#' @name dimnames
 #' @method dimnames Multiplyr
+#' @docType methods
 #' @export
 setMethod ("dimnames", "Multiplyr", function (x) {
     list(row.names(x), names(x))
 })
 
+#' Column names
+#'
+#' @rdname Multiplyr-methods
+#' @name names
 #' @method names Multiplyr
+#' @docType methods
 #' @export
 setMethod("names", "Multiplyr", function(x) {
     m <- x$order.cols > 0
     (x$col.names[m])[order(x$order.cols[m])]
 })
 
+#' Row names
+#'
+#' @rdname Multiplyr-methods
+#' @name row.names
 #' @method row.names Multiplyr
+#' @docType methods
 #' @export
 setMethod("row.names", "Multiplyr", function (x) {
     x$row_names()
