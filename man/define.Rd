@@ -17,7 +17,11 @@ define_(.self, ..., .dots)
 \item{.dots}{Workaround for non-standard evaluation}
 }
 \description{
-Define new variables
+This function is used to create new columns in a data frame. Specifying
+just the name will create a new numeric column. If specified in the form
+of \code{var=template}, then a new column named \code{var} will be
+created using \code{template} as a template. This is useful for creating
+new factors.
 }
 \section{Functions}{
 \itemize{

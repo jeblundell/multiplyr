@@ -17,10 +17,22 @@ partition_group_(.self, ..., .dots)
 \item{.dots}{Workaround for non-standard evaluation}
 }
 \description{
-Partition data so that each group is wholly on a node
+This should not typically be called explicitly; group_by achieves the same thing
+}
+\details{
+Partitions data across the cluster such that each group is wholly
+contained on a single node. Generally speaking it would be fairly
+pointless to group things and then not have each group fully accessible,
+but theoretically is possible to so (use \code{group_by (..., auto_partition=FALSE}).
 }
 \section{Functions}{
 \itemize{
 \item \code{partition_group_}: 
 }}
+\examples{
+\donttest{
+dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25))
+dat \%>\% partition_group (G)
+}
+}
 

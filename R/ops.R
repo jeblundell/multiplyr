@@ -561,7 +561,7 @@ partition_group_ <- function (.self, ..., .dots) {
     return (.self)
 }
 
-#' @describeIn summarise
+#' @describeIn reduce
 #' @export
 reduce_ <- function (.self, ..., .dots, auto_compact = NULL) {
     if (!is(.self, "Multiplyr")) {

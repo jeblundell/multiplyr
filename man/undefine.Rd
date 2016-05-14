@@ -23,7 +23,7 @@ unselect_(.self, ..., .dots)
 \item{.dots}{Workaround for non-standard evaluation}
 }
 \description{
-Delete variables
+In much the same way that \code{define} creates new columns, \code{undefine} will delete them
 }
 \section{Functions}{
 \itemize{
@@ -33,4 +33,10 @@ Delete variables
 
 \item \code{unselect_}: 
 }}
+\examples{
+\donttest{
+dat <- Multiplyr (x=1:100, y=100:1)
+dat \%>\% undefine (y)
+}
+}
 

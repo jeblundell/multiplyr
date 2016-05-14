@@ -21,10 +21,30 @@ group_by_(.self, ..., .dots, .cols = NULL, auto_partition = NULL)
 \item{.cols}{Columns to group by (used internally)}
 }
 \description{
-Group data
+Groups data by specified columns: further operations then work within those groups
+}
+\details{
+Many data analysis problems require working with particular combinations
+of data. For example, finding the average sales for a given day of the
+week could be achieved with \code{group_by(day)} and
+\code{summarise(sales = mean(sales)}. This would result in a data frame
+with 7 rows (1 for each group) with the average sales stored in the
+sales column.
+
+Multiple grouping variables may be specified, separated by columns. The
+above example could be extended to group by month as well as weekday,
+e.g. \code{group_by(month, day)}. The resulting data frame would then
+have 12 blocks of 7 (84 rows) with an average for each week day in that
+month provided the same way as above.
 }
 \section{Functions}{
 \itemize{
 \item \code{group_by_}: 
 }}
+\examples{
+\donttest{
+dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25))
+dat \%>\% group_by (G) \%>\% summarise (N=length(x))
+}
+}
 

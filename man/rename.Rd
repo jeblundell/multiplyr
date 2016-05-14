@@ -17,10 +17,17 @@ rename_(.self, ..., .dots)
 \item{.dots}{Workaround for non-standard evaluation}
 }
 \description{
-Rename variables
+Takes a list of newname=oldname pairs and renames columns
 }
 \section{Functions}{
 \itemize{
 \item \code{rename_}: 
 }}
+\examples{
+\donttest{
+dat <- Multiplyr (x = 1:100)
+dat \%>\% rename(y=x)
+dat["y"]
+}
+}
 

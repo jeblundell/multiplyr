@@ -19,10 +19,26 @@ distinct_(.self, ..., .dots, auto_compact = NULL)
 \item{.dots}{Workaround for non-standard evaluation}
 }
 \description{
-Select unique rows or unique combinations of variables
+Filters out any non-unique rows (optionally based on a specified set of variables)
+}
+\details{
+When called with no additional parameters, \code{distinct()}, this
+function will filter out any non-unique rows in the specified data frame.
+Specifying column names will limit the uniqueness checks to only those
+columns, i.e. \code{distinct(G)} will limit the data frame to only
+have unique values of G.
+
+Note that if data are grouped, then this will find unique rows or
+combinations for each group.
 }
 \section{Functions}{
 \itemize{
 \item \code{distinct_}: 
 }}
+\examples{
+\donttest{
+dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25))
+dat \%>\% distinct(G)
+}
+}
 

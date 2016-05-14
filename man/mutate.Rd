@@ -17,10 +17,16 @@ mutate_(.self, ..., .dots)
 \item{.dots}{Workaround for non-standard evaluation}
 }
 \description{
-Change values of existing variables (and create new ones)
+This function is used to alter the data frame, without dropping any columns (unlike \code{transmute}, which drops any columns not explicitly specified)
 }
 \section{Functions}{
 \itemize{
 \item \code{mutate_}: 
 }}
+\examples{
+\donttest{
+dat <- Multiplyr (x=1:100)
+dat \%>\% mutate (x=x*2)
+}
+}
 

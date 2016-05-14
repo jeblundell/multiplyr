@@ -19,10 +19,23 @@ filter_(.self, ..., .dots, auto_compact = NULL)
 \item{.dots}{Workaround for non-standard evaluation}
 }
 \description{
-Filter data
+Applies a set of filtering criteria to a data frame
+}
+\details{
+This may be used to only include rows that match a particular set of
+criteria. For example, \code{filter(x>10)} would remove any rows from
+the data whose value in the x column is not greater than 10. Multiple
+filtering criteria may be combined with \code{&} or \code{|}
+(representing "and", "or").
 }
 \section{Functions}{
 \itemize{
 \item \code{filter_}: 
 }}
+\examples{
+\donttest{
+dat <- Multiplyr (x=1:100, y=rnorm(100))
+dat \%>\% filter (x<50 & y>0)
+}
+}
 

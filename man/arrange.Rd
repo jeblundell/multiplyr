@@ -16,11 +16,26 @@ arrange_(.self, ..., .dots)
 
 \item{.dots}{Workaround for non-standard evaluation}
 }
+\value{
+Parallel data frame
+}
 \description{
-Sort data
+Sorts a parallel data frame by the specified columns
+}
+\details{
+This function takes a parallel data frame and sorts it by the first
+column specified. If there are any ties then it sorts by the second,
+and so on.
 }
 \section{Functions}{
 \itemize{
 \item \code{arrange_}: 
 }}
+\examples{
+\donttest{
+dat <- Multiplyr (x=1:100, G=rep(1:4, each=25))
+dat \%>\% arrange (x)
+dat \%>\% arrange (G, x)
+}
+}
 
