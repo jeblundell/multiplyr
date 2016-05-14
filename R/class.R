@@ -104,7 +104,6 @@ initialize = function (..., alloc=1, cl=NULL,
 
     if (length(vars) == 0) {
         #Occurs when $copy() used
-        #FIXME: how to manage when user calls
         return()
     }
 
@@ -262,7 +261,7 @@ calc_group_sizes = function (delay=TRUE) {
     if (!group_sizes_stale) {
         return()
     }
-    #FIXME: make parallel/more efficient
+
     if (empty) {
         group_sizes <<- rep(0, group_max)
     } else if (filtered) {
@@ -606,7 +605,6 @@ free_col = function (cols, update=FALSE) {
         factor.cols <<- factor.cols[idx]
         factor.levels <<- factor.levels[idx]
         if (update) {
-            #FIXME: do factor.levels drop rather than resend
             update_fields (c("factor.cols", "factor.levels"))
         }
     }

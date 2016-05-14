@@ -12,7 +12,6 @@ distribute <- function (x, N) {
         res[i] <- res[i] + 1
         return (res)
     } else {
-        #FIXME: naive bin packing algorithm
         bin.indices <- list()
         bin.size <- c()
         for (i in order(x, decreasing=TRUE)) {

@@ -378,7 +378,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
     .self$cluster_export_each ("Gbase", ".Gbase")
     .self$cluster_eval ({ #PROFME
         .local$bm[, .local$groupcol] <- .local$bm[, .local$groupcol] + .Gbase
-        .local$group <- unique (.local$bm[, .local$groupcol]) #FIXME
+        .local$group <- unique (.local$bm[, .local$groupcol])
         NULL
     })
 
@@ -451,8 +451,7 @@ mutate_ <- function (.self, ..., .dots) {
         if (.self$grouped) {
             stop("mutate on a group column is not permitted")
         } else {
-            #FIXME: more elegant solution
-            .self$group.cols <- 0 #prevent regroup
+            .self$group.cols <- 0
         }
     }
 
@@ -587,7 +586,6 @@ reduce_ <- function (.self, ..., .dots, auto_compact = NULL) {
         stop ("Insufficient free columns available")
     }
     newcols <- avail[1:length(newnames)]
-    #FIXME: preserve type?
 
     if (!.self$empty) {
         if (.self$grouped) {
@@ -825,7 +823,6 @@ summarise_ <- function (.self, ..., .dots, auto_compact = NULL) {
         stop ("Insufficient free columns available")
     }
     .newcols <- avail[1:length(newnames)]
-    #FIXME: preserve type?
 
     .self$cluster_export (c(".dots", ".newcols"))
     .self$cluster_eval ({
@@ -893,7 +890,6 @@ transmute_ <- function (.self, ..., .dots) {
         if (.self$grouped) {
             stop("transmute on a group column is not permitted")
         } else {
-            #FIXME: more elegant solution
             .self$group.cols <- 0 #prevent regroup
         }
     }
@@ -921,7 +917,6 @@ transmute_ <- function (.self, ..., .dots) {
     }
     #/mutate
 
-    #FIXME: do on local/grouped
     dropcols <- .self$order.cols > 0
     dropcols[.rescols] <- FALSE
     if (.self$grouped) {
