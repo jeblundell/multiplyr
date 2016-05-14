@@ -1,0 +1,118 @@
+---
+title: "Multiplyr basics"
+author: "Jim Blundell"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Multiplyr basics}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+The multiplyr package is intended to provide simple and transparent
+parallel processing functionality through an interface similar to
+one already familiar to many R users (dplyr):
+
+```
+# Construct a new data frame
+dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), length.out=100))
+
+# Group data by G
+dat %>% group_by (G)
+
+# Summarise length(x) in each group and store in N
+dat %>% summarise (N = length(x))
+```
+
+To those unfamiliar with dplyr: this package makes heavy use of the
+%>% operator, which allows several operations to be chained
+together. dat %>% ... results in ... being applied to 
+the data frame called dat. 
+
+## Multiplyr is a reference class
+
+There is one surprising thing missing from the above code, which is the
+complete absence of an assignment operator, <-, when
+group_by and summarise have been used. Since these data
+frames represent shared memory, things like group_by modify it 
+in place so assigning it back to the same object has no meaning.
+Attempting to assign the result of these to a different variable may have
+slightly unexpected behaviour.
+
+## Basic operations
+### Manipulating columns
+define, undefine
+rename
+select
+
+### Manipulating rows
+filter
+distinct
+slice
+
+### Manipulating data
+mutate
+transmute
+summarise, reduce
+within_node
+within_group
+
+### Grouping
+group_by
+group_sizes
+ungroup, regroup
+
+### Partitioning
+partition_even
+partition_group
+
+## No strings attached
+Data within a Multiplyr data frame is internally represented numerically,
+regardless of whether it's actually numeric or not. At first this may seem
+like a limitation, but can potentially make data manipulation very, very
+fast. When data in a Multiplyr data frame is updated, e.g. setting a
+value to "A", this results in "A" being looked up for that column's
+factor levels and then assigned to the underlying numeric matrix.
+
+However, there are times that the actual, specific content of the column
+is not relevant. One way to speed up certain operations is therefore to
+put the data frame into "no strings attached" mode, which disables any of
+these look-ups. For example:
+
+```
+# Construct a new data frame
+dat <- Multiplyr (G=rep(c("A", "B", "C", "D"), length.out=100),
+                  H=rep(c("p", "q", "r", "s"), each=25))
+# Display data
+dat["G"]
+dat["H"]
+
+# Switch into NSA mode
+dat %>% nsa()
+dat["G"]
+dat["H"]
+
+# Do some things
+dat %>% mutate (G=3)
+
+# Switch back
+dat %>% nsa(FALSE)
+dat["G"]
+dat["H"]
+```
+
+## Speed considerations
+
+There are some things that are particularly slow with a Multiplyr data
+frame. Most notably, initially creating it. The reason for this is that
+in the background a new local cluster is started. If you have 4 cores or
+CPUs then 4 new instances of R will be started, which can take a few
+seconds.
+
+## Limitations
+
+This package is not (yet!) a complete replacement for dplyr and there are
+some notable things missing, most notably neat interfacing with SQL
+databases.
+
+

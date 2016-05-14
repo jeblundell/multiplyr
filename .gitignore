@@ -3,3 +3,4 @@
 .RData
 .*
 *.desc
+inst/doc
