@@ -9,11 +9,19 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+```{r, echo = FALSE, message = FALSE}
+library(multiplyr)
+knitr::opts_chunk$set(
+  comment = NA,
+  error   = FALSE,
+  tidy    = FALSE)
+```
+
 The multiplyr package is intended to provide simple and transparent
 parallel processing functionality through an interface similar to
 one already familiar to many R users (dplyr):
 
-```
+```r
 # Construct a new data frame
 dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), length.out=100))
 
@@ -24,26 +32,86 @@ dat %>% group_by (G)
 dat %>% summarise (N = length(x))
 ```
 
-To those unfamiliar with dplyr: this package makes heavy use of the
-%>% operator, which allows several operations to be chained
-together. dat %>% ... results in ... being applied to 
-the data frame called dat. 
+To those unfamiliar with dplyr: this package makes heavy use of the %>%
+operator, which allows several operations to be chained together.
+dat %>% ... results in ... being applied to the data frame called dat. 
 
 ## Multiplyr is a reference class
 
 There is one surprising thing missing from the above code, which is the
-complete absence of an assignment operator, <-, when
-group_by and summarise have been used. Since these data
-frames represent shared memory, things like group_by modify it 
-in place so assigning it back to the same object has no meaning.
-Attempting to assign the result of these to a different variable may have
-slightly unexpected behaviour.
+complete absence of an assignment operator, <-, when group_by and
+summarise have been used. Since these data frames represent shared memory,
+things like group_by modify it in place so assigning it back to the same
+object has no meaning. Attempting to assign the result of these to a different
+variable may have slightly unexpected behaviour. In the current version of this
+package only one data frame per cluster is supported.
 
 ## Basic operations
 ### Manipulating columns
-define, undefine
-rename
-select
+#### Create new columns with define
+
+The first thing to note with creating new columns with a Multiplyr data frame
+is that the size of the underlying matrix is fixed at creation. This means
+that to create new columns you need to estimate in advance how many extra
+columns you might need. To allocate space for more columns on creation,
+use the alloc=N parameter of Multiplyr, where N is the number of extra columns
+to create. New columns are created with define, simply specifying their names
+and separating with commas. 
+
+```r
+# Create new data frame with space for 3 new columns
+dat <- Multiplyr (x=1:100, alloc=3)
+
+# Create 2 new columns named y and z
+dat %>% define (y, z)
+
+# Do things with new columns
+dat %>% mutate (y=x*2, z=sqrt(x))
+```
+
+The above only works for numeric columns; in order to do the same for factors
+or character data, you need to specify an existing template column with the
+format of newcolumn=template:
+
+```r
+# Create new Multiplyr frame with two columns (A and P) with space for 3 more
+dat <- Multiplyr (A=rep(c("A", "B", "C", "D"), each=25), 
+                  P=rep(c("p", "q"), each=50), 
+                  alloc=3)
+
+# Create new columns named newA and newP
+dat %>% define (newA=A, newP=P)
+
+# Set their values
+dat %>% mutate (newA="A", newP="p")
+```
+
+#### Rename columns with rename
+Renaming columns is easily achieved by specifying a list of newname=oldname
+pairs to rename:
+
+```r
+# Create a new Multiplyr frame with variables named x, y and z
+dat <- Multiplyr (x=1:100, y=100:1, z=rnorm(100))
+
+# Rename to p, q and r
+dat %>% rename (p=x, q=y, r=z)
+```
+
+#### Drop existing columns with undefine or select
+There are two potential ways to drop columns from a data frame: specifying
+which columns to drop (undefine), or specifying which columns to keep (select):
+
+```r
+# Create Multiplyr data frame with columns named x, y, z and misc
+dat <- Multiplyr (x=1:100, y=100:1, z=rnorm(100), misc=rep(1, 100))
+
+# Drop column named misc
+dat %>% undefine (misc)
+
+# Keep only the x and y columns
+dat %>% select (x, y)
+```
 
 ### Manipulating rows
 filter
@@ -101,18 +169,22 @@ dat["G"]
 dat["H"]
 ```
 
-## Speed considerations
+## Speed considerations/limitations
 
 There are some things that are particularly slow with a Multiplyr data
-frame. Most notably, initially creating it. The reason for this is that
-in the background a new local cluster is started. If you have 4 cores or
+frame. In particular, the way in which character data is handled. Any
+character data is effectively converted into a factor transparently. This means
+that if there is a column of text where every cell is unique, then this is
+passed on in its entirety, which is very slow.
+
+The initial creation of a parallel data frame is slow: the reason for this is
+that in the background a new local cluster is started. If you have 4 cores or
 CPUs then 4 new instances of R will be started, which can take a few
 seconds.
 
-## Limitations
-
 This package is not (yet!) a complete replacement for dplyr and there are
 some notable things missing, most notably neat interfacing with SQL
-databases.
+databases. Currently only one parallel data frame per cluster is supported, so
+there also are't any join operations.
 
 
