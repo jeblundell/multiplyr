@@ -97,7 +97,7 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
         return (.self)
     }
 
-    .self$sort (decreasing=FALSE, cols=.cols) #PROFME
+    .self$sort (decreasing=FALSE, cols=.cols)
     if (N == 1) {
         if (nrow(.self$bm) == 2) {
             .self$bm[2, .self$filtercol] <- ifelse (
@@ -171,7 +171,7 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
     })
 
     # (4) filter at breaks
-    .self$cluster_eval ({ #PROFME
+    .self$cluster_eval ({
         if (.local$empty) { return (NULL) }
         .local$filter_rows (.breaks)
         NULL
@@ -222,7 +222,7 @@ filter_ <- function (.self, ..., .dots, auto_compact = NULL) {
         auto_compact <- .self$auto_compact
     }
 
-    .self$cluster_export (c(".dots")) #PROFME
+    .self$cluster_export (c(".dots"))
     .self$cluster_eval ({
         if (.local$empty) { return (NULL) }
         if (.local$grouped) {
@@ -246,7 +246,7 @@ filter_ <- function (.self, ..., .dots, auto_compact = NULL) {
     if (auto_compact) {
         .self$compact()
     }
-    .self$calc_group_sizes() #PROFME
+    .self$calc_group_sizes()
 
     return (.self)
 }
@@ -279,7 +279,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
     }
     N <- length(.self$cls)
 
-    .self$sort (decreasing=FALSE, cols=.cols, with.group=FALSE) #PROFME
+    .self$sort (decreasing=FALSE, cols=.cols, with.group=FALSE)
 
     .self$group.cols <- .cols
     .self$grouped <- TRUE
@@ -367,7 +367,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
     tg <- test_transition (.self, .cols, trans)
 
     # (3) add group base to each local
-    Gcount <- do.call (c, .self$cluster_eval ({ #PROFME
+    Gcount <- do.call (c, .self$cluster_eval ({
         .local$bm[nrow(.local$bm), .local$groupcol]
     }))
     Gcount <- Gcount[-length(Gcount)]
@@ -376,7 +376,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
     Gtr[tg] <- 0
     Gbase <- cumsum(c(0, Gcount-Gtr))
     .self$cluster_export_each ("Gbase", ".Gbase")
-    .self$cluster_eval ({ #PROFME
+    .self$cluster_eval ({
         .local$bm[, .local$groupcol] <- .local$bm[, .local$groupcol] + .Gbase
         .local$group <- unique (.local$bm[, .local$groupcol])
         NULL
@@ -455,7 +455,7 @@ mutate_ <- function (.self, ..., .dots) {
         }
     }
 
-    .self$cluster_export (c(".resnames", ".rescols", ".dots")) #PROFME
+    .self$cluster_export (c(".resnames", ".rescols", ".dots"))
     .self$cluster_eval ({
         if (.local$empty) { return (NULL) }
         if (.local$grouped) {
@@ -924,7 +924,7 @@ transmute_ <- function (.self, ..., .dots) {
     }
     dropcols <- which (dropcols)
 
-    .self$free_col (dropcols, update=TRUE) #PROFME
+    .self$free_col (dropcols, update=TRUE)
 
     return (.self)
 }
