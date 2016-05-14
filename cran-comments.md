@@ -11,5 +11,12 @@ which is spurious as those expressions are not executed in this instance
 of R; the expressions are passed along to the relevant node via
 clusterEvalQ and executed there, where there is a binding.
 
+## Best practice deviation
+I understand that it is preferred that functions do not do modification in
+place and instead return a new, modified value of some operation. This package
+deviates from that practice since the whole point is that underlying data is
+a shared memory object: I hope this is made clearer by its implementation as a
+reference class.
+
 ## Downstream dependencies
 No downstream dependencies
