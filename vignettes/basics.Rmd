@@ -36,15 +36,38 @@ To those unfamiliar with dplyr: this package makes heavy use of the %>%
 operator, which allows several operations to be chained together.
 dat %>% ... results in ... being applied to the data frame called dat. 
 
-## Multiplyr is a reference class
+## Quirks
+### Multiplyr is a reference class
+There is one surprising thing missing from the example code here, which is the
+almost complete absence of <-, the assignment operator. Since these data frames
+represent shared memory, things like group_by modify it in place so assigning 
+it back to the same object has no meaning. Attempting to assign the result of 
+these to a different variable may have slightly unexpected behaviour. In the 
+current version of this package only one data frame per cluster is supported.
 
-There is one surprising thing missing from the above code, which is the
-complete absence of an assignment operator, <-, when group_by and
-summarise have been used. Since these data frames represent shared memory,
-things like group_by modify it in place so assigning it back to the same
-object has no meaning. Attempting to assign the result of these to a different
-variable may have slightly unexpected behaviour. In the current version of this
-package only one data frame per cluster is supported.
+### Data order is not maintained
+The internal representation of the data is a matrix and the way that the
+matrix is divided up amongst nodes is to give each node a contiguous block of
+that matrix (or several blocks in the case of grouped data). The side effect
+of this is that data must be sorted in a particular way.
+
+### Text is not actually text
+From the outside, Multiplyr data frames will appear to work like standard R
+data frames. However, the way text is stored internally is to convert them to 
+factors, which is effectively:
+- Sort the data alphabetically
+- Find all the unique values and give them an ID number
+- Replace the data with that ID number
+- Store a lookup table mapping ID number to the actual text
+
+This has one major advantage in that numeric data is easier and faster to
+manipulate and pass around. The major disadvantage, however, is that if a
+column has a lot of unique values of text then there's a large overhead in
+converting and passing to the cluster what these unique values are.
+
+I wouldn't recommend using this package for data where you have columns 
+with lots of unique values of text unless that text represents some sort of 
+grouping.
 
 ## Basic operations
 ### Manipulating columns
@@ -63,15 +86,20 @@ and separating with commas.
 dat <- Multiplyr (x=1:100, alloc=3)
 
 # Create 2 new columns named y and z
+# Note that this define is actually not needed as mutate will define implicitly
 dat %>% define (y, z)
 
 # Do things with new columns
 dat %>% mutate (y=x*2, z=sqrt(x))
 ```
 
-The above only works for numeric columns; in order to do the same for factors
-or character data, you need to specify an existing template column with the
-format of newcolumn=template:
+As you will see in later sections, the above define operation was not actually
+technically necessary as mutate will create new columns if they do not already 
+exist.
+
+One time where define is not superfluous is when creating columns that will
+store factors or text. For this, along with the name of the new column, you
+need to specify a template to copy in the form of newcolumn=template:
 
 ```r
 # Create new Multiplyr frame with two columns (A and P) with space for 3 more
@@ -113,26 +141,87 @@ dat %>% undefine (misc)
 dat %>% select (x, y)
 ```
 
+### Grouping
+#### Grouping data
+One of the main strengths of the manipulations on data with multiplyr (as it
+is with dplyr) is that data may be arranged in groups first, with operations
+then taking place on individual groups.
+
+Consider the experiment where 60 guinea pigs were given Vitamin C as either a
+supplement or in the form of orange juice at 3 different doses We can produce
+a table of summary statistics with the mean and standard deviation for each 
+combination of supplement and dose as follows:
+
+```r
+# Load data on guinea pig tooth growth:
+#  len    Odontoblast (tooth cell) length
+#  supp   Supplement (VC = Vit C supplement, OJ = Orange Juice)
+#  dose   Dose in mg (0.5, 1 or 2)
+#
+data (ToothGrowth)
+
+# Convert into a Multiplyr data frame with space for 2 new columns
+dat <- Multiplyr (ToothGrowth, alloc=2)
+
+# Group data by supplement and dose
+dat %>% group_by (supp, dose)
+
+# Produce summary statistics
+dat %>% summarise (len.mean = mean(len), len.sd = sd(len))
+```
+
+#### Ungrouping and regrouping
+Returning a data frame back to ungrouped form is achieved simply using ungroup.
+It is also possible to easily revert back to a grouped form using the same
+groupings with regroup.
+
+```r
+# Load data on guinea pig tooth growth:
+data (ToothGrowth)
+dat <- Multiplyr (ToothGrowth)
+
+# Group data by supplement and dose
+dat %>% group_by (supp, dose)
+
+# Ungroups data
+dat %>% ungroup()
+
+# Regroups data (implicitly by supplement and dose)
+dat %>% regroup()
+```
+
 ### Manipulating rows
-filter
-distinct
-slice
+#### Filtering based on criteria with filter
+A basic operation when working with data is to select a subset of rows based
+on certain criteria.
+
+```r
+# Load data on guinea pig tooth growth:
+data (ToothGrowth)
+dat <- Multiplyr (ToothGrowth)
+
+# Group by supplement
+dat %>% group_by (supp)
+
+# Select only guinea pigs with a dose >= 1 mg/kg
+dat %>% filter (dose >= 1)
+
+# Produce summary
+dat %>% summarise (mean.len = mean(len))
+```
+
+#### Filtering out duplicates with distinct
+
+#### Selecting a specific subset wih slice
 
 ### Manipulating data
-mutate
-transmute
-summarise, reduce
-within_node
-within_group
+#### Updating values with mutate
+#### Updating values and dropping other columns with transmute
+#### Summarising data with summarise and reduce
+#### Executing arbitrary code using within_*
 
-### Grouping
-group_by
-group_sizes
-ungroup, regroup
 
 ### Partitioning
-partition_even
-partition_group
 
 ## No strings attached
 Data within a Multiplyr data frame is internally represented numerically,
