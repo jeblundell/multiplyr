@@ -1,7 +1,9 @@
-#' dplyr-like package with shared memory matrices
+#' Data Manipulation with Parellelism and Shared Memory Matrices
 #'
 #' @description
-#' dplyr-like package with shared memory matrices
+#' Provides a new form of data frame backed by shared memory matrices and
+#' a way to manipulate them. Upon creation these data frames are shared
+#' across multiple local nodes to allow for simple parallel processing.
 #'
 #' @section Major differences from dplyr:
 #'

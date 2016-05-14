@@ -1,8 +1,8 @@
 Package: multiplyr
 Type: Package
-Title: dplyr-like package with shared memory matrices
-Description: Data frames are easy to use with dplyr, whilst bigmemory matrices are fast and can be used in parallel settings. This package is an attempt to combine them.
-Version: 0.1
+Title: Data Manipulation with Parellelism and Shared Memory Matrices
+Description: Provides a new form of data frame backed by shared memory matrices and a way to manipulate them. Upon creation these data frames are shared across multiple local nodes to allow for simple parallel processing.
+Version: 0.1.0
 Date: 2016-04-10
 Maintainer: Jim Blundell <james.blundell@keble.ox.ac.uk>
 Author: Jim Blundell
