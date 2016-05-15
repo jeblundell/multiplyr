@@ -33,15 +33,3 @@ distribute <- function (x, N) {
         return (bin.indices)
     }
 }
-
-#' Display a warning if a condition is sub-optimal
-#' @param expr Expression
-#' @param warn Warning text
-#' @export
-warn.suboptimal <- function (expr, warn) {
-    if (getOption("warn.suboptimal", default=FALSE)) {
-        if (expr) {
-            warning (warn, call.=FALSE)
-        }
-    }
-}

@@ -2,10 +2,8 @@
 % Please edit documentation in R/internal.R
 \name{internal}
 \alias{.dots2names}
-\alias{.filter_range}
 \alias{.p}
 \alias{internal}
-\alias{no.strings.attached}
 \alias{sm_desc_update}
 \alias{test_transition}
 \title{Internal functions}
@@ -13,10 +11,6 @@
 .p(...)
 
 .dots2names(dots)
-
-no.strings.attached(x)
-
-.filter_range(x, filtercol, start, end)
 
 sm_desc_update(desc, first, last)
 

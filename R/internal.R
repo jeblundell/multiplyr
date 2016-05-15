@@ -25,23 +25,6 @@ NULL
 #' @export
 #' @keywords internal
 #' @rdname internal
-no.strings.attached <- function (x) {
-    attr(x, "nsa") <- TRUE
-    x
-}
-
-#' @export
-#' @keywords internal
-#' @rdname internal
-.filter_range <- function (x, filtercol, start, end) {
-    x[[1]][, filtercol] <- 0
-    x[[1]][start:end, filtercol] <- 1
-}
-
-
-#' @export
-#' @keywords internal
-#' @rdname internal
 sm_desc_update <- function (desc, first, last) {
     desc@description$rowOffset <- c(
         (desc@description$rowOffset[1] + first) - 1,
