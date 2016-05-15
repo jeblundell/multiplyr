@@ -306,24 +306,8 @@ test_that ("with(dat$envir(), x <- ...) sets x to ...", {
     expect_equal (as.character(dat["location"]), as.character(dat.df$location))
 })
 
-#FIXME: row/col replacement
-# test_that ("Multiplyr[x, y] <- works as expected", {
-#     for (i in list(1:100, 100:1, 1:10, 50:60, 1, 100, c(20, 40, 60))) {
-#         dat[, "x"] <- dat.df[, "x"] <- 0
-#         dat[i, "x"] <- dat.df[i, "x"] <- 123
-#         expect_equal (dat$x, dat.df$x)
-#     }
-#     for (i in list(1:100, 100:1, 1:10, 50:60, 1, 100, c(20, 40, 60))) {
-#         dat[, "animal"] <- dat.df[, "animal"] <- "cow"
-#         dat[i, "animal"] <- dat.df[i, "animal"] <- "dog"
-#         expect_equal (dat$animal, dat.df$animal)
-#     }
-#     for (i in list(1:100, 100:1, 1:10, 50:60, 1, 100, c(20, 40, 60))) {
-#         dat[, "location"] <- dat.df[, "location"] <- "house"
-#         dat[i, "location"] <- dat.df[i, "location"] <- "field"
-#         expect_equal (as.character(dat$location), as.character(dat.df$location))
-#     }
-# })
+rm (dat)
+rm (dat.df)
 
 test_that ("$alloc_col() can allocate new columns/throw errors if no space", {
     dat <- Multiplyr(x=1:100, y=100:1, alloc=3, cl=cl2)
@@ -724,6 +708,7 @@ test_that ("$set_data(NULL, NULL) sets entire dataset", {
     dat.df <- data.frame (x=100:1, G=rep(c("A", "B"), length.out=100), stringsAsFactors = FALSE)
     dat$set_data(NULL, NULL, dat.df)
     expect_equivalent (dat$get_data(NULL, NULL), dat.df)
+    rm (dat.df)
 })
 test_that ("$set_data(i, NULL) sets a row slice", {
     dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
@@ -831,6 +816,9 @@ test_that ("$sort() returns sorted data", {
     dat$sort (decreasing=FALSE, dots=.dots)
     expect_equal (dat["x"], c(seq(1, 100, by=2), seq(2, 100, by=2)))
     expect_equal (dat["G"], rep(c("A", "B"), each=50))
+
+    rm (f)
+    rm (.dots)
 })
 
 test_that ("$update_fields() works appropriately", {
