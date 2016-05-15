@@ -44,8 +44,6 @@ test_that ("Multiplyr(x=..., y=...) creates the appropriate structure", {
     expect_equal (dat$group, 0)
     expect_equal (dat$group_partition, FALSE)
     expect_equal (dat$empty, FALSE)
-
-    rm (dat)
 })
 
 test_that ("Multiplyr() works on a data.frame", {
@@ -92,8 +90,18 @@ test_that ("Multiplyr() works on a data.frame", {
     expect_equal (dat$group, 0)
     expect_equal (dat$group_partition, FALSE)
     expect_equal (dat$empty, FALSE)
+})
 
-    rm (dat)
+test_that ("Multiplyr's destructor calls stopCluster", {
+    if (packageVersion("testthat") < "0.11.0") {
+        skip ("Testing for non-warning requires testthat >= 0.11")
+    }
+
+    #Warning messages:
+    #1: closing unused connection 5 (<-localhost:11064)
+    dat <- Multiplyr (x=1:100, cl=1)
+    dat <- Multiplyr (x=1:100, cl=cl2)
+    expect_warning (gc(), regexp=NA)
 })
 
 test_that ("dat$copy(shallow=TRUE) creates the appropriate structure", {
@@ -138,8 +146,6 @@ test_that ("dat$copy(shallow=TRUE) creates the appropriate structure", {
     expect_equal (dat$grouped, FALSE)
     expect_equal (dat$group, 0)
     expect_equal (dat$group_partition, FALSE)
-
-    rm (dat)
 })
 
 N<-100
@@ -334,8 +340,6 @@ test_that ("$alloc_col() can allocate new columns/throw errors if no space", {
     expect_equal (dat["y"], 100:1)
 
     expect_error (dat$alloc_col ("d"), "free columns")
-
-    rm (dat)
 })
 
 test_that ("$alloc_col() can return a mix of new and existing columns", {
@@ -354,8 +358,6 @@ test_that ("$alloc_col() can return a mix of new and existing columns", {
     expect_equal (dat["y"], 100:1)
 
     expect_error (dat$alloc_col (c("b", "c", "d")), "free columns")
-
-    rm (dat)
 })
 test_that ("$alloc_col(update=...) works appropriately", {
     dat <- Multiplyr(x=1:100, G=rep(c("A", "B"), each=50), alloc=3, cl=cl2)
@@ -366,7 +368,6 @@ test_that ("$alloc_col(update=...) works appropriately", {
     dat$alloc_col ("z", update=TRUE)
     expect_true ("z" %in% do.call (c, dat$cluster_eval (.local$col.names)))
     expect_true ("z" %in% do.call (c, dat$cluster_eval (.grouped[[1]]$col.names)))
-    rm (dat)
 })
 
 #FIXME: build_grouped
@@ -410,14 +411,11 @@ test_that ("$calc_group_sizes() works appropriately", {
     dat$group_sizes_stale <- TRUE
     dat$calc_group_sizes (delay=FALSE)
     expect_equal (dat$group_sizes, rep(0, 4))
-
-    rm (dat)
 })
 
 test_that ("$cluster_eval(...) evaluates ...", {
     dat <- Multiplyr(x=1:100, cl=cl2)
     expect_equal (do.call(c, dat$cluster_eval(123)), c(123, 123))
-    rm (dat)
 })
 
 test_that ("$cluster_export() works as expected", {
@@ -437,8 +435,6 @@ test_that ("$cluster_export() works as expected", {
     expect_equal (do.call (c, dat$cluster_eval(b)), c(456, 456))
 
     expect_error (dat$cluster_export (c("y", "z"), "q"), "same length")
-
-    rm (dat)
 })
 
 test_that ("$cluster_export_each(...) exports individual cells of ... to each node", {
@@ -461,8 +457,6 @@ test_that ("$cluster_export_each(...) exports individual cells of ... to each no
     expect_equal (dat$cluster_eval(length(b)), list(1, 1))
 
     expect_error (dat$cluster_export (c("y", "z"), "c"), "same length")
-
-    rm (dat)
 })
 
 test_that ("$copy() works as expected", {
@@ -494,8 +488,6 @@ test_that ("$describe() returns the appropriate structure", {
         nm <- names(res)[i]
         expect_equal (res[[i]], dat$field(nm), info=nm)
     }
-
-    rm (dat)
 })
 
 test_that ("$destroy_grouped() destroys .grouped on cluster", {
@@ -505,7 +497,6 @@ test_that ("$destroy_grouped() destroys .grouped on cluster", {
     expect_equal (dat$cluster_eval(length(.grouped)), list(1, 1))
     dat$destroy_grouped()
     expect_equal (dat$cluster_eval(exists(".grouped")), list(FALSE, FALSE))
-    rm (dat)
 })
 
 test_that ("$factor_map() works appropriately", {
@@ -517,7 +508,6 @@ test_that ("$factor_map() works appropriately", {
                   c(2, 2, 1, 2, 1))
     expect_equal (dat$factor_map (c("G", "F"), data.frame(G=c("D", "D", "C", "D", "C"), F=c("D", "D", "A", "C", "B"), stringsAsFactors=FALSE)),
                   matrix (c(c(2, 2, 1, 2, 1), c(4, 4, 1, 3, 2)), ncol=2))
-    rm (dat)
 })
 
 test_that ("$filter_range() works appropriately", {
@@ -553,8 +543,6 @@ test_that ("$filter_range() works appropriately", {
     dat$filter_range (51, 100)
     expect_equal (dat$bm[, dat$filtercol], rep(c(0, 1), each=50))
     expect_equal (dat["x"], 51:100)
-
-    rm (dat)
 })
 test_that ("$filter_rows() works appropriately", {
     dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
@@ -564,8 +552,6 @@ test_that ("$filter_rows() works appropriately", {
 
     dat$filter_rows (41:50)
     expect_equal (dat["x"], 41:50)
-
-    rm (dat)
 })
 test_that ("$filter_vector() works appropriately", {
     dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
@@ -575,8 +561,6 @@ test_that ("$filter_vector() works appropriately", {
 
     dat$filter_vector (rep(c(TRUE, FALSE), length.out=100))
     expect_equal (dat["x"], (1:50)[rep(c(TRUE, FALSE), length.out=50)])
-
-    rm (dat)
 })
 
 test_that ("$free_col() drops columns correctly", {
@@ -601,8 +585,6 @@ test_that ("$free_col() drops columns correctly", {
     dat$free_col (2)
     expect_equal (dat$factor.cols, 3)
     expect_equal (dat$factor.levels[[1]], c("A", "B", "C", "D"))
-
-    rm (dat)
 })
 
 dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
@@ -691,7 +673,6 @@ test_that ("$group_restrict(...) returns a group restricted data frame", {
     expect_equal (grp["G"], rep("C", 25))
     expect_equal (dat["x"], 1:100)
     expect_equal (dat["G"], rep(c("A", "B", "C", "D"), each=25))
-    rm (dat)
 })
 
 test_that ("$group_restrict(...) throws an error for no parameters or non-grouped data", {
@@ -703,7 +684,6 @@ test_that ("$group_restrict(...) throws an error for no parameters or non-groupe
     expect_error (dat$group_restrict(1), "grouped")
     dat %>% group_by (G)
     expect_error (dat$group_restrict(), "specify")
-    rm (dat)
 })
 
 test_that ("$group_restrict() for an empty group returns a frame with $empty=TRUE ", {
@@ -716,7 +696,6 @@ test_that ("$group_restrict() for an empty group returns a frame with $empty=TRU
     dat %>% filter(x<50)
     grp <- dat$group_restrict(3)
     expect_true (grp$empty)
-    rm (dat)
 })
 
 test_that ("$local_subset() works appropriately", {
@@ -725,7 +704,6 @@ test_that ("$local_subset() works appropriately", {
     expect_equal (dat$first, 50)
     expect_equal (dat$last, 60)
     expect_equal (dat["x"], 50:60)
-    rm (dat)
 })
 
 #$partition_even -> test_partition.R
@@ -741,7 +719,6 @@ test_that ("$row_names() works appropriately", {
     expect_equal (dat$row_names(), 1:10)
     dat$filter_vector (rep(FALSE, 100))
     expect_equal (dat$row_names(), character(0))
-    rm (dat)
 })
 
 test_that ("$set_data(NULL, NULL) sets entire dataset", {
@@ -749,21 +726,18 @@ test_that ("$set_data(NULL, NULL) sets entire dataset", {
     dat.df <- data.frame (x=100:1, G=rep(c("A", "B"), length.out=100), stringsAsFactors = FALSE)
     dat$set_data(NULL, NULL, dat.df)
     expect_equivalent (dat$get_data(NULL, NULL), dat.df)
-    rm (dat)
 })
 test_that ("$set_data(i, NULL) sets a row slice", {
     dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
     dat$set_data (1:10, NULL, data.frame(x=10:1, G=rep("B", 10)))
     expect_equal (dat["x"], c(10:1, 11:100))
     expect_equal (dat["G"], c(rep("B", 10), rep("A", 40), rep("B", 50)))
-    rm (dat)
 })
 test_that ("$set_data(NULL, j) sets specified columns", {
     dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
     dat$set_data (NULL, "x", 100:1)
     expect_equal (dat["x"], 100:1)
     expect_equal (dat["G"], rep(c("A", "B"), each=50))
-    rm (dat)
 })
 test_that ("$set_data(i, j) sets row/column subset", {
     dat <- Multiplyr (x=1:100, y=100:1, G=rep(c("A", "B"), each=50), cl=cl2)
@@ -775,7 +749,6 @@ test_that ("$set_data(i, j) sets row/column subset", {
     expect_equal (dat["x"], c(10:1, 10:1, 21:100))
     expect_equal (dat["y"], c(100:91, 1:10, 80:1))
     expect_equal (dat["G"], rep(c("A", "B"), each=50))
-    rm (dat)
 })
 test_that ("$set_data() works on filtered data", {
     v <- rep(c(TRUE, FALSE, FALSE, TRUE), length.out=100)
@@ -791,8 +764,6 @@ test_that ("$set_data() works on filtered data", {
     expect_equal (dat["x"], dat.df[v, "x"])
     expect_equal (dat["y"], dat.df[v, "y"])
     expect_equal (dat["G"], dat.df[v, "G"])
-
-    rm (dat)
 })
 
 dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
@@ -862,8 +833,6 @@ test_that ("$sort() returns sorted data", {
     dat$sort (decreasing=FALSE, dots=.dots)
     expect_equal (dat["x"], c(seq(1, 100, by=2), seq(2, 100, by=2)))
     expect_equal (dat["G"], rep(c("A", "B"), each=50))
-
-    rm (dat)
 })
 
 test_that ("$update_fields() works appropriately", {
@@ -873,7 +842,6 @@ test_that ("$update_fields() works appropriately", {
     dat$update_fields ("pad")
     expect_equal (dat$cluster_eval(.local$pad), list(1:100, 1:100))
     expect_equal (dat$cluster_eval(.grouped[[1]]$pad), list(1:100, 1:100))
-    rm (dat)
 })
 
 dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)

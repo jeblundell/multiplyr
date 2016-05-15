@@ -65,6 +65,7 @@ Multiplyr <- setRefClass("Multiplyr",
                 bm.master       = "big.matrix",
                 desc            = "big.matrix.descriptor",
                 cls             = "SOCKcluster",
+                cls.created     = "logical",
                 slave           = "logical",
                 factor.cols     = "numeric",
                 factor.levels   = "list",
@@ -126,6 +127,7 @@ initialize = function (..., alloc=1, cl=NULL,
     }
 
     profile ("start", "initialize.cluster")
+    cls.created <<- is.null(cl) || is.numeric(cl)
     if (is.null (cl)) {
         cl <- max (1, parallel::detectCores() - 1)
         cls <<- parallel::makeCluster (cl)
@@ -217,6 +219,11 @@ initialize = function (..., alloc=1, cl=NULL,
 
     partition_even()
     profile ("stop", "initialize")
+},
+finalize = function () {
+    if (cls.created) {
+        parallel::stopCluster(cls)
+    }
 },
 alloc_col = function (name=".tmp", update=FALSE) {
     "Allocate a new column and optionally update cluster nodes to do the same. Returns the column number"
