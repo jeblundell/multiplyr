@@ -1,7 +1,12 @@
 # fastdf class functions
 
 setOldClass (c("cluster", "SOCKcluster"))
-#' Parallel-processing data frame
+#' Parallel processing data frame
+#'
+#' With the exception of calling Multiplyr to create a new data frame, none
+#' of the methods/fields here are really intended for general use: it's
+#' generally best to stick to the manipulation functions. Run the following command
+#' to get a better overview: \code{vignette("basics")}
 #'
 #' @docType class
 #' @param ... Either a data frame or a list of name=value pairs

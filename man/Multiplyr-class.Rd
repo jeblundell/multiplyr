@@ -4,7 +4,7 @@
 \name{Multiplyr-class}
 \alias{Multiplyr}
 \alias{Multiplyr-class}
-\title{Parallel-processing data frame}
+\title{Parallel processing data frame}
 \arguments{
 \item{...}{Either a data frame or a list of name=value pairs}
 
@@ -22,7 +22,10 @@
 Object of class Multiplyr
 }
 \description{
-Parallel-processing data frame
+With the exception of calling Multiplyr to create a new data frame, none
+of the methods/fields here are really intended for general use: it's
+generally best to stick to the manipulation functions. Run the following command
+to get a better overview: \code{vignette("basics")}
 }
 \section{Fields}{
 
