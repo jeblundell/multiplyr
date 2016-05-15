@@ -28,10 +28,6 @@ Data frame
 \description{
 In much the same way that \code{define} creates new columns, \code{undefine} will delete them
 }
-\section{Functions}{
-\itemize{
-\item \code{unselect}: 
-}}
 \examples{
 \donttest{
 dat <- Multiplyr (x=1:100, y=100:1)

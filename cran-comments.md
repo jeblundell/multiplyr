@@ -6,6 +6,9 @@ There were no ERRORs or WARNINGs.
 
 There will be a NOTE due to this being a first submission of the package.
 
+There is a note for the non-standard directory 'man-roxygen'. I make use of
+roxygen2's templates for documentation, so this is unavoidable.
+
 There are 20 NOTES of the form "no visible binding for global variable",
 which is spurious as those expressions are not executed in this instance
 of R; the expressions are passed along to the relevant node via

@@ -3,11 +3,12 @@
 \docType{methods}
 \name{Multiplyr-methods}
 \alias{Multiplyr-methods}
-\alias{[<-}
-\alias{as.data.frame}
-\alias{dimnames}
-\alias{names}
-\alias{row.names}
+\alias{[,Multiplyr,ANY,ANY,ANY-method}
+\alias{[<-,Multiplyr,ANY,ANY-method}
+\alias{as.data.frame,Multiplyr-method}
+\alias{dimnames,Multiplyr-method}
+\alias{names,Multiplyr-method}
+\alias{row.names,Multiplyr-method}
 \title{Data access methods for Multiplyr}
 \usage{
 \S4method{[}{Multiplyr,ANY,ANY,ANY}(x, i, j, ..., drop = TRUE)
@@ -21,6 +22,19 @@
 \S4method{names}{Multiplyr}(x)
 
 \S4method{row.names}{Multiplyr}(x)
+}
+\arguments{
+\item{x}{Data frame}
+
+\item{i}{Rows}
+
+\item{j}{Columns}
+
+\item{...}{Additional parameters}
+
+\item{drop}{Logical: whether to reduce a 1 column data frame result to a vector}
+
+\item{value}{Value to set}
 }
 \description{
 Data access methods for Multiplyr

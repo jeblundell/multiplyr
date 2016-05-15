@@ -5,7 +5,7 @@
 \alias{reduce_}
 \title{Summarise data (with local reduction)}
 \usage{
-reduce(.self, ...)
+reduce(.self, ..., auto_compact = NULL)
 
 reduce_(.self, ..., .dots, auto_compact = NULL)
 }
@@ -13,6 +13,8 @@ reduce_(.self, ..., .dots, auto_compact = NULL)
 \item{.self}{Data frame}
 
 \item{...}{Additional parameters}
+
+\item{auto_compact}{Compact data after operation}
 
 \item{.dots}{Workaround for non-standard evaluation}
 }

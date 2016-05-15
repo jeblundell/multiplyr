@@ -17,7 +17,8 @@ This will take a lazy_dots object and will extract all the names from it
 }
 \examples{
 f <- function (...) { lazyeval::lazy_dots (...) }
-.dots2names (f(x, y=z))
+dots <- f(x, y=z)
+.dots2names (dots)
 }
 \keyword{internal}
 

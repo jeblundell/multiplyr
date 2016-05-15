@@ -1256,6 +1256,13 @@ update_fields = function (fieldnames) {
 
 #' Data access methods for Multiplyr
 #'
+#' @param x Data frame
+#' @param i Rows
+#' @param j Columns
+#' @param ... Additional parameters
+#' @param drop Logical: whether to reduce a 1 column data frame result to a vector
+#' @param value Value to set
+#'
 #' @rdname Multiplyr-methods
 #' @name Multiplyr-methods
 NULL
@@ -1263,8 +1270,8 @@ NULL
 #' Get data
 #'
 #' @rdname Multiplyr-methods
-#' @name [<-
-#' @method [<- Multiplyr
+#' @aliases [,Multiplyr,ANY,ANY,ANY-method
+#' @method [ Multiplyr
 #' @docType methods
 #' @export
 setMethod ("[", "Multiplyr", function (x, i, j, ..., drop=TRUE) {
@@ -1295,7 +1302,7 @@ setMethod ("[", "Multiplyr", function (x, i, j, ..., drop=TRUE) {
 #' Set data
 #'
 #' @rdname Multiplyr-methods
-#' @name [<-
+#' @aliases [<-,Multiplyr,ANY,ANY-method
 #' @method [<- Multiplyr
 #' @docType methods
 #' @export
@@ -1327,7 +1334,7 @@ setMethod ("[<-", "Multiplyr", function (x, i, j, ..., value) {
 #' Coerce Multiplyr object to be a standard data.frame
 #'
 #' @rdname Multiplyr-methods
-#' @name as.data.frame
+#' @aliases as.data.frame,Multiplyr-method
 #' @method as.data.frame Multiplyr
 #' @docType methods
 #' @export
@@ -1338,7 +1345,7 @@ setMethod ("as.data.frame", "Multiplyr", function (x) {
 #' List containing row and column names
 #'
 #' @rdname Multiplyr-methods
-#' @name dimnames
+#' @aliases dimnames,Multiplyr-method
 #' @method dimnames Multiplyr
 #' @docType methods
 #' @export
@@ -1349,7 +1356,7 @@ setMethod ("dimnames", "Multiplyr", function (x) {
 #' Column names
 #'
 #' @rdname Multiplyr-methods
-#' @name names
+#' @aliases names,Multiplyr-method
 #' @method names Multiplyr
 #' @docType methods
 #' @export
@@ -1361,8 +1368,8 @@ setMethod("names", "Multiplyr", function(x) {
 #' Row names
 #'
 #' @rdname Multiplyr-methods
-#' @name row.names
 #' @method row.names Multiplyr
+#' @aliases row.names,Multiplyr-method
 #' @docType methods
 #' @export
 setMethod("row.names", "Multiplyr", function (x) {

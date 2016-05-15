@@ -167,6 +167,7 @@ partition_group <- function (.self, ...) {
 #' \code{reduce} is used to bring all those together to a single value.
 #'
 #' @template nse
+#' @param auto_compact Compact data after operation
 #' @export
 #' @examples
 #' \donttest{
@@ -176,9 +177,9 @@ partition_group <- function (.self, ...) {
 #' dat <- Multiplyr (x = 1:100)
 #' dat %>% summarise (N = length(x)) %>% reduce(N = sum(N))
 #' }
-reduce <- function (.self, ...) {
+reduce <- function (.self, ..., auto_compact=NULL) {
     .dots <- lazyeval::lazy_dots (...)
-    reduce_ (.self, .dots=.dots)
+    reduce_ (.self, .dots=.dots, auto_compact=auto_compact)
 }
 
 #' Rename variables

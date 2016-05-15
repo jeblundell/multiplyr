@@ -24,12 +24,13 @@
 #' @rdname dots2names
 #' @examples
 #' f <- function (...) { lazyeval::lazy_dots (...) }
-#' .dots2names (f(x, y=z))
+#' dots <- f(x, y=z)
+#' .dots2names (dots)
 .dots2names <- function (dots) {
     nm <- names (dots)
     exprs <- nm == ""
     if (any(exprs)) {
-        nm[exprs] <- as.vector (sapply (dots[[exprs]], function (x) { as.character (x$expr) }))
+        nm[exprs] <- as.vector (sapply (dots[exprs], function (x) { as.character (x$expr) }))
     }
     return (nm)
 }
