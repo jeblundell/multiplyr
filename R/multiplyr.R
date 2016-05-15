@@ -3,7 +3,8 @@
 #' @description
 #' Provides a new form of data frame backed by shared memory matrices and
 #' a way to manipulate them. Upon creation these data frames are shared
-#' across multiple local nodes to allow for simple parallel processing.
+#' across multiple local nodes to allow for simple parallel processing. Run the
+#' following command for a more thorough explanation: \code{vignette("basics")}
 #'
 #' @section Major differences from dplyr:
 #'

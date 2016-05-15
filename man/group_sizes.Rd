@@ -18,6 +18,7 @@ This function is used to find the size of groups in a Multiplyr data frame
 \examples{
 \donttest{
 dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), length.out=100))
+dat \%>\% group_by (G)
 group_sizes (dat)
 }
 }

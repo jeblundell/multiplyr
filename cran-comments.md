@@ -1,5 +1,9 @@
 ## Test environments
 * Local Linux (Debian) build, R 3.2.2
+* Local Linux (Debian) build, R-devel r70617
+
+All checks run with options --as-cran --run-donttest and with all suggested and
+required packages installed.
 
 ## R CMD check results
 There were no ERRORs or WARNINGs. 
@@ -9,12 +13,14 @@ There will be a NOTE due to this being a first submission of the package.
 There is a note for the non-standard directory 'man-roxygen'. I make use of
 roxygen2's templates for documentation, so this is unavoidable.
 
-There are 20 NOTES of the form "no visible binding for global variable",
+There is 1 NOTE that repeats "no visible binding for global variable",
 which is spurious as those expressions are not executed in this instance
 of R; the expressions are passed along to the relevant node via
 clusterEvalQ and executed there, where there is a binding.
 
-## Best practice deviation
+## Best practice
+All tests are run with a cluster started with parallel::makeCluster(2)
+
 I understand that it is preferred that functions do not do modification in
 place and instead return a new, modified value of some operation. This package
 deviates from that practice since the whole point is that underlying data is

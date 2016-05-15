@@ -428,6 +428,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
 #' @examples
 #' \donttest{
 #' dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), length.out=100))
+#' dat %>% group_by (G)
 #' group_sizes (dat)
 #' }
 group_sizes <- function (.self) {
