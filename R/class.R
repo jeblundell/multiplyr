@@ -949,12 +949,7 @@ reattach_slave = function (descres) {
     bm.master <<- bm
     slave <<- TRUE
     bindenv <<- new.env()
-
-    #horrible kludge so copy() doesn't complain about NULL
-    #as apparently R can't cope with assigning NULL to fields?
-    clsna <- NA
-    class(clsna) <- "SOCKcluster"
-    cls <<- clsna
+    cls <<- .clsna()
 },
 rebuild_grouped = function () {
     "Executes destroy_grouped(), followed by build_grouped()"
