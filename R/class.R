@@ -98,7 +98,8 @@ Multiplyr <- setRefClass("Multiplyr",
                 profile_ruser   = "numeric",
                 profile_rsys    = "numeric",
                 profile_rreal   = "numeric",
-                profiling       = "logical"
+                profiling       = "logical",
+                nullframe       = "logical"
                 ),
     methods=list(
 initialize = function (..., alloc=0, cl=NULL,
@@ -108,8 +109,11 @@ initialize = function (..., alloc=0, cl=NULL,
     "Constructor"
     vars <- list(...)
 
-    if (length(vars) == 0 && alloc == 0) {
-        #Occurs when $copy() used
+    if (length(vars) == 0) {
+        nullframe <<- TRUE
+        # Session aborts in RStudio if no bm set?
+        bm <<- bigmemory::big.matrix (nrow=1, ncol=1)
+        bm.master <<- bm
         return()
     }
 
@@ -217,6 +221,7 @@ initialize = function (..., alloc=0, cl=NULL,
     auto_compact <<- auto_compact
     auto_partition <<- auto_partition
     group_sizes_stale <<- FALSE
+    nullframe <<- FALSE
 
     desc <<- bigmemory.sri::describe (bm)
 
@@ -1132,6 +1137,10 @@ set_data = function (i=NULL, j=NULL, value, nsa=NULL) {
 },
 show = function (max.row=10) {
     "Displays content of data frame; use max.row=0 to not limit number of rows displayed"
+    if (nullframe) {
+        stop ("Data frames with no rows/columns allocated not supported")
+    }
+
     if (is.null(max.row) || max.row == 0 || max.row > nrow(bm)) {
         max.row <- nrow(bm)
     }
