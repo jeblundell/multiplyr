@@ -616,15 +616,22 @@ free_col = function (cols, update=FALSE) {
         }
         factor.cols <<- factor.cols[idx]
         factor.levels <<- factor.levels[idx]
-        if (update) {
-            update_fields (c("factor.cols", "factor.levels"))
-        }
     }
     col.names[cols] <<- NA
     type.cols[cols] <<- 0
     order.cols[cols] <<- 0
     if (update) {
-        update_fields (c("col.names", "type.cols", "order.cols"))
+        cluster_export ("cols", ".cols")
+        cluster_eval ({
+            .master$free_col (.cols, update=FALSE)
+            .local$free_col (.cols, update=FALSE)
+            if (exists(".grouped")) {
+                for (.grp in .grouped) {
+                    .grp$free_col (.cols, update=FALSE)
+                }
+            }
+            NULL
+        })
     }
 },
 get_data = function (i=NULL, j=NULL, nsa=NULL, drop=TRUE) {

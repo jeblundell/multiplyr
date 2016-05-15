@@ -980,6 +980,7 @@ transmute_ <- function (.self, ..., .dots) {
     dropcols <- which (dropcols)
 
     .self$free_col (dropcols, update=TRUE)
+    .self$update_fields (c("col.names", "type.cols", "order.cols"))
 
     return (.self)
 }
