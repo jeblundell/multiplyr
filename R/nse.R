@@ -9,6 +9,7 @@
 #' and so on.
 #'
 #' @template nse
+#' @family row manipulations
 #' @export
 #' @examples
 #' \donttest{
@@ -33,6 +34,7 @@ arrange <- function (.self, ...) {
 #' new factors.
 #'
 #' @template nse
+#' @family column manipulations
 #' @export
 define <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots (...)
@@ -53,6 +55,7 @@ define <- function (.self, ...) {
 #' combinations for each group.
 #'
 #' @template nse
+#' @family row manipulations
 #' @param auto_compact Compact data after operation
 #' @export
 #' @examples
@@ -76,6 +79,7 @@ distinct <- function (.self, ..., auto_compact = NULL) {
 #' (representing "and", "or").
 #'
 #' @template nse
+#' @family row manipulations
 #' @param auto_compact Compact data after operation
 #' @export
 #' @examples
@@ -106,6 +110,7 @@ filter <- function (.self, ..., auto_compact=NULL) {
 #' month provided the same way as above.
 #'
 #' @template nse
+#' @family row manipulations
 #' @param .cols Columns to group by (used internally)
 #' @param auto_partition Re-partition across cluster after operation
 #' @export
@@ -124,6 +129,7 @@ group_by <- function (.self, ..., auto_partition=NULL) {
 #' This function is used to alter the data frame, without dropping any columns (unlike \code{transmute}, which drops any columns not explicitly specified)
 #'
 #' @template nse
+#' @family data manipulations
 #' @export
 #' @examples
 #' \donttest{
@@ -167,6 +173,7 @@ partition_group <- function (.self, ...) {
 #' \code{reduce} is used to bring all those together to a single value.
 #'
 #' @template nse
+#' @family data manipulations
 #' @param auto_compact Compact data after operation
 #' @export
 #' @examples
@@ -187,6 +194,7 @@ reduce <- function (.self, ..., auto_compact=NULL) {
 #' Takes a list of newname=oldname pairs and renames columns
 #'
 #' @template nse
+#' @family column manipulations
 #' @export
 #' @examples
 #' \donttest{
@@ -204,6 +212,7 @@ rename <- function (.self, ...) {
 #' Takes a list of columns and returns a data frame with only those columns and in the order specified
 #'
 #' @template nse
+#' @family column manipulations
 #' @export
 #' @examples
 #' \donttest{
@@ -220,6 +229,7 @@ select <- function (.self, ...) {
 #' Produces a summary statistic for each group or cluster node (the latter case should then be followed up with \code{reduce})
 #'
 #' @template nse
+#' @family data manipulations
 #' @param auto_compact Compact data after operation
 #' @export
 #' @examples
@@ -237,6 +247,7 @@ summarise <- function (.self, ..., auto_compact=NULL) {
 #' This function works like a combination of \code{mutate} and \code{select}: it may be used to modify values in a data frame, and then drops any column not explicitly specified
 #'
 #' @template nse
+#' @family data manipulations
 #' @export
 #' @examples
 #' \donttest{
@@ -253,6 +264,7 @@ transmute <- function (.self, ...) {
 #' In much the same way that \code{define} creates new columns, \code{undefine} will delete them
 #'
 #' @template nse
+#' @family column manipulations
 #' @export
 #' @examples
 #' \donttest{

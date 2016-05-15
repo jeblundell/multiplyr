@@ -34,4 +34,10 @@ dat <- Multiplyr (x=1:100, y=100:1)
 dat \%>\% undefine (y)
 }
 }
+\seealso{
+Other column manipulations: \code{\link{define}},
+  \code{\link{define_}}; \code{\link{rename}},
+  \code{\link{rename_}}; \code{\link{select}},
+  \code{\link{select_}}
+}
 

@@ -37,4 +37,11 @@ dat \%>\% slice (1:10, each=TRUE)
 dat \%>\% slice (1:10)
 }
 }
+\seealso{
+Other row manipulations: \code{\link{arrange}},
+  \code{\link{arrange_}}; \code{\link{distinct}},
+  \code{\link{distinct_}}; \code{\link{filter}},
+  \code{\link{filter_}}; \code{\link{group_by}},
+  \code{\link{group_by_}}
+}
 

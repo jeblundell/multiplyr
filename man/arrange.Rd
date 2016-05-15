@@ -34,4 +34,10 @@ dat \%>\% arrange (x)
 dat \%>\% arrange (G, x)
 }
 }
+\seealso{
+Other row manipulations: \code{\link{distinct}},
+  \code{\link{distinct_}}; \code{\link{filter}},
+  \code{\link{filter_}}; \code{\link{group_by}},
+  \code{\link{group_by_}}; \code{\link{slice}}
+}
 

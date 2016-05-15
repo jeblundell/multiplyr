@@ -33,4 +33,12 @@ dat \%>\% within_group ({
 dat \%>\% summarise (x.mean = coef(mdl)[[1]])
 }
 }
+\seealso{
+Other data manipulations: \code{\link{mutate}},
+  \code{\link{mutate_}}; \code{\link{nsa}};
+  \code{\link{reduce}}, \code{\link{reduce_}};
+  \code{\link{summarise}}, \code{\link{summarise_}};
+  \code{\link{transmute}}, \code{\link{transmute_}};
+  \code{\link{within_node}}
+}
 

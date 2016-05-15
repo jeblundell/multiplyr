@@ -40,4 +40,10 @@ dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25))
 dat \%>\% distinct(G)
 }
 }
+\seealso{
+Other row manipulations: \code{\link{arrange}},
+  \code{\link{arrange_}}; \code{\link{filter}},
+  \code{\link{filter_}}; \code{\link{group_by}},
+  \code{\link{group_by_}}; \code{\link{slice}}
+}
 

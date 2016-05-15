@@ -30,4 +30,11 @@ of \code{var=template}, then a new column named \code{var} will be
 created using \code{template} as a template. This is useful for creating
 new factors.
 }
+\seealso{
+Other column manipulations: \code{\link{rename}},
+  \code{\link{rename_}}; \code{\link{select}},
+  \code{\link{select_}}; \code{\link{undefine}},
+  \code{\link{undefine_}}, \code{\link{unselect}},
+  \code{\link{unselect_}}
+}
 

@@ -28,4 +28,11 @@ dat <- Multiplyr (x = 1:100, y = 100:1, z = rep(123, 100))
 dat \%>\% select (y, x)
 }
 }
+\seealso{
+Other column manipulations: \code{\link{define}},
+  \code{\link{define_}}; \code{\link{rename}},
+  \code{\link{rename_}}; \code{\link{undefine}},
+  \code{\link{undefine_}}, \code{\link{unselect}},
+  \code{\link{unselect_}}
+}
 

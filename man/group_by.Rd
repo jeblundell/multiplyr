@@ -46,4 +46,10 @@ dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25))
 dat \%>\% group_by (G) \%>\% summarise (N=length(x))
 }
 }
+\seealso{
+Other row manipulations: \code{\link{arrange}},
+  \code{\link{arrange_}}; \code{\link{distinct}},
+  \code{\link{distinct_}}; \code{\link{filter}},
+  \code{\link{filter_}}; \code{\link{slice}}
+}
 

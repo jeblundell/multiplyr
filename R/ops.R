@@ -496,6 +496,7 @@ mutate_ <- function (.self, ..., .dots) {
 #' disables translation of character values to and from numeric representation.
 #' This allows for much faster calculations.
 #'
+#' @family data manipulations
 #' @param .self Data frame
 #' @param enabled TRUE to enable, FALSE to disable. Defaults to TRUE.
 #' @return Data frame
@@ -763,6 +764,7 @@ select_ <- function (.self, ..., .dots) {
 #' out all except a specified subset within each group or, if no grouping,
 #' within each node.
 #'
+#' @family row manipulations
 #' @param .self Data frame
 #' @param rows Rows to select
 #' @param start Start of range of rows
@@ -1051,6 +1053,7 @@ groupwise <- regroup
 #' be referred to by, for example, later calls to summarise. This environment
 #' contains active bindings to the columns of that data frame.
 #'
+#' @family data manipulations
 #' @param .self Data frame
 #' @param expr Code to execute
 #' @return Data frame
@@ -1094,6 +1097,7 @@ within_group <- function (.self, expr) {
 #' be referred to by, for example, later calls to summarise. This environment
 #' contains active bindings to the columns of that data frame.
 #'
+#' @family data manipulations
 #' @param .self Data frame
 #' @param expr Code to execute
 #' @export

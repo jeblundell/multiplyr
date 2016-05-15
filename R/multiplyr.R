@@ -20,7 +20,7 @@
 #'     \code{\link{filter}}      \tab Filter data \cr
 #'     \code{\link{group_by}}    \tab Group data \cr
 #'     \code{\link{group_sizes}} \tab Return size of groups \cr
-#'     \code{\link{groupwise}}   \tab Use grouped data\cr
+#'     \code{\link{groupwise}}   \tab Use grouped data (also known as \code{ungroup})\cr
 #'     \code{\link{mutate}}      \tab Change values of existing variables (and create new ones) \cr
 #'     \code{\link{rename}}      \tab Rename variables \cr
 #'     \code{\link{rowwise}}     \tab Use data as individual rows \cr
@@ -42,6 +42,7 @@
 #' \tabular{ll}{
 #'     \code{\link{Multiplyr}}   \tab Create new parallel data frame \cr
 #'     \code{\link{define}}      \tab Define new variables \cr
+#'     \code{\link{nsa}}         \tab No strings attached mode \cr
 #'     \code{\link{reduce}}      \tab Summarise locally only \cr
 #'     \code{\link{regroup}}     \tab Return to grouped data \cr
 #'     \code{\link{undefine}}    \tab Delete variables \cr

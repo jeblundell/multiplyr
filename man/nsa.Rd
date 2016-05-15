@@ -29,4 +29,12 @@ dat <- Multiplyr (G=rep(c("A", "B", "C", "D"), length.out=100))
 dat \%>\% nsa () \%>\% mutate (G=max(G)) \%>\% nsa(FALSE)
 }
 }
+\seealso{
+Other data manipulations: \code{\link{mutate}},
+  \code{\link{mutate_}}; \code{\link{reduce}},
+  \code{\link{reduce_}}; \code{\link{summarise}},
+  \code{\link{summarise_}}; \code{\link{transmute}},
+  \code{\link{transmute_}}; \code{\link{within_group}};
+  \code{\link{within_node}}
+}
 

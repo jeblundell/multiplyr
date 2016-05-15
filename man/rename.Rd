@@ -29,4 +29,11 @@ dat \%>\% rename(y=x)
 dat["y"]
 }
 }
+\seealso{
+Other column manipulations: \code{\link{define}},
+  \code{\link{define_}}; \code{\link{select}},
+  \code{\link{select_}}; \code{\link{undefine}},
+  \code{\link{undefine_}}, \code{\link{unselect}},
+  \code{\link{unselect_}}
+}
 

@@ -30,4 +30,11 @@ dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25))
 dat \%>\% group_by (G) \%>\% summarise (xbar = mean(x))
 }
 }
+\seealso{
+Other data manipulations: \code{\link{mutate}},
+  \code{\link{mutate_}}; \code{\link{nsa}};
+  \code{\link{reduce}}, \code{\link{reduce_}};
+  \code{\link{transmute}}, \code{\link{transmute_}};
+  \code{\link{within_group}}; \code{\link{within_node}}
+}
 

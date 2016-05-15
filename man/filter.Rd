@@ -37,4 +37,10 @@ dat <- Multiplyr (x=1:100, y=rnorm(100))
 dat \%>\% filter (x<50 & y>0)
 }
 }
+\seealso{
+Other row manipulations: \code{\link{arrange}},
+  \code{\link{arrange_}}; \code{\link{distinct}},
+  \code{\link{distinct_}}; \code{\link{group_by}},
+  \code{\link{group_by_}}; \code{\link{slice}}
+}
 

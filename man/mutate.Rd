@@ -28,4 +28,11 @@ dat <- Multiplyr (x=1:100)
 dat \%>\% mutate (x=x*2)
 }
 }
+\seealso{
+Other data manipulations: \code{\link{nsa}};
+  \code{\link{reduce}}, \code{\link{reduce_}};
+  \code{\link{summarise}}, \code{\link{summarise_}};
+  \code{\link{transmute}}, \code{\link{transmute_}};
+  \code{\link{within_group}}; \code{\link{within_node}}
+}
 
