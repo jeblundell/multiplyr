@@ -1,31 +1,38 @@
 ## Test environments
-* Local Linux (Debian) build, R 3.2.2
-* Local Linux (Debian) build, R-devel r70617
+* Linux (Debian stretch/sid x32), R 3.2.2
+* Linux (Debian stretch/sid x32), R-devel r70617
+* win-builder (x86_64-w64-mingw32), R-devel r70617
+* OS X (Darwin 13.4 x64), R 3.3.0
 
-All checks run with options --as-cran --run-donttest and with all suggested and
-required packages installed.
+Linux build options: --as-cran --run-dontrun --run-donttest
+
+OS X build options: --as-cran --no-manual.
 
 ## R CMD check results
-There were no ERRORs or WARNINGs. 
+### ERRORs
+There were no ERRORs on all builds as outlined above.
 
+The OS X build produces ERRORs when the check is run with --run-donttest due to
+several of the examples not specifying how many cores to allocate. The default
+is to allocate parallel::detectCores()-1 cores and the errors are due to an
+attempt to spawn 7 R processes.
+
+### WARNINGs
+There were no WARNINGs for all builds
+
+### NOTEs
 There will be a NOTE due to this being a first submission of the package.
 
-There is a note for the non-standard directory 'man-roxygen'. I make use of
+There is a NOTE for the non-standard directory 'man-roxygen'. I make use of
 roxygen2's templates for documentation, so this is unavoidable.
 
-There is 1 NOTE that repeats "no visible binding for global variable",
+There is a NOTE that repeats "no visible binding for global variable",
 which is spurious as those expressions are not executed in this instance
 of R; the expressions are passed along to the relevant node via
 clusterEvalQ and executed there, where there is a binding.
 
-## Best practice
-All tests are run with a cluster started with parallel::makeCluster(2)
-
-I understand that it is preferred that functions do not do modification in
-place and instead return a new, modified value of some operation. This package
-deviates from that practice since the whole point is that underlying data is
-a shared memory object: I hope this is made clearer by its implementation as a
-reference class.
+The OS X build had 2 additional NOTEs due to absence of pandoc and GhostScript
+on the test machine. 
 
 ## Downstream dependencies
-No downstream dependencies
+No downstream dependencies due to this being the first submission
