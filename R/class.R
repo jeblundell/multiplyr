@@ -113,11 +113,15 @@ initialize = function (..., alloc=1, cl=NULL,
         return()
     }
 
+    dots <- lazyeval::auto_name (lazyeval::lazy_dots (...))
+    vnames <- names(dots)
+
     profiling <<- profiling
     profile ("start", "initialize")
 
     if (length(vars) == 1) {
         if (is.data.frame(vars[[1]])) {
+            vnames <- names(vars[[1]])
             vars <- unclass(vars[[1]])
         } else if (is(vars[[1]], "Multiplyr.desc")) {
             reattach_slave (vars[[1]])
@@ -158,7 +162,7 @@ initialize = function (..., alloc=1, cl=NULL,
     special <- c(".filter", ".group", ".tmp")
     nrows <- length(vars[[1]])
     ncols <- length(vars) + alloc + length(special)
-    col.names <<- c(names(vars), rep(NA, alloc), special)
+    col.names <<- c(vnames, rep(NA, alloc), special)
     order.cols <<- c(seq_len(length(vars)), rep(0, alloc), rep(0, length(special)))
 
     bm <<- bigmemory::big.matrix (nrow=nrows, ncol=ncols)

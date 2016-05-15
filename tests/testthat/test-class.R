@@ -2,12 +2,10 @@ context("class")
 
 cl2 <- parallel::makeCluster(2)
 
-test_that ("Multiplyr(x=..., y=...) creates the appropriate structure", {
-    dat <- Multiplyr(x=1:100,
-                  f=factor(rep(c("f1", "f2"), each=50), levels=c("f1", "f2")),
-                  G=rep(c("A", "B", "C", "D"), each=25),
-                  alloc=1,
-                  cl=cl2)
+test_that ("Multiplyr(x=...) creates the appropriate structure", {
+    x <- 1:100
+    f.src <- factor(rep(c("f1", "f2"), each=50), levels=c("f1", "f2"))
+    dat <- Multiplyr(x, f=f.src, G=rep(c("A", "B", "C", "D"), each=25), alloc=1, cl=cl2)
 
     expect_equal (nrow(dat$bm), 100)
     expect_gte (ncol(dat$bm), 3)
