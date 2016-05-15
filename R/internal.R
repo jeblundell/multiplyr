@@ -42,6 +42,8 @@
 #' This is a horrible kludge needed so copy() doesn't complain about
 #' assigning NULL to a field when there's no cluster, i.e. for the slave nodes
 #'
+#' @name clsna
+#' @return NA with class set to SOCKcluster
 #' @keywords internal
 #' @export
 .clsna <- function () {
