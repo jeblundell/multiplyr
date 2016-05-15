@@ -1145,6 +1145,9 @@ show = function (max.row=10) {
     for (i in seq_len(ncol(bm))[pc==0 & order.cols > 0]) {
         pc[i] <- max(nchar(as.character(bm[1:max.row,i])))
     }
+    pc.names <- nchar(col.names)
+    pc.nb <- pc.names > pc
+    pc[pc.nb] <- pc.names[pc.nb]
 
     out <- ""
     for (i in cols) {
@@ -1189,8 +1192,17 @@ show = function (max.row=10) {
         cat (sprintf ("\nGrouped by: %s\n",
                       paste(col.names[group.cols], collapse=", ")))
         .self$calc_group_sizes (delay=FALSE)
-        cat (sprintf ("Groups: %d\nGroup sizes: %s\n", group_max,
-                      paste(group_sizes, collapse=", ")))
+        cat (sprintf ("Groups: %d\n", group_max))
+        gs <- sprintf ("Group sizes: %s\n", paste(group_sizes, collapse=", "))
+        if (nchar(gs) >= 80) {
+            cat(sprintf ("Group sizes: median %.1f (IQR %.0f-%.0f, range %.0f-%.0f)\n",
+                         median(group_sizes), quantile(group_sizes, 0.25),
+                         quantile(group_sizes, 0.75), min(group_sizes),
+                         max(group_sizes)))
+        } else {
+            cat (gs)
+        }
+
     }
     if (group_partition) {
         res <- cluster_eval ({

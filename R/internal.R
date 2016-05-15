@@ -11,7 +11,9 @@
 #' @return Concetenated string
 #' @examples
 #' cat (.p("hello ", "world!"))
-.p <- function (...) { paste (..., sep="") }
+.p <- function (...) {
+    paste0 (..., collapse="")
+}
 
 #' Extract names from a lazy_dots object (internal)
 #'
