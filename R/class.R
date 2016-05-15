@@ -149,6 +149,7 @@ initialize = function (..., alloc=1, cl=NULL,
         cluster_eval ({
             library (multiplyr)
             library (lazyeval)
+            NULL
         })
     }
     profile ("stop", "initialize.cluster")
