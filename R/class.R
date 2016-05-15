@@ -1155,6 +1155,7 @@ show = function (max.row=10) {
     }
     pc.names <- nchar(col.names)
     pc.nb <- pc.names > pc
+    pc.nb[is.na(pc.nb)] <- FALSE
     pc[pc.nb] <- pc.names[pc.nb]
 
     out <- ""
