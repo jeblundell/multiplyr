@@ -12,12 +12,12 @@ arrange_(.self, ..., .dots)
 \arguments{
 \item{.self}{Data frame}
 
-\item{...}{Variables to sort by}
+\item{...}{Additional parameters}
 
 \item{.dots}{Workaround for non-standard evaluation}
 }
 \value{
-Parallel data frame
+Data frame
 }
 \description{
 Sorts data frame using the columns specified

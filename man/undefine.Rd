@@ -22,6 +22,9 @@ unselect_(.self, ..., .dots)
 
 \item{.dots}{Workaround for non-standard evaluation}
 }
+\value{
+Data frame
+}
 \description{
 In much the same way that \code{define} creates new columns, \code{undefine} will delete them
 }

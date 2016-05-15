@@ -18,6 +18,9 @@ summarise_(.self, ..., .dots, auto_compact = NULL)
 
 \item{.dots}{Workaround for non-standard evaluation}
 }
+\value{
+Data frame
+}
 \description{
 Produces a summary statistic for each group or cluster node (the latter case should then be followed up with \code{reduce})
 }

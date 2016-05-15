@@ -16,6 +16,9 @@ rename_(.self, ..., .dots)
 
 \item{.dots}{Workaround for non-standard evaluation}
 }
+\value{
+Data frame
+}
 \description{
 Takes a list of newname=oldname pairs and renames columns
 }

@@ -16,6 +16,9 @@ select_(.self, ..., .dots)
 
 \item{.dots}{Workaround for non-standard evaluation}
 }
+\value{
+Data frame
+}
 \description{
 Takes a list of columns and returns a data frame with only those columns and in the order specified
 }

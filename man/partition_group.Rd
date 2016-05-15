@@ -12,9 +12,12 @@ partition_group_(.self, ..., .dots)
 \arguments{
 \item{.self}{Data frame}
 
-\item{...}{Names of grouping variables}
+\item{...}{Additional parameters}
 
 \item{.dots}{Workaround for non-standard evaluation}
+}
+\value{
+Data frame
 }
 \description{
 Partitions data across the cluster such that each group is wholly

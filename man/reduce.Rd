@@ -9,6 +9,16 @@ reduce(.self, ...)
 
 reduce_(.self, ..., .dots, auto_compact = NULL)
 }
+\arguments{
+\item{.self}{Data frame}
+
+\item{...}{Additional parameters}
+
+\item{.dots}{Workaround for non-standard evaluation}
+}
+\value{
+Data frame
+}
 \description{
 \code{summarise} is used to summarise data on each node: \code{reduce} is then used to ensure that there's one overall summary
 }

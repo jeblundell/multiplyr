@@ -8,10 +8,7 @@
 #' column specified. If there are any ties then it sorts by the second,
 #' and so on.
 #'
-#' @param .self Data frame
-#' @param ... Variables to sort by
-#' @param .dots Workaround for non-standard evaluation
-#' @return Parallel data frame
+#' @template nse
 #' @export
 #' @examples
 #' \donttest{
@@ -35,9 +32,7 @@ arrange <- function (.self, ...) {
 #' created using \code{template} as a template. This is useful for creating
 #' new factors.
 #'
-#' @param .self Data frame
-#' @param ... Names of new variables
-#' @param .dots Workaround for non-standard evaluation
+#' @template nse
 #' @export
 define <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots (...)
@@ -57,9 +52,7 @@ define <- function (.self, ...) {
 #' Note that if data are grouped, then this will find unique rows or
 #' combinations for each group.
 #'
-#' @param .self Data frame
-#' @param ... Additional parameters
-#' @param .dots Workaround for non-standard evaluation
+#' @template nse
 #' @param auto_compact Compact data after operation
 #' @export
 #' @examples
@@ -82,9 +75,7 @@ distinct <- function (.self, ..., auto_compact = NULL) {
 #' filtering criteria may be combined with \code{&} or \code{|}
 #' (representing "and", "or").
 #'
-#' @param .self Data frame
-#' @param ... Additional parameters
-#' @param .dots Workaround for non-standard evaluation
+#' @template nse
 #' @param auto_compact Compact data after operation
 #' @export
 #' @examples
@@ -114,10 +105,8 @@ filter <- function (.self, ..., auto_compact=NULL) {
 #' have 12 blocks of 7 (84 rows) with an average for each week day in that
 #' month provided the same way as above.
 #'
-#' @param .self Data frame
-#' @param ... Variables to sort by
+#' @template nse
 #' @param .cols Columns to group by (used internally)
-#' @param .dots Workaround for non-standard evaluation
 #' @param auto_partition Re-partition across cluster after operation
 #' @export
 #' @examples
@@ -134,9 +123,7 @@ group_by <- function (.self, ..., auto_partition=NULL) {
 #'
 #' This function is used to alter the data frame, without dropping any columns (unlike \code{transmute}, which drops any columns not explicitly specified)
 #'
-#' @param .self Data frame
-#' @param ... Additional parameters
-#' @param .dots Workaround for non-standard evaluation
+#' @template nse
 #' @export
 #' @examples
 #' \donttest{
@@ -158,9 +145,7 @@ mutate <- function (.self, ...) {
 #' then not have each group fully accessible, but theoretically is possible to
 #' so (use \code{group_by (..., auto_partition=FALSE}).
 #'
-#' @param .self Data frame
-#' @param ... Names of grouping variables
-#' @param .dots Workaround for non-standard evaluation
+#' @template nse
 #' @export
 #' @examples
 #' \donttest{
@@ -181,7 +166,7 @@ partition_group <- function (.self, ...) {
 #' there are 3 nodes in the cluster, then there will be 3 summary values.
 #' \code{reduce} is used to bring all those together to a single value.
 #'
-#' @name reduce
+#' @template nse
 #' @export
 #' @examples
 #' \donttest{
@@ -200,9 +185,7 @@ reduce <- function (.self, ...) {
 #'
 #' Takes a list of newname=oldname pairs and renames columns
 #'
-#' @param .self Data frame
-#' @param ... Additional parameters
-#' @param .dots Workaround for non-standard evaluation
+#' @template nse
 #' @export
 #' @examples
 #' \donttest{
@@ -219,9 +202,7 @@ rename <- function (.self, ...) {
 #'
 #' Takes a list of columns and returns a data frame with only those columns and in the order specified
 #'
-#' @param .self Data frame
-#' @param ... Additional parameters
-#' @param .dots Workaround for non-standard evaluation
+#' @template nse
 #' @export
 #' @examples
 #' \donttest{
@@ -237,9 +218,7 @@ select <- function (.self, ...) {
 #'
 #' Produces a summary statistic for each group or cluster node (the latter case should then be followed up with \code{reduce})
 #'
-#' @param .self Data frame
-#' @param ... Additional parameters
-#' @param .dots Workaround for non-standard evaluation
+#' @template nse
 #' @param auto_compact Compact data after operation
 #' @export
 #' @examples
@@ -256,9 +235,7 @@ summarise <- function (.self, ..., auto_compact=NULL) {
 #'
 #' This function works like a combination of \code{mutate} and \code{select}: it may be used to modify values in a data frame, and then drops any column not explicitly specified
 #'
-#' @param .self Data frame
-#' @param ... Additional parameters
-#' @param .dots Workaround for non-standard evaluation
+#' @template nse
 #' @export
 #' @examples
 #' \donttest{
@@ -274,9 +251,7 @@ transmute <- function (.self, ...) {
 #'
 #' In much the same way that \code{define} creates new columns, \code{undefine} will delete them
 #'
-#' @param .self Data frame
-#' @param ... Additional parameters
-#' @param .dots Workaround for non-standard evaluation
+#' @template nse
 #' @export
 #' @examples
 #' \donttest{
@@ -288,6 +263,6 @@ undefine <- function (.self, ...) {
     undefine_ (.self, .dots=.dots)
 }
 
-#' @describeIn undefine
+#' @rdname undefine
 #' @export
 unselect <- undefine

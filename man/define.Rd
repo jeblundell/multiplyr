@@ -12,9 +12,12 @@ define_(.self, ..., .dots)
 \arguments{
 \item{.self}{Data frame}
 
-\item{...}{Names of new variables}
+\item{...}{Additional parameters}
 
 \item{.dots}{Workaround for non-standard evaluation}
+}
+\value{
+Data frame
 }
 \description{
 Takes a list of column names and creates them. Optionally uses a template to

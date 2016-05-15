@@ -16,6 +16,9 @@ mutate_(.self, ..., .dots)
 
 \item{.dots}{Workaround for non-standard evaluation}
 }
+\value{
+Data frame
+}
 \description{
 This function is used to alter the data frame, without dropping any columns (unlike \code{transmute}, which drops any columns not explicitly specified)
 }

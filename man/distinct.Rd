@@ -18,6 +18,9 @@ distinct_(.self, ..., .dots, auto_compact = NULL)
 
 \item{.dots}{Workaround for non-standard evaluation}
 }
+\value{
+Data frame
+}
 \description{
 Select unique rows or unique combinations of variables
 }

@@ -12,13 +12,16 @@ group_by_(.self, ..., .dots, .cols = NULL, auto_partition = NULL)
 \arguments{
 \item{.self}{Data frame}
 
-\item{...}{Variables to sort by}
+\item{...}{Additional parameters}
 
 \item{auto_partition}{Re-partition across cluster after operation}
 
 \item{.dots}{Workaround for non-standard evaluation}
 
 \item{.cols}{Columns to group by (used internally)}
+}
+\value{
+Data frame
 }
 \description{
 Groups data by specified columns: further operations then work within those groups

@@ -18,6 +18,9 @@ filter_(.self, ..., .dots, auto_compact = NULL)
 
 \item{.dots}{Workaround for non-standard evaluation}
 }
+\value{
+Data frame
+}
 \description{
 Select a subset of rows whose columns meet a set of criteria
 }
