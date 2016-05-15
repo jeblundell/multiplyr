@@ -2,7 +2,7 @@
 title: "Multiplyr basics"
 author: "Jim Blundell"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output: rmarkdown::pdf_document
 vignette: >
   %\VignetteIndexEntry{Multiplyr basics}
   %\VignetteEngine{knitr::rmarkdown}

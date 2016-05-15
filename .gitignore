@@ -4,3 +4,6 @@
 .*
 *.desc
 inst/doc
+vignettes/*.pdf
+vignettes/*.html
+vignettes/*.R
