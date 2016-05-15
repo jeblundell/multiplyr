@@ -27,7 +27,7 @@ test_that("mutate(x=1:50) works", {
 })
 
 test_that("mutate(x=123, y=x) works", {
-    dat <- Multiplyr (x=1:100, G=rep(1:5, each=20), cl=cl2)
+    dat <- Multiplyr (x=1:100, G=rep(1:5, each=20), alloc=1, cl=cl2)
     dat %>% mutate (x=123, y=x)
     expect_equal (dat["y"], rep(123, length.out=100))
     rm (dat)
@@ -99,7 +99,7 @@ test_that("transmute(x=x*2) works", {
 })
 
 test_that("transmute(y=x) and transmute(x=y) works", {
-    dat <- Multiplyr (x=1:100, cl=cl2)
+    dat <- Multiplyr (x=1:100, alloc=1, cl=cl2)
     x <- dat["x"]
 
     dat %>% transmute (y=x)
@@ -112,7 +112,7 @@ test_that("transmute(y=x) and transmute(x=y) works", {
 })
 
 test_that("transmute(x=123, y=x) works", {
-    dat <- Multiplyr (x=1:100, cl=cl2)
+    dat <- Multiplyr (x=1:100, alloc=1, cl=cl2)
     dat %>% transmute (x=123, y=x)
     expect_equal (dat["y"], rep(123, 100))
     rm (dat)

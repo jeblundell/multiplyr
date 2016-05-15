@@ -115,7 +115,7 @@ test_that ("rename() preserves data and only renames", {
 })
 
 test_that ("rename() propagates to clusters/groups", {
-    dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
+    dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), alloc=1, cl=cl2)
     dat %>% partition_group (G)
 
     dat %>% rename (a=x)

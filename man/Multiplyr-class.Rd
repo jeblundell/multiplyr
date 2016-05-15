@@ -145,7 +145,7 @@ to get a better overview: \code{vignette("basics")}
 
 \item{\code{group_restrict(group = 0)}}{Returns a new Multiplyr data frame with data restricted to specified group ID}
 
-\item{\code{initialize(..., alloc = 1, cl = NULL, auto_compact = TRUE,
+\item{\code{initialize(..., alloc = 0, cl = NULL, auto_compact = TRUE,
   auto_partition = TRUE, profiling = TRUE)}}{Constructor}
 
 \item{\code{local_subset(first, last)}}{Applies sub.big.matrix to bm}

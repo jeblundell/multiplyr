@@ -101,14 +101,14 @@ Multiplyr <- setRefClass("Multiplyr",
                 profiling       = "logical"
                 ),
     methods=list(
-initialize = function (..., alloc=1, cl=NULL,
+initialize = function (..., alloc=0, cl=NULL,
                        auto_compact=TRUE,
                        auto_partition=TRUE,
                        profiling=TRUE) {
     "Constructor"
     vars <- list(...)
 
-    if (length(vars) == 0) {
+    if (length(vars) == 0 && alloc == 0) {
         #Occurs when $copy() used
         return()
     }
