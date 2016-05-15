@@ -9,7 +9,11 @@ partition_even(.self)
 \arguments{
 \item{.self}{Data frame}
 }
+\value{
+Data frame
+}
 \description{
-Partition data evenly amongst cluster nodes
+This function results in data being repartitioned evenly across cluster nodes,
+ignoring any grouping variables.
 }
 

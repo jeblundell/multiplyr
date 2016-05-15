@@ -19,10 +19,6 @@ rename_(.self, ..., .dots)
 \description{
 Takes a list of newname=oldname pairs and renames columns
 }
-\section{Functions}{
-\itemize{
-\item \code{rename_}: 
-}}
 \examples{
 \donttest{
 dat <- Multiplyr (x = 1:100)

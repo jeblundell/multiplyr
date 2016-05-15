@@ -1,18 +1,30 @@
 # Internal functions not really intended for public use
 
-#' Internal functions
-#' @name internal
-#' @keywords internal
-NULL
-
+#' Concatenate (internal)
+#'
+#' Shorthand for concatenating strings together
+#'
 #' @export
 #' @keywords internal
-#' @rdname internal
+#' @rdname p
+#' @param ... Strings to be concatenated
+#' @return Concetenated string
+#' @examples
+#' cat (.p("hello ", "world!"))
 .p <- function (...) { paste (..., sep="") }
 
+#' Extract names from a lazy_dots object (internal)
+#'
+#' This will take a lazy_dots object and will extract all the names from it
+#'
+#' @param dots Lazy dots object
+#' @return Vector of names
 #' @export
 #' @keywords internal
-#' @rdname internal
+#' @rdname dots2names
+#' @examples
+#' f <- function (...) { lazyeval::lazy_dots (...) }
+#' .dots2names (f(x, y=z))
 .dots2names <- function (dots) {
     nm <- names (dots)
     exprs <- nm == ""
@@ -22,9 +34,19 @@ NULL
     return (nm)
 }
 
+#' Update description of a big.matrix after a row subset (internal)
+#'
+#' Generating a new big.matrix.descriptor or doing sub.big.matrix on something
+#' that's not a descriptor is slow. This method exists to effectively create
+#' the descriptor that describe(new.sub.big.matrix) would do, but in a fraction
+#' of the time.
+#'
+#' @param desc Existing big.matrix.descriptor
+#' @param first First relative row of that matrix
+#' @param last Last relative row of that matrix
+#' @return New descriptor
 #' @export
 #' @keywords internal
-#' @rdname internal
 sm_desc_update <- function (desc, first, last) {
     desc@description$rowOffset <- c(
         (desc@description$rowOffset[1] + first) - 1,
@@ -33,9 +55,19 @@ sm_desc_update <- function (desc, first, last) {
     return (desc)
 }
 
+#' Test for grouping transition (internal)
+#'
+#' This algorithm tests specific rows for a transition. Each cluster node will
+#' test its own subset for grouping transitions, but the transition between the
+#' last row of one cluster and the first of the next needs to be tested on the
+#' master node.
+#'
+#' @param .self Parallel data frame
+#' @param cols Columns to test
+#' @param rows Rows to test
+#' @return Logical vector of which rows have a transition (first element is always TRUE)
 #' @export
 #' @keywords internal
-#' @rdname internal
 test_transition <- function (.self, cols, rows) {
     N <- length(rows)
     rows.i <- which (!is.na(rows)) #subsetting gets stroppy with NA

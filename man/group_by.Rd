@@ -37,10 +37,6 @@ e.g. \code{group_by(month, day)}. The resulting data frame would then
 have 12 blocks of 7 (84 rows) with an average for each week day in that
 month provided the same way as above.
 }
-\section{Functions}{
-\itemize{
-\item \code{group_by_}: 
-}}
 \examples{
 \donttest{
 dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25))

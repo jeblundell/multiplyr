@@ -19,10 +19,6 @@ transmute_(.self, ..., .dots)
 \description{
 This function works like a combination of \code{mutate} and \code{select}: it may be used to modify values in a data frame, and then drops any column not explicitly specified
 }
-\section{Functions}{
-\itemize{
-\item \code{transmute_}: 
-}}
 \examples{
 \donttest{
 dat <- Multiplyr (x=1:100, y=100:1)

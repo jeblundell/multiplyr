@@ -28,10 +28,6 @@ In much the same way that \code{define} creates new columns, \code{undefine} wil
 \section{Functions}{
 \itemize{
 \item \code{unselect}: 
-
-\item \code{undefine_}: 
-
-\item \code{unselect_}: 
 }}
 \examples{
 \donttest{

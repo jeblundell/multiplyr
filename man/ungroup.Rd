@@ -12,11 +12,12 @@ rowwise(.self)
 \arguments{
 \item{.self}{Data frame}
 }
-\description{
-Return data to non-grouped
+\value{
+Data frame
 }
-\section{Functions}{
-\itemize{
-\item \code{rowwise}: 
-}}
+\description{
+After grouping data with group_by, there may be a need to return to a
+non-grouped form. Running ungroup() will drop any grouping. This can be
+reinstated again with regroup().
+}
 

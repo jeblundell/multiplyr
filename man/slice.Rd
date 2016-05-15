@@ -20,7 +20,21 @@ slice(.self, rows = NULL, start = NULL, end = NULL, each = FALSE,
 
 \item{auto_compact}{Compact data}
 }
+\value{
+Data frame
+}
 \description{
-Select rows by position
+This function is used to filter out everything except a specified subset of
+the data. The each parameter is used to change slice's behaviour to filter
+out all except a specified subset within each group or, if no grouping,
+within each node.
+}
+\examples{
+\donttest{
+dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25))
+dat \%>\% group_by (G)
+dat \%>\% slice (1:10, each=TRUE)
+dat \%>\% slice (1:10)
+}
 }
 

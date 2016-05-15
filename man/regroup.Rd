@@ -14,11 +14,19 @@ groupwise(.self, auto_partition = NULL)
 
 \item{auto_partition}{Re-partition across cluster after operation}
 }
-\description{
-Return to grouped data
+\value{
+Data frame
 }
-\section{Functions}{
-\itemize{
-\item \code{groupwise}: 
-}}
+\description{
+After a data frame has been grouped and then ungrouped, this function acts
+as a shorthand (and faster way) to reinstate grouping.
+}
+\examples{
+\donttest{
+dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), length.out=100))
+dat \%>\% group_by (G)
+dat \%>\% ungroup() \%>\% regroup()
+dat \%>\% summarise (N=length(x))
+}
+}
 

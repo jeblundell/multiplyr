@@ -19,7 +19,7 @@ filter_(.self, ..., .dots, auto_compact = NULL)
 \item{.dots}{Workaround for non-standard evaluation}
 }
 \description{
-Applies a set of filtering criteria to a data frame
+Select a subset of rows whose columns meet a set of criteria
 }
 \details{
 This may be used to only include rows that match a particular set of
@@ -28,10 +28,6 @@ the data whose value in the x column is not greater than 10. Multiple
 filtering criteria may be combined with \code{&} or \code{|}
 (representing "and", "or").
 }
-\section{Functions}{
-\itemize{
-\item \code{filter_}: 
-}}
 \examples{
 \donttest{
 dat <- Multiplyr (x=1:100, y=rnorm(100))

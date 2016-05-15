@@ -21,10 +21,6 @@ summarise_(.self, ..., .dots, auto_compact = NULL)
 \description{
 Produces a summary statistic for each group or cluster node (the latter case should then be followed up with \code{reduce})
 }
-\section{Functions}{
-\itemize{
-\item \code{summarise_}: 
-}}
 \examples{
 \donttest{
 dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25))

@@ -11,7 +11,26 @@ within_group(.self, expr)
 
 \item{expr}{Code to execute}
 }
+\value{
+Data frame
+}
 \description{
-Execute code within a group
+This is the mainstay of parallel computation for a data frame. This will
+execute the specified expression within each group. Each group will have a
+persistent environment, so that variables created in that environment can
+be referred to by, for example, later calls to summarise. This environment
+contains active bindings to the columns of that data frame.
+}
+\examples{
+\donttest{
+dat <- Multiplyr (G = rep(c("A", "B"), each=50),
+                  m = rep(c(5, 10), each=50),
+                  alloc=1)
+dat \%>\% group_by (G) \%>\% mutate (x=rnorm(length(m), mean=m))
+dat \%>\% within_group ({
+    mdl <- lm (x ~ 1)
+})
+dat \%>\% summarise (x.mean = coef(mdl)[[1]])
+}
 }
 

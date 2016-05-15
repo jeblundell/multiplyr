@@ -3,7 +3,7 @@
 \name{define}
 \alias{define}
 \alias{define_}
-\title{Define new variables}
+\title{Define new columns}
 \usage{
 define(.self, ...)
 
@@ -17,14 +17,14 @@ define_(.self, ..., .dots)
 \item{.dots}{Workaround for non-standard evaluation}
 }
 \description{
+Takes a list of column names and creates them. Optionally uses a template to
+copy across factor/character mappings.
+}
+\details{
 This function is used to create new columns in a data frame. Specifying
 just the name will create a new numeric column. If specified in the form
 of \code{var=template}, then a new column named \code{var} will be
 created using \code{template} as a template. This is useful for creating
 new factors.
 }
-\section{Functions}{
-\itemize{
-\item \code{define_}: 
-}}
 

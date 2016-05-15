@@ -9,9 +9,24 @@ nsa(.self, enabled = TRUE)
 \arguments{
 \item{.self}{Data frame}
 
-\item{enabled}{TRUE/FALSE}
+\item{enabled}{TRUE to enable, FALSE to disable. Defaults to TRUE.}
+}
+\value{
+Data frame
 }
 \description{
-No strings attached mode
+This function may be used to set or unset whether a data frame is in no
+strings attached mode, potentially speeding up various operations.
+}
+\details{
+This function will place a data frame in no strings attached mode, which
+disables translation of character values to and from numeric representation.
+This allows for much faster calculations.
+}
+\examples{
+\donttest{
+dat <- Multiplyr (G=rep(c("A", "B", "C", "D"), length.out=100))
+dat \%>\% nsa () \%>\% mutate (G=max(G)) \%>\% nsa(FALSE)
+}
 }
 

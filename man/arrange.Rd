@@ -20,17 +20,13 @@ arrange_(.self, ..., .dots)
 Parallel data frame
 }
 \description{
-Sorts a parallel data frame by the specified columns
+Sorts data frame using the columns specified
 }
 \details{
 This function takes a parallel data frame and sorts it by the first
 column specified. If there are any ties then it sorts by the second,
 and so on.
 }
-\section{Functions}{
-\itemize{
-\item \code{arrange_}: 
-}}
 \examples{
 \donttest{
 dat <- Multiplyr (x=1:100, G=rep(1:4, each=25))

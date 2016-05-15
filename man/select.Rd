@@ -19,10 +19,6 @@ select_(.self, ..., .dots)
 \description{
 Takes a list of columns and returns a data frame with only those columns and in the order specified
 }
-\section{Functions}{
-\itemize{
-\item \code{select_}: 
-}}
 \examples{
 \donttest{
 dat <- Multiplyr (x = 1:100, y = 100:1, z = rep(123, 100))

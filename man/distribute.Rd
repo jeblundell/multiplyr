@@ -11,7 +11,17 @@ distribute(x, N)
 
 \item{N}{Number of nodes}
 }
+\value{
+A vector containing number of rows or a list containing the indices of groups
+}
 \description{
-Calculations for how to distribute x items over N nodes
+This function is used to determine how to distribute the contents of a
+data frame across the cluster. It may either be called with a single number
+representing the total number of rows, or it may be called with a vector of
+numbers representing the size of groups.
+}
+\examples{
+distribute (100, 4)
+distribute (c(25, 25, 50), 2)
 }
 

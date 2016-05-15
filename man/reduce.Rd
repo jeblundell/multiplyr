@@ -18,10 +18,6 @@ in each node summarising the data it has available. This means that if
 there are 3 nodes in the cluster, then there will be 3 summary values.
 \code{reduce} is used to bring all those together to a single value.
 }
-\section{Functions}{
-\itemize{
-\item \code{reduce_}: 
-}}
 \examples{
 \donttest{
 dat <- Multiplyr (x = 1:100)

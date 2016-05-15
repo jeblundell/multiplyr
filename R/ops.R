@@ -1,6 +1,6 @@
 # Operations on Multiplyr objects
 
-#' @describeIn arrange
+#' @rdname arrange
 #' @export
 arrange_ <- function (.self, ..., .dots) {
     #This works on the presumption that factors have levels
@@ -21,7 +21,7 @@ arrange_ <- function (.self, ..., .dots) {
     return (.self)
 }
 
-#' @describeIn define
+#' @rdname define
 #' @export
 define_ <- function (.self, ..., .dots) {
     if (!is(.self, "Multiplyr")) {
@@ -59,7 +59,7 @@ define_ <- function (.self, ..., .dots) {
     return (.self)
 }
 
-#' @describeIn distinct
+#' @rdname distinct
 #' @export
 distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
     if (!is(.self, "Multiplyr")) {
@@ -203,7 +203,7 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
     return(.self)
 }
 
-#' @describeIn filter
+#' @rdname filter
 #' @export
 filter_ <- function (.self, ..., .dots, auto_compact = NULL) {
     if (!is(.self, "Multiplyr")) {
@@ -251,7 +251,7 @@ filter_ <- function (.self, ..., .dots, auto_compact = NULL) {
     return (.self)
 }
 
-#' @describeIn group_by
+#' @rdname group_by
 #' @export
 group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
     if (!is(.self, "Multiplyr")) {
@@ -419,8 +419,17 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
 }
 
 #' Return size of groups
+#'
+#' This function is used to find the size of groups in a Multiplyr data frame
+#'
 #' @param .self Data frame
+#' @return Group sizes
 #' @export
+#' @examples
+#' \donttest{
+#' dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), length.out=100))
+#' group_sizes (dat)
+#' }
 group_sizes <- function (.self) {
     if (!is(.self, "Multiplyr")) {
         stop ("group_sizes operation only valid for Multiplyr objects")
@@ -432,7 +441,7 @@ group_sizes <- function (.self) {
     .self$group_sizes
 }
 
-#' @describeIn mutate
+#' @rdname mutate
 #' @export
 mutate_ <- function (.self, ..., .dots) {
     if (!is(.self, "Multiplyr")) {
@@ -478,9 +487,23 @@ mutate_ <- function (.self, ..., .dots) {
 }
 
 #' No strings attached mode
+#'
+#' This function may be used to set or unset whether a data frame is in no
+#' strings attached mode, potentially speeding up various operations.
+#'
+#' This function will place a data frame in no strings attached mode, which
+#' disables translation of character values to and from numeric representation.
+#' This allows for much faster calculations.
+#'
 #' @param .self Data frame
-#' @param enabled TRUE/FALSE
+#' @param enabled TRUE to enable, FALSE to disable. Defaults to TRUE.
+#' @return Data frame
 #' @export
+#' @examples
+#' \donttest{
+#' dat <- Multiplyr (G=rep(c("A", "B", "C", "D"), length.out=100))
+#' dat %>% nsa () %>% mutate (G=max(G)) %>% nsa(FALSE)
+#' }
 nsa <- function (.self, enabled=TRUE) {
     if (!is(.self, "Multiplyr")) {
         stop ("nsa operation only valid for Multiplyr objects")
@@ -496,7 +519,12 @@ nsa <- function (.self, enabled=TRUE) {
 }
 
 #' Partition data evenly amongst cluster nodes
+#'
+#' This function results in data being repartitioned evenly across cluster nodes,
+#' ignoring any grouping variables.
+#'
 #' @param .self Data frame
+#' @return Data frame
 #' @export
 partition_even <- function (.self) {
     if (!is(.self, "Multiplyr")) {
@@ -508,7 +536,7 @@ partition_even <- function (.self) {
     return(.self)
 }
 
-#' @describeIn partition_group
+#' @rdname partition_group
 #' @export
 partition_group_ <- function (.self, ..., .dots) {
     if (!is(.self, "Multiplyr")) {
@@ -560,7 +588,7 @@ partition_group_ <- function (.self, ..., .dots) {
     return (.self)
 }
 
-#' @describeIn reduce
+#' @rdname reduce
 #' @export
 reduce_ <- function (.self, ..., .dots, auto_compact = NULL) {
     if (!is(.self, "Multiplyr")) {
@@ -630,9 +658,21 @@ reduce_ <- function (.self, ..., .dots, auto_compact = NULL) {
 }
 
 #' Return to grouped data
+#'
+#' After a data frame has been grouped and then ungrouped, this function acts
+#' as a shorthand (and faster way) to reinstate grouping.
+#'
 #' @param .self Data frame
 #' @param auto_partition Re-partition across cluster after operation
+#' @return Data frame
 #' @export
+#' @examples
+#' \donttest{
+#' dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), length.out=100))
+#' dat %>% group_by (G)
+#' dat %>% ungroup() %>% regroup()
+#' dat %>% summarise (N=length(x))
+#' }
 regroup <- function (.self, auto_partition=NULL) {
     if (!is(.self, "Multiplyr")) {
         stop ("regroup operation only valid for Multiplyr objects")
@@ -662,7 +702,7 @@ regroup <- function (.self, auto_partition=NULL) {
     return (.self)
 }
 
-#' @describeIn rename
+#' @rdname rename
 #' @export
 rename_ <- function (.self, ..., .dots) {
     if (!is(.self, "Multiplyr")) {
@@ -683,7 +723,7 @@ rename_ <- function (.self, ..., .dots) {
     return (.self)
 }
 
-#' @describeIn select
+#' @rdname select
 #' @export
 select_ <- function (.self, ..., .dots) {
     if (!is(.self, "Multiplyr")) {
@@ -716,13 +756,27 @@ select_ <- function (.self, ..., .dots) {
 }
 
 #' Select rows by position
+#'
+#' This function is used to filter out everything except a specified subset of
+#' the data. The each parameter is used to change slice's behaviour to filter
+#' out all except a specified subset within each group or, if no grouping,
+#' within each node.
+#'
 #' @param .self Data frame
 #' @param rows Rows to select
 #' @param start Start of range of rows
 #' @param end End of range of rows
 #' @param each Apply slice to each cluster/group
 #' @param auto_compact Compact data
+#' @return Data frame
 #' @export
+#' @examples
+#' \donttest{
+#' dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25))
+#' dat %>% group_by (G)
+#' dat %>% slice (1:10, each=TRUE)
+#' dat %>% slice (1:10)
+#' }
 slice <- function (.self, rows=NULL, start=NULL, end=NULL, each=FALSE, auto_compact=NULL) {
     if (!is(.self, "Multiplyr")) {
         stop ("slice operation only valid for Multiplyr objects")
@@ -797,7 +851,7 @@ slice <- function (.self, rows=NULL, start=NULL, end=NULL, each=FALSE, auto_comp
     .self
 }
 
-#' @describeIn summarise
+#' @rdname summarise
 #' @export
 summarise_ <- function (.self, ..., .dots, auto_compact = NULL) {
     if (!is(.self, "Multiplyr")) {
@@ -869,7 +923,7 @@ summarise_ <- function (.self, ..., .dots, auto_compact = NULL) {
     return (.self)
 }
 
-#' @describeIn transmute
+#' @rdname transmute
 #' @export
 transmute_ <- function (.self, ..., .dots) {
     if (!is(.self, "Multiplyr")) {
@@ -929,7 +983,7 @@ transmute_ <- function (.self, ..., .dots) {
     return (.self)
 }
 
-#' @describeIn undefine
+#' @rdname undefine
 #' @export
 undefine_ <- function (.self, ..., .dots) {
     if (!is(.self, "Multiplyr")) {
@@ -951,12 +1005,18 @@ undefine_ <- function (.self, ..., .dots) {
     return (.self)
 }
 
-#' @describeIn undefine
+#' @rdname undefine
 #' @export
 unselect_ <- undefine_
 
 #' Return data to non-grouped
+#'
+#' After grouping data with group_by, there may be a need to return to a
+#' non-grouped form. Running ungroup() will drop any grouping. This can be
+#' reinstated again with regroup().
+#'
 #' @param .self Data frame
+#' @return Data frame
 #' @export
 ungroup <- function (.self) {
     if (!is(.self, "Multiplyr")) {
@@ -973,18 +1033,37 @@ ungroup <- function (.self) {
     return (.self)
 }
 
-#' @describeIn ungroup
+#' @rdname ungroup
 #' @export
 rowwise <- ungroup
 
-#' @describeIn regroup
+#' @rdname regroup
 #' @export
 groupwise <- regroup
 
 #' Execute code within a group
+#'
+#' This is the mainstay of parallel computation for a data frame. This will
+#' execute the specified expression within each group. Each group will have a
+#' persistent environment, so that variables created in that environment can
+#' be referred to by, for example, later calls to summarise. This environment
+#' contains active bindings to the columns of that data frame.
+#'
 #' @param .self Data frame
 #' @param expr Code to execute
+#' @return Data frame
 #' @export
+#' @examples
+#' \donttest{
+#' dat <- Multiplyr (G = rep(c("A", "B"), each=50),
+#'                   m = rep(c(5, 10), each=50),
+#'                   alloc=1)
+#' dat %>% group_by (G) %>% mutate (x=rnorm(length(m), mean=m))
+#' dat %>% within_group ({
+#'     mdl <- lm (x ~ 1)
+#' })
+#' dat %>% summarise (x.mean = coef(mdl)[[1]])
+#' }
 within_group <- function (.self, expr) {
     if (!is(.self, "Multiplyr")) {
         stop ("within_group operation only valid for Multiplyr objects")
@@ -1006,6 +1085,13 @@ within_group <- function (.self, expr) {
 }
 
 #' Execute code within a node
+#'
+#' This is the mainstay of parallel computation for a data frame. This will
+#' execute the specified expression within each node. Each node will have a
+#' persistent environment, so that variables created in that environment can
+#' be referred to by, for example, later calls to summarise. This environment
+#' contains active bindings to the columns of that data frame.
+#'
 #' @param .self Data frame
 #' @param expr Code to execute
 #' @export

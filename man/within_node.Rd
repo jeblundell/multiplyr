@@ -12,6 +12,10 @@ within_node(.self, expr)
 \item{expr}{Code to execute}
 }
 \description{
-Execute code within a node
+This is the mainstay of parallel computation for a data frame. This will
+execute the specified expression within each node. Each node will have a
+persistent environment, so that variables created in that environment can
+be referred to by, for example, later calls to summarise. This environment
+contains active bindings to the columns of that data frame.
 }
 

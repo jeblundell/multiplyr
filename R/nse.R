@@ -2,7 +2,7 @@
 
 #' Sort data
 #'
-#' Sorts a parallel data frame by the specified columns
+#' Sorts data frame using the columns specified
 #'
 #' This function takes a parallel data frame and sorts it by the first
 #' column specified. If there are any ties then it sorts by the second,
@@ -24,7 +24,10 @@ arrange <- function (.self, ...) {
     arrange_ (.self, .dots=.dots)
 }
 
-#' Define new variables
+#' Define new columns
+#'
+#' Takes a list of column names and creates them. Optionally uses a template to
+#' copy across factor/character mappings.
 #'
 #' This function is used to create new columns in a data frame. Specifying
 #' just the name will create a new numeric column. If specified in the form
@@ -43,9 +46,9 @@ define <- function (.self, ...) {
 
 #' Select unique rows or unique combinations of variables
 #'
-#' Filters out any non-unique rows (optionally based on a specified set of variables)
+#' Select unique rows or unique combinations of variables
 #'
-#' When called with no additional parameters, \code{distinct()}, this 
+#' When called with no additional parameters, \code{distinct()}, this
 #' function will filter out any non-unique rows in the specified data frame.
 #' Specifying column names will limit the uniqueness checks to only those
 #' columns, i.e. \code{distinct(G)} will limit the data frame to only
@@ -71,12 +74,12 @@ distinct <- function (.self, ..., auto_compact = NULL) {
 
 #' Filter data
 #'
-#' Applies a set of filtering criteria to a data frame
+#' Select a subset of rows whose columns meet a set of criteria
 #'
 #' This may be used to only include rows that match a particular set of
 #' criteria. For example, \code{filter(x>10)} would remove any rows from
 #' the data whose value in the x column is not greater than 10. Multiple
-#' filtering criteria may be combined with \code{&} or \code{|} 
+#' filtering criteria may be combined with \code{&} or \code{|}
 #' (representing "and", "or").
 #'
 #' @param .self Data frame
@@ -100,7 +103,7 @@ filter <- function (.self, ..., auto_compact=NULL) {
 #'
 #' Many data analysis problems require working with particular combinations
 #' of data. For example, finding the average sales for a given day of the
-#' week could be achieved with \code{group_by(day)} and 
+#' week could be achieved with \code{group_by(day)} and
 #' \code{summarise(sales = mean(sales)}. This would result in a data frame
 #' with 7 rows (1 for each group) with the average sales stored in the
 #' sales column.
@@ -147,12 +150,13 @@ mutate <- function (.self, ...) {
 
 #' Partition data so that each group is wholly on a node
 #'
-#' This should not typically be called explicitly; group_by achieves the same thing
+#' Partitions data across the cluster such that each group is wholly
+#' contained on a single node.
 #'
-#' Partitions data across the cluster such that each group is wholly 
-#' contained on a single node. Generally speaking it would be fairly
-#' pointless to group things and then not have each group fully accessible,
-#' but theoretically is possible to so (use \code{group_by (..., auto_partition=FALSE}).
+#' This should not typically be called explicitly; group_by achieves the same
+#' thing. Generally speaking it would be fairly pointless to group things and
+#' then not have each group fully accessible, but theoretically is possible to
+#' so (use \code{group_by (..., auto_partition=FALSE}).
 #'
 #' @param .self Data frame
 #' @param ... Names of grouping variables

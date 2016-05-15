@@ -9,7 +9,16 @@ group_sizes(.self)
 \arguments{
 \item{.self}{Data frame}
 }
+\value{
+Group sizes
+}
 \description{
-Return size of groups
+This function is used to find the size of groups in a Multiplyr data frame
+}
+\examples{
+\donttest{
+dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), length.out=100))
+group_sizes (dat)
+}
 }
 

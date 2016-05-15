@@ -19,10 +19,6 @@ mutate_(.self, ..., .dots)
 \description{
 This function is used to alter the data frame, without dropping any columns (unlike \code{transmute}, which drops any columns not explicitly specified)
 }
-\section{Functions}{
-\itemize{
-\item \code{mutate_}: 
-}}
 \examples{
 \donttest{
 dat <- Multiplyr (x=1:100)

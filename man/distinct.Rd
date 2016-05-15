@@ -19,7 +19,7 @@ distinct_(.self, ..., .dots, auto_compact = NULL)
 \item{.dots}{Workaround for non-standard evaluation}
 }
 \description{
-Filters out any non-unique rows (optionally based on a specified set of variables)
+Select unique rows or unique combinations of variables
 }
 \details{
 When called with no additional parameters, \code{distinct()}, this
@@ -31,10 +31,6 @@ have unique values of G.
 Note that if data are grouped, then this will find unique rows or
 combinations for each group.
 }
-\section{Functions}{
-\itemize{
-\item \code{distinct_}: 
-}}
 \examples{
 \donttest{
 dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25))
