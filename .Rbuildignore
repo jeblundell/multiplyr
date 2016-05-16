@@ -4,3 +4,5 @@
 ^README-.*\.png$
 ^NEWS.Rmd$
 ^cran-comments\.md$
+^max-roxygen$
+^man-roxygen/*$
