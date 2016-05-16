@@ -1,12 +1,6 @@
+## Resubmission
+
 ## Test environments
-* Linux (Debian stretch/sid x32), R 3.2.2
-* Linux (Debian stretch/sid x32), R-devel r70617
-* win-builder (x86_64-w64-mingw32), R-devel r70617
-* OS X (Darwin 13.4 x64), R 3.3.0
-
-Linux build options: --as-cran --run-dontrun --run-donttest
-
-OS X build options: --as-cran --no-manual.
 
 ## R CMD check results
 ### ERRORs
