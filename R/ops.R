@@ -1,5 +1,11 @@
 # Operations on Multiplyr objects
 
+if(getRversion() >= "2.15.1") {
+    # Avoid NOTEs during check about lack of global variable bindings
+    utils::globalVariables(c(".Gbase", ".end", ".expr", ".grouped", ".groups",
+        ".local", ".master", ".rows", ".start", ".tg"))
+}
+
 #' @rdname arrange
 #' @export
 arrange_ <- function (.self, ..., .dots) {
