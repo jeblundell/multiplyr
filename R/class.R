@@ -114,6 +114,7 @@ initialize = function (..., alloc=0, cl=NULL,
         # Session aborts in RStudio if no bm set?
         bm <<- bigmemory::big.matrix (nrow=1, ncol=1)
         bm.master <<- bm
+        cls <<- .clsna()
         return()
     }
 
@@ -135,31 +136,10 @@ initialize = function (..., alloc=0, cl=NULL,
     }
 
     profile ("start", "initialize.cluster")
-    cls.created <<- is.null(cl) || is.numeric(cl)
-    if (is.null (cl)) {
-        cl <- max (1, parallel::detectCores() - 1)
-        cls <<- parallel::makeCluster (cl)
-    } else if (is.numeric(cl)) {
-        cls <<- parallel::makeCluster(cl)
-    } else {
-        cls <<- cl
-        cluster_eval ({
-            if (exists(".master")) { rm(.master) }
-            if (exists(".local")) { rm(.local) }
-            NULL
-        })
-    }
+    cluster_start (cl)
 
     slave <<- FALSE
 
-    res <- do.call (c, cluster_eval(exists("partition_even")))
-    if (any(!res)) {
-        cluster_eval ({
-            library (multiplyr)
-            library (lazyeval)
-            NULL
-        })
-    }
     profile ("stop", "initialize.cluster")
 
     profile ("start", "initialize.data")
@@ -231,9 +211,8 @@ initialize = function (..., alloc=0, cl=NULL,
     profile ("stop", "initialize")
 },
 finalize = function () {
-    if (cls.created) {
-        parallel::stopCluster(cls)
-    }
+    "Destructor"
+    cluster_stop (only.if.started=TRUE)
 },
 alloc_col = function (name=".tmp", update=FALSE) {
     "Allocate a new column and optionally update cluster nodes to do the same. Returns the column number"
@@ -300,6 +279,9 @@ calc_group_sizes = function (delay=TRUE) {
 },
 cluster_eval = function (...) {
     "Executes specified expression on cluster"
+    if (!cluster_running()) {
+        stop ("Cluster not running")
+    }
     if (profiling) {
         profile ("start", "cluster_eval")
         res <- parallel::clusterEvalQ (cls, ...)
@@ -310,6 +292,9 @@ cluster_eval = function (...) {
 },
 cluster_export = function (var, var.as=NULL, envir=parent.frame()) {
     "Exports a variable from current environment to the cluster, optionally with a different name"
+    if (!cluster_running()) {
+        stop ("Cluster not running")
+    }
     profile ("start", "cluster_export")
     if (is.null(var.as)) {
         parallel::clusterExport (cls, var, envir)
@@ -327,6 +312,9 @@ cluster_export = function (var, var.as=NULL, envir=parent.frame()) {
 },
 cluster_export_each = function (var, var.as=var, envir=parent.frame()) {
     "Like cluster_export, but exports only one element of each variable to each node"
+    if (!cluster_running()) {
+        stop ("Cluster not running")
+    }
     profile ("start", "cluster_export_each")
     if (length(var) != length(var.as)) {
         stop ("var.as needs to be same length as var: did you mean to do cluster_export_each(c(...))?")
@@ -375,6 +363,47 @@ cluster_profile = function () {
     for (i in res) {
         profile_import (i)
     }
+},
+cluster_running = function () {
+    "Checks whether cluster is running"
+    if (length(cls) > 1) {
+        return (TRUE)
+    } else {
+        return (!is.na(cls))
+    }
+},
+cluster_start = function (cl=NULL) {
+    "Starts a cluster with cl cores if cl is numeric, detectCores()-1 if cl is NULL, or uses specified existing cluster"
+    cls.created <<- is.null(cl) || is.numeric(cl)
+    if (is.null (cl)) {
+        cl <- max (1, parallel::detectCores() - 1)
+        cls <<- parallel::makeCluster (cl)
+    } else if (is.numeric(cl)) {
+        cls <<- parallel::makeCluster(cl)
+    } else {
+        cls <<- cl
+        cluster_eval ({
+            if (exists(".master")) { rm(.master) }
+            if (exists(".local")) { rm(.local) }
+            NULL
+        })
+    }
+    res <- do.call (c, cluster_eval(exists("partition_even")))
+    if (any(!res)) {
+        cluster_eval ({
+            library (multiplyr)
+            library (lazyeval)
+            NULL
+        })
+    }
+},
+cluster_stop = function (only.if.started=FALSE) {
+    "Stops cluster"
+    if (!cluster_running()) { return() }
+    if (cls.created || !only.if.started) {
+        parallel::stopCluster(cls)
+    }
+    cls <<- .clsna()
 },
 compact = function () {
     "Re-sorts data so all rows included after filtering are contiguous (and calls sub.big.matrix in the process)"
@@ -1200,7 +1229,9 @@ show = function (max.row=10) {
     if (grouped) {
         cat (sprintf ("\nGrouped by: %s\n",
                       paste(col.names[group.cols], collapse=", ")))
-        .self$calc_group_sizes (delay=FALSE)
+        if (cluster_running()) {
+            .self$calc_group_sizes (delay=FALSE)
+        }
         cat (sprintf ("Groups: %d\n", group_max))
         gs <- sprintf ("Group sizes: %s\n", paste(group_sizes, collapse=", "))
         if (nchar(gs) >= 80) {
@@ -1213,7 +1244,9 @@ show = function (max.row=10) {
         }
 
     }
-    if (group_partition) {
+    if (!cluster_running()) {
+        cat ("Cluster not currently running\n")
+    } else if (group_partition) {
         res <- cluster_eval ({
             if (.local$empty) { return(0) }
             return (length(.local$group))

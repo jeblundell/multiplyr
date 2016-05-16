@@ -525,6 +525,7 @@ nsa <- function (.self, enabled=TRUE) {
 #' This function results in data being repartitioned evenly across cluster nodes,
 #' ignoring any grouping variables.
 #'
+#' @family cluster functions
 #' @param .self Data frame
 #' @return Data frame
 #' @export
@@ -753,6 +754,29 @@ select_ <- function (.self, ..., .dots) {
 
     del <- which (del)
     .self$free_col (del, update=TRUE)
+
+    return (.self)
+}
+
+#' Shutdown running cluster
+#'
+#' Theoretically a Multiplyr data frame will have its cluster implicitly
+#' shutdown when R's garbage collection kicks in. This function exists to
+#' execute it explicitly. This does not affect any of the data.
+#'
+#' @family cluster functions
+#' @param .self Data frame
+#' @export
+shutdown <- function (.self) {
+    if (!is(.self, "Multiplyr")) {
+        stop ("shutdown operation only valid for Multiplyr objects")
+    } else if (!.self$cluster_running()) {
+        warning ("Attempt to shutdown cluster that's already not running")
+    }
+
+    .self$cluster_profile ()
+    .self$calc_group_sizes(delay=FALSE)
+    .self$cluster_stop (only.if.started=FALSE)
 
     return (.self)
 }

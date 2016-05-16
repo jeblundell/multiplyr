@@ -35,4 +35,8 @@ dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25))
 dat \%>\% partition_group (G)
 }
 }
+\seealso{
+Other cluster functions: \code{\link{partition_even}};
+  \code{\link{shutdown}}
+}
 

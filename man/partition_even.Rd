@@ -16,4 +16,8 @@ Data frame
 This function results in data being repartitioned evenly across cluster nodes,
 ignoring any grouping variables.
 }
+\seealso{
+Other cluster functions: \code{\link{partition_group}},
+  \code{\link{partition_group_}}; \code{\link{shutdown}}
+}
 

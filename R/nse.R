@@ -151,6 +151,7 @@ mutate <- function (.self, ...) {
 #' then not have each group fully accessible, but theoretically is possible to
 #' so (use \code{group_by (..., auto_partition=FALSE}).
 #'
+#' @family cluster functions
 #' @template nse
 #' @export
 #' @examples
