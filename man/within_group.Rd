@@ -31,6 +31,7 @@ dat \%>\% within_group ({
     mdl <- lm (x ~ 1)
 })
 dat \%>\% summarise (x.mean = coef(mdl)[[1]])
+dat \%>\% shutdown()
 }
 }
 \seealso{

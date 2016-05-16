@@ -26,6 +26,7 @@ Takes a list of columns and returns a data frame with only those columns and in 
 \donttest{
 dat <- Multiplyr (x = 1:100, y = 100:1, z = rep(123, 100))
 dat \%>\% select (y, x)
+dat \%>\% shutdown()
 }
 }
 \seealso{

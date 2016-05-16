@@ -32,6 +32,7 @@ In much the same way that \code{define} creates new columns, \code{undefine} wil
 \donttest{
 dat <- Multiplyr (x=1:100, y=100:1)
 dat \%>\% undefine (y)
+dat \%>\% shutdown()
 }
 }
 \seealso{

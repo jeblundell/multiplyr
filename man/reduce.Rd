@@ -34,9 +34,11 @@ there are 3 nodes in the cluster, then there will be 3 summary values.
 \donttest{
 dat <- Multiplyr (x = 1:100)
 dat \%>\% summarise (N = length(x))
+dat \%>\% shutdown()
 
 dat <- Multiplyr (x = 1:100)
 dat \%>\% summarise (N = length(x)) \%>\% reduce(N = sum(N))
+dat \%>\% shutdown()
 }
 }
 \seealso{

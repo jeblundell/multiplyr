@@ -26,6 +26,7 @@ This function is used to alter the data frame, without dropping any columns (unl
 \donttest{
 dat <- Multiplyr (x=1:100)
 dat \%>\% mutate (x=x*2)
+dat \%>\% shutdown()
 }
 }
 \seealso{

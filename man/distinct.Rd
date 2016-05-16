@@ -38,6 +38,7 @@ combinations for each group.
 \donttest{
 dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25))
 dat \%>\% distinct(G)
+dat \%>\% shutdown()
 }
 }
 \seealso{

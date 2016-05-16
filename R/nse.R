@@ -16,6 +16,7 @@
 #' dat <- Multiplyr (x=1:100, G=rep(1:4, each=25))
 #' dat %>% arrange (x)
 #' dat %>% arrange (G, x)
+#' dat %>% shutdown()
 #' }
 arrange <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots(...)
@@ -62,6 +63,7 @@ define <- function (.self, ...) {
 #' \donttest{
 #' dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25))
 #' dat %>% distinct(G)
+#' dat %>% shutdown()
 #' }
 distinct <- function (.self, ..., auto_compact = NULL) {
     .dots <- lazyeval::lazy_dots (...)
@@ -86,6 +88,7 @@ distinct <- function (.self, ..., auto_compact = NULL) {
 #' \donttest{
 #' dat <- Multiplyr (x=1:100, y=rnorm(100))
 #' dat %>% filter (x<50 & y>0)
+#' dat %>% shutdown()
 #' }
 filter <- function (.self, ..., auto_compact=NULL) {
     .dots <- lazyeval::lazy_dots (...)
@@ -118,6 +121,7 @@ filter <- function (.self, ..., auto_compact=NULL) {
 #' \donttest{
 #' dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25))
 #' dat %>% group_by (G) %>% summarise (N=length(x))
+#' dat %>% shutdown()
 #' }
 group_by <- function (.self, ..., auto_partition=NULL) {
     .dots <- lazyeval::lazy_dots (...)
@@ -135,6 +139,7 @@ group_by <- function (.self, ..., auto_partition=NULL) {
 #' \donttest{
 #' dat <- Multiplyr (x=1:100)
 #' dat %>% mutate (x=x*2)
+#' dat %>% shutdown()
 #' }
 mutate <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots (...)
@@ -158,6 +163,7 @@ mutate <- function (.self, ...) {
 #' \donttest{
 #' dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25))
 #' dat %>% partition_group (G)
+#' dat %>% shutdown()
 #' }
 partition_group <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots (...)
@@ -181,9 +187,11 @@ partition_group <- function (.self, ...) {
 #' \donttest{
 #' dat <- Multiplyr (x = 1:100)
 #' dat %>% summarise (N = length(x))
+#' dat %>% shutdown()
 #'
 #' dat <- Multiplyr (x = 1:100)
 #' dat %>% summarise (N = length(x)) %>% reduce(N = sum(N))
+#' dat %>% shutdown()
 #' }
 reduce <- function (.self, ..., auto_compact=NULL) {
     .dots <- lazyeval::lazy_dots (...)
@@ -202,6 +210,7 @@ reduce <- function (.self, ..., auto_compact=NULL) {
 #' dat <- Multiplyr (x = 1:100)
 #' dat %>% rename(y=x)
 #' dat["y"]
+#' dat %>% shutdown()
 #' }
 rename <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots (...)
@@ -219,6 +228,7 @@ rename <- function (.self, ...) {
 #' \donttest{
 #' dat <- Multiplyr (x = 1:100, y = 100:1, z = rep(123, 100))
 #' dat %>% select (y, x)
+#' dat %>% shutdown()
 #' }
 select <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots (...)
@@ -237,6 +247,7 @@ select <- function (.self, ...) {
 #' \donttest{
 #' dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25))
 #' dat %>% group_by (G) %>% summarise (xbar = mean(x))
+#' dat %>% shutdown()
 #' }
 summarise <- function (.self, ..., auto_compact=NULL) {
     .dots <- lazyeval::lazy_dots (...)
@@ -254,6 +265,7 @@ summarise <- function (.self, ..., auto_compact=NULL) {
 #' \donttest{
 #' dat <- Multiplyr (x=1:100, y=100:1)
 #' dat %>% mutate (x=x*2)
+#' dat %>% shutdown()
 #' }
 transmute <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots (...)
@@ -271,6 +283,7 @@ transmute <- function (.self, ...) {
 #' \donttest{
 #' dat <- Multiplyr (x=1:100, y=100:1)
 #' dat %>% undefine (y)
+#' dat %>% shutdown()
 #' }
 undefine <- function (.self, ...) {
     .dots <- lazyeval::lazy_dots (...)

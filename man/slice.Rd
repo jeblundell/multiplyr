@@ -35,6 +35,7 @@ dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25))
 dat \%>\% group_by (G)
 dat \%>\% slice (1:10, each=TRUE)
 dat \%>\% slice (1:10)
+dat \%>\% shutdown()
 }
 }
 \seealso{

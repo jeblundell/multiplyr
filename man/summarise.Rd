@@ -28,6 +28,7 @@ Produces a summary statistic for each group or cluster node (the latter case sho
 \donttest{
 dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25))
 dat \%>\% group_by (G) \%>\% summarise (xbar = mean(x))
+dat \%>\% shutdown()
 }
 }
 \seealso{

@@ -27,6 +27,7 @@ Takes a list of newname=oldname pairs and renames columns
 dat <- Multiplyr (x = 1:100)
 dat \%>\% rename(y=x)
 dat["y"]
+dat \%>\% shutdown()
 }
 }
 \seealso{

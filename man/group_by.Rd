@@ -44,6 +44,7 @@ month provided the same way as above.
 \donttest{
 dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25))
 dat \%>\% group_by (G) \%>\% summarise (N=length(x))
+dat \%>\% shutdown()
 }
 }
 \seealso{

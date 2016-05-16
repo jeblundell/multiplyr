@@ -20,9 +20,13 @@ setOldClass (c("cluster", "SOCKcluster"))
 #' @exportClass Multiplyr
 #' @export Multiplyr
 #' @examples
+#' \donttest{
 #' dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=2)
+#' dat %>% shutdown()
 #' dat.df <- data.frame (x=1:100, G=rep(c("A", "B"), each=50))
 #' dat <- Multiplyr (dat.df, cl=2)
+#' dat %>% shutdown()
+#' }
 #' @field bm                big.matrix (internal representation of data)
 #' @field bm.master         big.matrix for certain operations that need non-subsetted data
 #' @field desc              big.matrix.descriptor for setting up shared memory access

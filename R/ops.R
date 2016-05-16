@@ -430,6 +430,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
 #' dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), length.out=100))
 #' dat %>% group_by (G)
 #' group_sizes (dat)
+#' dat %>% shutdown()
 #' }
 group_sizes <- function (.self) {
     if (!is(.self, "Multiplyr")) {
@@ -505,6 +506,7 @@ mutate_ <- function (.self, ..., .dots) {
 #' \donttest{
 #' dat <- Multiplyr (G=rep(c("A", "B", "C", "D"), length.out=100))
 #' dat %>% nsa () %>% mutate (G=max(G)) %>% nsa(FALSE)
+#' dat %>% shutdown()
 #' }
 nsa <- function (.self, enabled=TRUE) {
     if (!is(.self, "Multiplyr")) {
@@ -675,6 +677,7 @@ reduce_ <- function (.self, ..., .dots, auto_compact = NULL) {
 #' dat %>% group_by (G)
 #' dat %>% ungroup() %>% regroup()
 #' dat %>% summarise (N=length(x))
+#' dat %>% shutdown()
 #' }
 regroup <- function (.self, auto_partition=NULL) {
     if (!is(.self, "Multiplyr")) {
@@ -775,7 +778,9 @@ shutdown <- function (.self) {
     }
 
     .self$cluster_profile ()
-    .self$calc_group_sizes(delay=FALSE)
+    if (.self$grouped) {
+        .self$calc_group_sizes(delay=FALSE)
+    }
     .self$cluster_stop (only.if.started=FALSE)
 
     return (.self)
@@ -803,6 +808,7 @@ shutdown <- function (.self) {
 #' dat %>% group_by (G)
 #' dat %>% slice (1:10, each=TRUE)
 #' dat %>% slice (1:10)
+#' dat %>% shutdown()
 #' }
 slice <- function (.self, rows=NULL, start=NULL, end=NULL, each=FALSE, auto_compact=NULL) {
     if (!is(.self, "Multiplyr")) {
@@ -1092,6 +1098,7 @@ groupwise <- regroup
 #'     mdl <- lm (x ~ 1)
 #' })
 #' dat %>% summarise (x.mean = coef(mdl)[[1]])
+#' dat %>% shutdown()
 #' }
 within_group <- function (.self, expr) {
     if (!is(.self, "Multiplyr")) {

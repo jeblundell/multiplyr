@@ -27,6 +27,7 @@ dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), length.out=100))
 dat \%>\% group_by (G)
 dat \%>\% ungroup() \%>\% regroup()
 dat \%>\% summarise (N=length(x))
+dat \%>\% shutdown()
 }
 }
 

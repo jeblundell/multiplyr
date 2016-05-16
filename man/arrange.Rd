@@ -32,6 +32,7 @@ and so on.
 dat <- Multiplyr (x=1:100, G=rep(1:4, each=25))
 dat \%>\% arrange (x)
 dat \%>\% arrange (G, x)
+dat \%>\% shutdown()
 }
 }
 \seealso{

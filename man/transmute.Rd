@@ -26,6 +26,7 @@ This function works like a combination of \code{mutate} and \code{select}: it ma
 \donttest{
 dat <- Multiplyr (x=1:100, y=100:1)
 dat \%>\% mutate (x=x*2)
+dat \%>\% shutdown()
 }
 }
 \seealso{

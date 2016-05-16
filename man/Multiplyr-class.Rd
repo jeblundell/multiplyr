@@ -123,6 +123,12 @@ to get a better overview: \code{vignette("basics")}
 
 \item{\code{cluster_profile()}}{Update profile totals to include all nodes' totals (also resets nodes' totals to 0)}
 
+\item{\code{cluster_running()}}{Checks whether cluster is running}
+
+\item{\code{cluster_start(cl = NULL)}}{Starts a cluster with cl cores if cl is numeric, detectCores()-1 if cl is NULL, or uses specified existing cluster}
+
+\item{\code{cluster_stop(only.if.started = FALSE)}}{Stops cluster}
+
 \item{\code{compact()}}{Re-sorts data so all rows included after filtering are contiguous (and calls sub.big.matrix in the process)}
 
 \item{\code{describe()}}{Describes data frame (for later use by reattach_slave)}
@@ -138,6 +144,8 @@ to get a better overview: \code{vignette("basics")}
 \item{\code{filter_rows(rows)}}{Only include specified numeric rows. Note that rows refer to all rows in the big.matrix, filtered or otherwise}
 
 \item{\code{filter_vector(rows)}}{Only include these rows (given as a vector of TRUE/FALSE values). Note that this applies to all rows in the big.matrix, filtered or otherwise}
+
+\item{\code{finalize()}}{Destructor}
 
 \item{\code{free_col(cols, update = FALSE)}}{Free specified (numeric) column and optionally update cluster}
 
@@ -169,8 +177,12 @@ to get a better overview: \code{vignette("basics")}
 \item{\code{update_fields(fieldnames)}}{Update specified cluster data frames' field names to be the same as this one's}
 }}
 \examples{
+\donttest{
 dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=2)
+dat \%>\% shutdown()
 dat.df <- data.frame (x=1:100, G=rep(c("A", "B"), each=50))
 dat <- Multiplyr (dat.df, cl=2)
+dat \%>\% shutdown()
+}
 }
 

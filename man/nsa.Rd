@@ -27,6 +27,7 @@ This allows for much faster calculations.
 \donttest{
 dat <- Multiplyr (G=rep(c("A", "B", "C", "D"), length.out=100))
 dat \%>\% nsa () \%>\% mutate (G=max(G)) \%>\% nsa(FALSE)
+dat \%>\% shutdown()
 }
 }
 \seealso{

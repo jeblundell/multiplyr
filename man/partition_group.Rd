@@ -33,6 +33,7 @@ so (use \code{group_by (..., auto_partition=FALSE}).
 \donttest{
 dat <- Multiplyr (x=1:100, G=rep(c("A", "B", "C", "D"), each=25))
 dat \%>\% partition_group (G)
+dat \%>\% shutdown()
 }
 }
 \seealso{
