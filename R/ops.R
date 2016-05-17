@@ -314,7 +314,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
         } else {
             breaks <- which (!apply (sm1[,.cols] == sm2[,.cols], 1, all))
         }
-        sizes <- c(breaks, 100) - c(0, breaks)
+        sizes <- c(breaks, (.self$last - .self$first)+1) - c(0, breaks)
         breaks <- c(0, breaks) + 1
         last <- 0
         for (i in 1:length(breaks)) {
