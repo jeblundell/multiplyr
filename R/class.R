@@ -1264,7 +1264,7 @@ show = function (max.row=10) {
             return (nrow(.local$bm))
         })
         cat (sprintf ("\nData partitioned over %d clusters\n", length(cls)))
-        if (grouped) {
+        if (grouped && length(cls) > 1) {
             cat ("Warning: You may want to run partition_group() as each cluster has partial groups\n")
         } else {
             cat (sprintf ("N per cluster: %s\n", paste(res, collapse=", ")))
