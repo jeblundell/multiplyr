@@ -246,14 +246,13 @@ build_grouped = function () {
     "Build data frames on the cluster (a list called .grouped) with its data subsetted to the appropriate group"
     if (empty) { return() }
     cluster_eval ({
-        if (.local$empty) { return(NULL) }
-
-        .grouped <- list()
-        for (.g in 1:length(.local$group)) {
-            .grp <- .master$group_restrict(.local$group[.g])
-            .grouped <- append(.grouped, list(.grp))
+        if (!.local$empty) {
+            .grouped <- list()
+            for (.g in 1:length(.local$group)) {
+                .grp <- .master$group_restrict(.local$group[.g])
+                .grouped <- append(.grouped, list(.grp))
+            }
         }
-
         NULL
     })
 },
@@ -441,8 +440,9 @@ compact = function () {
 
     #(4) Within each node/group, move data to target range
     cluster_eval ({
-        if (.N == 0) { return(NULL) }
-        .local$bm.master[.dest:(.dest+.N-1),] <- .local$bm[1:.N,]
+        if (.N > 0) {
+            .local$bm.master[.dest:(.dest+.N-1),] <- .local$bm[1:.N,]
+        }
         NULL
     })
 
@@ -890,8 +890,9 @@ partition_even = function (max.row = last) {
         .master$group_partition <- .local$group_partition <- FALSE
 
         .local$empty <- (.last < .first || .last == 0)
-        if (.local$empty) { return(NULL) }
-        .local$local_subset (.first, .last)
+        if (!.local$empty) {
+            .local$local_subset (.first, .last)
+        }
         NULL
     })
 
@@ -1252,16 +1253,24 @@ show = function (max.row=10) {
         cat ("Cluster not currently running\n")
     } else if (group_partition) {
         res <- cluster_eval ({
-            if (.local$empty) { return(0) }
-            return (length(.local$group))
+            if (.local$empty) {
+                .res <- 0
+            } else {
+                .res <- length(.local$group)
+            }
+            .res
         })
         res <- do.call (c, res)
         cat (sprintf ("Group partioned over %d clusters\n", length(cls)))
         cat (sprintf ("Groups per cluster: %s\n", paste(res, collapse=", ")))
     } else {
         res <- cluster_eval ({
-            if (.local$empty) { return(0) }
-            return (nrow(.local$bm))
+            if (.local$empty) {
+                .res <- 0
+            } else {
+                .res <- nrow(.local$bm)
+            }
+            .res
         })
         cat (sprintf ("\nData partitioned over %d clusters\n", length(cls)))
         if (grouped && length(cls) > 1) {
@@ -1307,10 +1316,11 @@ update_fields = function (fieldnames) {
         cluster_eval({
             .master$field (name = .fieldname, value = .fieldval)
             .local$field (name = .fieldname, value = .fieldval)
-            if (.local$empty) { return(NULL) }
-            if (exists(".grouped")) {
-                for (.g in 1:length(.grouped)) {
-                    .grouped[[.g]]$field (name = .fieldname, value = .fieldval)
+            if (!.local$empty) {
+                if (exists(".grouped")) {
+                    for (.g in 1:length(.grouped)) {
+                        .grouped[[.g]]$field (name = .fieldname, value = .fieldval)
+                    }
                 }
             }
             NULL
