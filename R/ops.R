@@ -3,7 +3,7 @@
 if(getRversion() >= "2.15.1") {
     # Avoid NOTEs during check about lack of global variable bindings
     utils::globalVariables(c(".Gbase", ".end", ".expr", ".grouped", ".groups",
-        ".local", ".master", ".rows", ".start", ".tg"))
+        ".local", ".rows", ".start", ".tg"))
 }
 
 #' @rdname arrange
@@ -110,8 +110,8 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
                 all(.self$bm[1, .cols] == .self$bm[2, .cols]), 0, 1)
             return (.self)
         }
-        sm1 <- bigmemory::sub.big.matrix (.self$desc, firstRow=1, lastRow=nrow(.self$bm)-1)
-        sm2 <- bigmemory::sub.big.matrix (.self$desc, firstRow=2, lastRow=nrow(.self$bm))
+        sm1 <- bigmemory::sub.big.matrix (.self$desc.master, firstRow=.self$first,   lastRow=.self$last-1)
+        sm2 <- bigmemory::sub.big.matrix (.self$desc.master, firstRow=.self$first+1, lastRow=.self$last)
         if (length(.cols) == 1) {
             breaks <- which (sm1[,.cols] != sm2[,.cols])
         } else {
@@ -147,12 +147,33 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
             .breaks <- 1:i
             return (i)
         }
-        .sm1 <- bigmemory::sub.big.matrix (.local$desc, firstRow=1, lastRow=nrow(.local$bm)-1)
-        .sm2 <- bigmemory::sub.big.matrix (.local$desc, firstRow=2, lastRow=nrow(.local$bm))
+        .sm1 <- bigmemory::sub.big.matrix (.local$desc.master, firstRow=.local$first,   lastRow=.local$last-1)
+        .sm2 <- bigmemory::sub.big.matrix (.local$desc.master, firstRow=.local$first+1, lastRow=.local$last)
         if (length(.cols) == 1) {
             .breaks <- which (.sm1[,.cols] != .sm2[,.cols])
         } else {
-            .breaks <- which (!apply (.sm1[,.cols] == .sm2[,.cols], 1, all))
+            if (nrow(.local$bm) == 1) {
+                .breaks <- 1
+                .res <- 1
+            } else if (nrow(.local$bm) == 2) {
+                i <- ifelse (all(.local$bm[1, .cols] ==
+                                     .local$bm[2, .cols]), 1, 2)
+                .breaks <- 1:i
+                .res <- i
+            } else {
+                .sm1 <- bigmemory::sub.big.matrix (.local$desc.master, firstRow=.local$first,   lastRow=.local$last-1)
+                .sm2 <- bigmemory::sub.big.matrix (.local$desc.master, firstRow=.local$first+1, lastRow=.local$last)
+                if (length(.cols) == 1) {
+                    .breaks <- which (.sm1[,.cols] != .sm2[,.cols])
+                } else {
+                    .breaks <- which (!apply (.sm1[,.cols] == .sm2[,.cols], 1, all))
+                }
+                rm (.sm1, .sm2)
+                .breaks <- .breaks + 1
+                .res <- .local$last
+            }
+
+            .res
         }
         rm (.sm1, .sm2)
         .breaks <- .breaks + 1
@@ -307,8 +328,8 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
             .self$group_max <- i
             return (.self)
         }
-        sm1 <- bigmemory::sub.big.matrix (.self$desc, firstRow=1, lastRow=nrow(.self$bm)-1)
-        sm2 <- bigmemory::sub.big.matrix (.self$desc, firstRow=2, lastRow=nrow(.self$bm))
+        sm1 <- bigmemory::sub.big.matrix (.self$desc.master, firstRow=.self$first,   lastRow=.self$last-1)
+        sm2 <- bigmemory::sub.big.matrix (.self$desc.master, firstRow=.self$first+1, lastRow=.self$last)
         if (length(.cols) == 1) {
             breaks <- which (sm1[,.cols] != sm2[,.cols])
         } else {
@@ -348,14 +369,33 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
             .local$group_max <- i
             return (i)
         }
-        .sm1 <- bigmemory::sub.big.matrix (.local$desc, firstRow=1, lastRow=nrow(.local$bm)-1)
-        .sm2 <- bigmemory::sub.big.matrix (.local$desc, firstRow=2, lastRow=nrow(.local$bm))
+        .sm1 <- bigmemory::sub.big.matrix (.local$desc.master, firstRow=.local$first,   lastRow=.local$last-1)
+        .sm2 <- bigmemory::sub.big.matrix (.local$desc.master, firstRow=.local$first+1, lastRow=.local$last)
         if (length(.cols) == 1) {
             .breaks <- which (.sm1[,.cols] != .sm2[,.cols])
         } else {
-            .breaks <- which (!apply (.sm1[,.cols] == .sm2[,.cols], 1, all))
+            if (nrow(.local$bm) == 1) {
+                .breaks <- 1
+                .res <- 1
+            } else if (nrow(.local$bm) == 2) {
+                i <- ifelse (all(.local$bm[1, .cols] ==
+                                     .local$bm[2, .cols]), 1, 2)
+                .local$bm[, .local$groupcol] <- 1:i
+                .breaks <- 1:i
+                .local$group_sizes <- rep(1, i)
+                .local$group_max <- i
+                .res <- i
+            } else {
+                .sm1 <- bigmemory::sub.big.matrix (.local$desc.master, firstRow=.local$first,   lastRow=.local$last-1)
+                .sm2 <- bigmemory::sub.big.matrix (.local$desc.master, firstRow=.local$first+1, lastRow=.local$last)
+                if (length(.cols) == 1) {
+                    .breaks <- which (.sm1[,.cols] != .sm2[,.cols])
+                } else {
+                    .breaks <- which (!apply (.sm1[,.cols] == .sm2[,.cols], 1, all))
+                }
+                rm (.sm1, .sm2)
+            }
         }
-        rm (.sm1, .sm2)
 
         .breaks <- c(.breaks, nrow(.local$bm))
         .prev <- 0
@@ -585,9 +625,9 @@ partition_group_ <- function (.self, ..., .dots) {
             return (NULL)
         }
 
-        .local <- .master$copy(shallow=TRUE)
-        .local$empty <- FALSE
-        .local$group <- .groups
+        if (!.local$empty) {
+            .local$group <- .groups
+        }
 
         NULL
     })

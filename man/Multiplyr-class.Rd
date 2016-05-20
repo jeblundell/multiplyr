@@ -34,7 +34,7 @@ to get a better overview: \code{vignette("basics")}
 
 \item{\code{bm.master}}{big.matrix for certain operations that need non-subsetted data}
 
-\item{\code{desc}}{big.matrix.descriptor for setting up shared memory access}
+\item{\code{desc.master}}{big.matrix.descriptor for setting up shared memory access}
 
 \item{\code{cls}}{SOCKcluster created by parallel package}
 
@@ -119,7 +119,7 @@ to get a better overview: \code{vignette("basics")}
 
 \item{\code{cluster_export_each(var, var.as = var, envir = parent.frame())}}{Like cluster_export, but exports only one element of each variable to each node}
 
-\item{\code{cluster_export_self()}}{Exports this data frame to the cluster (naming it .master)}
+\item{\code{cluster_export_self()}}{Exports this data frame to the cluster (naming it .local)}
 
 \item{\code{cluster_profile()}}{Update profile totals to include all nodes' totals (also resets nodes' totals to 0)}
 

@@ -29,7 +29,7 @@ setOldClass (c("cluster", "SOCKcluster"))
 #' }
 #' @field bm                big.matrix (internal representation of data)
 #' @field bm.master         big.matrix for certain operations that need non-subsetted data
-#' @field desc              big.matrix.descriptor for setting up shared memory access
+#' @field desc.master       big.matrix.descriptor for setting up shared memory access
 #' @field cls               SOCKcluster created by parallel package
 #' @field slave             Flag indicating whether cluster_* operations are valid
 #' @field factor.cols       Which columns are factors/character
@@ -67,7 +67,7 @@ setOldClass (c("cluster", "SOCKcluster"))
 Multiplyr <- setRefClass("Multiplyr",
     fields=list(bm              = "big.matrix",
                 bm.master       = "big.matrix",
-                desc            = "big.matrix.descriptor",
+                desc.master     = "big.matrix.descriptor",
                 cls             = "SOCKcluster",
                 cls.created     = "logical",
                 slave           = "logical",
@@ -153,8 +153,7 @@ initialize = function (..., alloc=0, cl=NULL,
     col.names <<- c(vnames, rep(NA, alloc), special)
     order.cols <<- c(seq_len(length(vars)), rep(0, alloc), rep(0, length(special)))
 
-    bm <<- bigmemory::big.matrix (nrow=nrows, ncol=ncols)
-    bm.master <<- bm
+    bm.master <<- bm <<- bigmemory::big.matrix (nrow=nrows, ncol=ncols)
 
     first <<- 1
     last <<- nrows
@@ -207,7 +206,7 @@ initialize = function (..., alloc=0, cl=NULL,
     group_sizes_stale <<- FALSE
     nullframe <<- FALSE
 
-    desc <<- bigmemory.sri::describe (bm)
+    desc.master <<- bigmemory.sri::describe (bm)
 
     cluster_export_self ()
 
@@ -246,12 +245,12 @@ build_grouped = function () {
     "Build data frames on the cluster (a list called .grouped) with its data subsetted to the appropriate group"
     if (empty) { return() }
     cluster_eval ({
-        if (.local$empty) { return(NULL) }
-
-        .grouped <- list()
-        for (.g in 1:length(.local$group)) {
-            .grp <- .master$group_restrict(.local$group[.g])
-            .grouped <- append(.grouped, list(.grp))
+        if (!.local$empty) {
+            .grouped <- list()
+            for (.g in 1:length(.local$group)) {
+                .grp <- .local$group_restrict(.local$group[.g])
+                .grouped <- append(.grouped, list(.grp))
+            }
         }
 
         NULL
@@ -333,12 +332,11 @@ cluster_export_each = function (var, var.as=var, envir=parent.frame()) {
     profile ("stop", "cluster_export_each")
 },
 cluster_export_self = function () {
-    "Exports this data frame to the cluster (naming it .master)"
-    #Replaces cluster_export (".master")
+    "Exports this data frame to the cluster (naming it .local)"
     .res <- .self$describe()
     cluster_export (".res")
     cluster_eval({
-        .master <- Multiplyr(.res)
+        .local <- Multiplyr(.res)
         NULL
     })
 },
@@ -387,7 +385,6 @@ cluster_start = function (cl=NULL) {
     } else {
         cls <<- cl
         cluster_eval ({
-            if (exists(".master")) { rm(.master) }
             if (exists(".local")) { rm(.local) }
             NULL
         })
@@ -449,21 +446,19 @@ compact = function () {
     #(5) Submatrix master, propagate to local
     filtered <<- FALSE
     if (last > 0) {
-        bm <<- bigmemory::sub.big.matrix (desc, firstRow=1, lastRow=last)
-        desc <<- sm_desc_update (desc, 1, last)
+        bm <<- bm.master <<- bigmemory::sub.big.matrix (desc.master, firstRow=1, lastRow=last)
+        desc.master <<- sm_desc_update (desc.master, 1, last)
         cluster_export ("last", ".last")
         cluster_eval ({
-            .master$last <- .last
-            .master$filtered <- FALSE
-            .master$bm <- bigmemory::sub.big.matrix (.master$desc, firstRow=1, lastRow=.master$last)
-            .master$desc <- sm_desc_update (.master$desc, 1, .master$last)
-            rm (.local)
+            .local$filtered <- FALSE
+            .local$desc.master <- sm_desc_update (.local$desc.master, 1, .last)
+            .local$bm.master <- bigmemory.sri::attach.resource (.local$desc.master)
             NULL
         })
     } else {
         empty <<- TRUE
         cluster_eval ({
-            .master$empty <- TRUE
+            .local$empty <- TRUE
             NULL
         })
     }
@@ -666,7 +661,6 @@ free_col = function (cols, update=FALSE) {
     if (update) {
         cluster_export ("cols", ".cols")
         cluster_eval ({
-            .master$free_col (.cols, update=FALSE)
             .local$free_col (.cols, update=FALSE)
             if (exists(".grouped")) {
                 for (.grp in .grouped) {
@@ -815,19 +809,18 @@ group_restrict = function (group=0) {
     grp$group <- group
 
     #presumes that dat is sorted by grouping column first
-    rows <- which (grp$bm[, grp$groupcol] == grp$group)
+    rows <- which (bm.master[, groupcol] == group)
     if (length(rows) == 0) {
         grp$empty <- TRUE
         grp$profile ("stop", "group_restrict")
         return (grp)
     }
     lims <- range(rows)
-    grp$bm <- bigmemory::sub.big.matrix(grp$desc,
-                                          firstRow=lims[1],
-                                          lastRow=lims[2])
-    grp$desc <- sm_desc_update (grp$desc, lims[1], lims[2])
     grp$first <- lims[1]
     grp$last <- lims[2]
+    tryCatch(
+        grp$bm <- bigmemory::sub.big.matrix(grp$desc.master, firstRow=grp$first, lastRow=grp$last)
+    , error = function (e) { stop(sprintf("sub big matrix fail: %d:%d (%d:%d)", grp$first, grp$last, first, last)) })
     grp$empty <- FALSE
     grp$profile ("stop", "group_restrict")
     return (grp)
@@ -837,8 +830,7 @@ local_subset = function (first, last) {
     if (empty) { return() }
     first <<- first
     last <<- last
-    bm <<- bigmemory::sub.big.matrix (desc, firstRow=first, lastRow=last)
-    desc <<- sm_desc_update (desc, first, last)
+    bm <<- bigmemory::sub.big.matrix (desc.master, firstRow=first, lastRow=last)
 },
 partition_even = function (max.row = last) {
     "Partitions data evenly across cluster, irrespective of grouping boundaries"
@@ -854,10 +846,6 @@ partition_even = function (max.row = last) {
 
     if (max.row == 0) {
         cluster_eval ({
-            if (exists(".master")) {
-                .master$empty <- TRUE
-                .master$grouped <- .master$group_partition <- FALSE
-            }
             if (exists(".local")) {
                 .local$empty <- TRUE
                 .local$grouped <- .local$group_partition <- FALSE
@@ -881,13 +869,8 @@ partition_even = function (max.row = last) {
     }
 
     cluster_eval ({
-        if (!exists(".local")) {
-            .local <- .master$copy (shallow=TRUE)
-        }
-        .local$desc <- .master$desc
-
-        .master$grouped <- .local$grouped <- FALSE
-        .master$group_partition <- .local$group_partition <- FALSE
+        .local$grouped <- FALSE
+        .local$group_partition <- FALSE
 
         .local$empty <- (.last < .first || .last == 0)
         if (.local$empty) { return(NULL) }
@@ -983,8 +966,7 @@ reattach_slave = function (descres) {
         field(nm[i], descres[[i]])
     }
 
-    bm <<- bigmemory::attach.big.matrix(desc)
-    bm.master <<- bm
+    bm.master <<- bm <<- bigmemory::attach.big.matrix(desc.master)
     slave <<- TRUE
     bindenv <<- new.env()
     cls <<- .clsna()
@@ -1305,7 +1287,6 @@ update_fields = function (fieldnames) {
         .fieldval <- .self$field(name=.fieldname)
         cluster_export (c(".fieldname", ".fieldval"))
         cluster_eval({
-            .master$field (name = .fieldname, value = .fieldval)
             .local$field (name = .fieldname, value = .fieldval)
             if (.local$empty) { return(NULL) }
             if (exists(".grouped")) {

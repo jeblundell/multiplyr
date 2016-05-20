@@ -91,8 +91,8 @@ test_transition <- function (.self, cols, rows) {
     rows.i <- which (!is.na(rows)) #subsetting gets stroppy with NA
     rows <- rows[rows.i]
 
-    sm1 <- bigmemory::sub.big.matrix (.self$desc, firstRow=1, lastRow=nrow(.self$bm)-1)
-    sm2 <- bigmemory::sub.big.matrix (.self$desc, firstRow=2, lastRow=nrow(.self$bm))
+    sm1 <- bigmemory::sub.big.matrix (.self$desc.master, firstRow=.self$first,   lastRow=.self$last-1)
+    sm2 <- bigmemory::sub.big.matrix (.self$desc.master, firstRow=.self$first+1, lastRow=.self$last)
     if (length(cols) == 1 || length(rows) == 1) {
         tg.a <- any(sm1[rows, cols] != sm2[rows, cols])
     } else {
