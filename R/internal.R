@@ -37,19 +37,20 @@
     return (nm)
 }
 
-#' Returns NA as a cluster object
+#' Returns NA of a particular class
 #'
 #' This is a horrible kludge needed so copy() doesn't complain about
 #' assigning NULL to a field when there's no cluster, i.e. for the slave nodes
 #'
-#' @name clsna
-#' @return NA with class set to SOCKcluster
+#' @name NA_class_
+#' @param type Name of class
+#' @return NA with class set to type
 #' @keywords internal
 #' @export
-.clsna <- function () {
-    clsna <- NA
-    class(clsna) <- "SOCKcluster"
-    return (clsna)
+NA_class_ <- function (type) {
+    res <- NA
+    class(res) <- type
+    return (res)
 }
 
 #' Update description of a big.matrix after a row subset (internal)

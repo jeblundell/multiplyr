@@ -118,7 +118,7 @@ initialize = function (..., alloc=0, cl=NULL,
         # Session aborts in RStudio if no bm set?
         bm <<- bigmemory::big.matrix (nrow=1, ncol=1)
         bm.master <<- bm
-        cls <<- .clsna()
+        cls <<- NA_class_("SOCKcluster")
         return()
     }
 
@@ -404,7 +404,7 @@ cluster_stop = function (only.if.started=FALSE) {
     if (cls.created || !only.if.started) {
         parallel::stopCluster(cls)
     }
-    cls <<- .clsna()
+    cls <<- NA_class_("SOCKcluster")
 },
 compact = function () {
     "Re-sorts data so all rows included after filtering are contiguous (and calls sub.big.matrix in the process)"
@@ -969,7 +969,7 @@ reattach_slave = function (descres) {
     bm.master <<- bm <<- bigmemory::attach.big.matrix(desc.master)
     slave <<- TRUE
     bindenv <<- new.env()
-    cls <<- .clsna()
+    cls <<- NA_class_("SOCKcluster")
 },
 rebuild_grouped = function () {
     "Executes destroy_grouped(), followed by build_grouped()"
