@@ -62,8 +62,6 @@ to get a better overview: \code{vignette("basics")}
 
 \item{\code{group.cols}}{Which columns are involved in grouping}
 
-\item{\code{group_sizes}}{Size of each group (NB not necessarily current: see \code{calc_group_sizes})}
-
 \item{\code{group_max}}{Number of groups}
 
 \item{\code{bindenv}}{Environment for \code{within_group} etc. operations}
@@ -86,7 +84,7 @@ to get a better overview: \code{vignette("basics")}
 
 \item{\code{auto_partition}}{Re-partition after group_by}
 
-\item{\code{group_sizes_stale}}{Flag indicating that group_sizes need to be re-calculated}
+\item{\code{group_sizes_stale}}{Flag indicating that group sizes need to be re-calculated}
 
 \item{\code{profile_names}}{Profile names}
 
@@ -158,7 +156,7 @@ to get a better overview: \code{vignette("basics")}
 
 \item{\code{local_subset(first, last)}}{Applies sub.big.matrix to bm}
 
-\item{\code{partition_even(max.row = last)}}{Partitions data evenly across cluster, irrespective of grouping boundaries}
+\item{\code{partition_even(extend = FALSE)}}{Partitions data evenly across cluster, irrespective of grouping boundaries}
 
 \item{\code{profile(action = NULL, name = NULL)}}{Profiling function: action may be start or stop. If no parameters, this returns a data.frame of profiling timings}
 

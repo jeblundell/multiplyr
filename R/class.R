@@ -43,7 +43,6 @@ setOldClass (c("cluster", "SOCKcluster"))
 #' @field group             Which group IDs are assigned to this data frame
 #' @field group_partition   Flag indicating that \code{partition_group()} has been used
 #' @field group.cols        Which columns are involved in grouping
-#' @field group_sizes       Size of each group (NB not necessarily current: see \code{calc_group_sizes})
 #' @field group_max         Number of groups
 #' @field bindenv           Environment for \code{within_group} etc. operations
 #' @field first             Subsetting: first row
@@ -55,7 +54,7 @@ setOldClass (c("cluster", "SOCKcluster"))
 #' @field filtered          Flag indicating that this data frame has had filtering applied
 #' @field auto_compact      Compact data after each filtering etc. operation
 #' @field auto_partition    Re-partition after group_by
-#' @field group_sizes_stale Flag indicating that group_sizes need to be re-calculated
+#' @field group_sizes_stale Flag indicating that group sizes need to be re-calculated
 #' @field profile_names     Profile names
 #' @field profile_user      Total user time for each profile
 #' @field profile_sys       Total system time for each profile
@@ -68,6 +67,7 @@ Multiplyr <- setRefClass("Multiplyr",
     fields=list(bm              = "big.matrix",
                 bm.master       = "big.matrix",
                 desc.master     = "big.matrix.descriptor",
+                group_cache     = "big.matrix",
                 cls             = "SOCKcluster",
                 cls.created     = "logical",
                 slave           = "logical",
@@ -82,7 +82,6 @@ Multiplyr <- setRefClass("Multiplyr",
                 group           = "numeric",
                 group_partition = "logical",
                 group.cols      = "numeric",
-                group_sizes     = "numeric",
                 group_max       = "numeric",
                 bindenv         = "environment",
                 first           = "numeric",
@@ -119,6 +118,7 @@ initialize = function (..., alloc=0, cl=NULL,
         bm <<- bigmemory::big.matrix (nrow=1, ncol=1)
         bm.master <<- bm
         cls <<- NA_class_("SOCKcluster")
+        group_cache <<- NA_class_("big.matrix")
         return()
     }
 
@@ -205,6 +205,7 @@ initialize = function (..., alloc=0, cl=NULL,
     auto_partition <<- auto_partition
     group_sizes_stale <<- FALSE
     nullframe <<- FALSE
+    group_cache <<- NA_class_("big.matrix")
 
     desc.master <<- bigmemory.sri::describe (bm)
 
@@ -258,6 +259,9 @@ build_grouped = function () {
 },
 calc_group_sizes = function (delay=TRUE) {
     "Calculate group sizes (if delay=TRUE then this will just mark group sizes as being stale)"
+    if (!grouped) {
+        return ()
+    }
     if (delay) {
         group_sizes_stale <<- TRUE
         return()
@@ -267,15 +271,29 @@ calc_group_sizes = function (delay=TRUE) {
     }
 
     if (empty) {
-        group_sizes <<- rep(0, group_max)
-    } else if (filtered) {
-        bm[, tmpcol] <<- bm[, groupcol] * bm[, filtercol]
-        group_sizes <<- sapply(seq_len(group_max), function (g) {
-            sum(.self$bm[, .self$tmpcol] == g)
-        })
+        group_cache[, 3] <<- rep(0, group_max)
+    } else if (!filtered) {
+        # FIXME: Maybe make parallel if group_max > something?
+        group_cache[, 3] <<- (group_cache[, 2] - group_cache[, 1]) + 1
     } else {
-        group_sizes <<- sapply(seq_len(group_max), function (g) {
-            sum(.self$bm[, .self$groupcol] == g)
+        nr <- distribute (group_cache[, 3], N)
+        N <- length(cls)
+        if (group_max == 1) {
+            Gi <- distribute (1, N)
+            Gi[Gi == 0] <- NA
+        } else {
+            Gi <- distribute (G, N)
+        }
+        cluster_export_each ("Gi", ".groups")
+
+        cluster_eval ({
+            if (!(NA %in% .groups)) {
+                for (.g in .groups) {
+                    .grp <- bigmemory.sri::attach.resource (sm_desc_group (.local$desc.master, .g))
+                    .local$group_cache [.g, 3] <- sum(.grp[, .local$filtercol])
+                }
+            }
+            NULL
         })
     }
     group_sizes_stale <<- FALSE
@@ -795,6 +813,9 @@ get_data = function (i=NULL, j=NULL, nsa=NULL, drop=TRUE) {
 
     return (out)
 },
+group_cache_attach = function (descres) {
+    group_cache <<- bigmemory.sri::attach.resource(descres)
+},
 group_restrict = function (group=0) {
     "Returns a new Multiplyr data frame with data restricted to specified group ID"
     if (group <= 0) {
@@ -805,22 +826,19 @@ group_restrict = function (group=0) {
     }
     grp <- copy (shallow=TRUE)
     grp$profile ("start", "group_restrict")
-    grp$group_sizes <- grp$group_sizes[grp$group == group]
     grp$group <- group
 
-    #presumes that dat is sorted by grouping column first
-    rows <- which (bm.master[, groupcol] == group)
-    if (length(rows) == 0) {
+    grp$first <- group_cache[group, 1]
+    grp$last <- group_cache[group, 2]
+    if (grp$first <= 0 || grp$last < grp$first) {
+        grp$bm <- NA_class_ ("big.matrix")
         grp$empty <- TRUE
         grp$profile ("stop", "group_restrict")
         return (grp)
     }
-    lims <- range(rows)
-    grp$first <- lims[1]
-    grp$last <- lims[2]
-    tryCatch(
-        grp$bm <- bigmemory::sub.big.matrix(grp$desc.master, firstRow=grp$first, lastRow=grp$last)
-    , error = function (e) { stop(sprintf("sub big matrix fail: %d:%d (%d:%d)", grp$first, grp$last, first, last)) })
+    grp$bm <- bigmemory.sri::attach.resource(sm_desc_group(.self, group))
+    grp$first <- group_cache[group, 1]
+    grp$last <- group_cache[group, 2]
     grp$empty <- FALSE
     grp$profile ("stop", "group_restrict")
     return (grp)
@@ -830,11 +848,11 @@ local_subset = function (first, last) {
     if (empty) { return() }
     first <<- first
     last <<- last
-    bm <<- bigmemory::sub.big.matrix (desc.master, firstRow=first, lastRow=last)
+    bm <<- bigmemory.sri::attach.resource (sm_desc_subset (.self, first, last))
 },
-partition_even = function (max.row = last) {
+partition_even = function (extend=FALSE) {
     "Partitions data evenly across cluster, irrespective of grouping boundaries"
-    if (empty || max.row == 0) { return() }
+    if (empty) { return() }
     N <- length(cls)
 
     profile ("start", "partition_even")
@@ -844,7 +862,7 @@ partition_even = function (max.row = last) {
     }
     grouped <<- group_partition <<- FALSE
 
-    if (max.row == 0) {
+    if (last == 0) {
         cluster_eval ({
             if (exists(".local")) {
                 .local$empty <- TRUE
@@ -856,14 +874,18 @@ partition_even = function (max.row = last) {
         return()
     }
 
-    nr <- distribute (max.row, N)
-    if (max.row < N) {
-        nr[nr != 0] <- 1:max.row
+    nr <- distribute (last, N)
+    if (last < N) {
+        nr[nr != 0] <- 1:last
         cluster_export_each ("nr", ".first")
         cluster_export_each ("nr", ".last")
     } else {
         .last <- cumsum(nr)
         .first <- c(0, .last)[1:N] + 1
+        if (extend) { 
+            .last <- .last + 1
+            .last[N] <- last
+        }
         cluster_export_each (".first")
         cluster_export_each (".last")
     }
@@ -1219,12 +1241,12 @@ show = function (max.row=10) {
             .self$calc_group_sizes (delay=FALSE)
         }
         cat (sprintf ("Groups: %d\n", group_max))
-        gs <- sprintf ("Group sizes: %s\n", paste(group_sizes, collapse=", "))
+        gs <- sprintf ("Group sizes: %s\n", paste(group_cache[, 3], collapse=", "))
         if (nchar(gs) >= 80) {
             cat(sprintf ("Group sizes: median %.1f (IQR %.0f-%.0f, range %.0f-%.0f)\n",
-                         median(group_sizes), quantile(group_sizes, 0.25),
-                         quantile(group_sizes, 0.75), min(group_sizes),
-                         max(group_sizes)))
+                         median(group_cache[, 3]), quantile(group_cache[, 3], 0.25),
+                         quantile(group_cache[, 3], 0.75), min(group_cache[, 3]),
+                         max(group_cache[, 3])))
         } else {
             cat (gs)
         }

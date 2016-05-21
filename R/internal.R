@@ -53,6 +53,46 @@ NA_class_ <- function (type) {
     return (res)
 }
 
+#' Returns big.matrix descriptor offset by 1 (for row by row comparisons)
+#'
+#' @param .self Data frame
+#' @param start 1 or 2
+#' @return big.matrix.descriptor subset to 1:last-1 or 2:last
+#' @export
+#' @keywords internal
+sm_desc_comp <- function (.self, start) {
+    if (start == 1) {
+        return (sm_desc_update (.self$desc.master, .self$first, .self$last-1))
+    } else if (start == 2) {
+        return (sm_desc_update (.self$desc.master, .self$first+1, .self$last))
+    }
+}
+
+#' Returns a big.matrix descriptor for a particular group ID
+#'
+#' @param .self Data frame
+#' @param group_id Group ID (from groupcol)
+#' @return big.matrix.descriptor that would restrict to this group
+#' @export
+#' @keywords internal
+sm_desc_group <- function (.self, group_id) {
+    return (sm_desc_update(.self$desc.master,
+                           .self$group_cache[group_id, 1],
+                           .self$group_cache[group_id, 2]))
+}
+
+#' Returns big.matrix descriptor limited to particular start/end row
+#'
+#' @param .self Data frame
+#' @param first First row
+#' @param last Last row
+#' @return big.matrix.descriptor that would restrict to this group
+#' @export
+#' @keywords internal
+sm_desc_subset <- function (.self, first, last) {
+    return (sm_desc_update(.self$desc.master, first, last))
+}
+
 #' Update description of a big.matrix after a row subset (internal)
 #'
 #' Generating a new big.matrix.descriptor or doing sub.big.matrix on something
@@ -92,8 +132,8 @@ test_transition <- function (.self, cols, rows) {
     rows.i <- which (!is.na(rows)) #subsetting gets stroppy with NA
     rows <- rows[rows.i]
 
-    sm1 <- bigmemory::sub.big.matrix (.self$desc.master, firstRow=.self$first,   lastRow=.self$last-1)
-    sm2 <- bigmemory::sub.big.matrix (.self$desc.master, firstRow=.self$first+1, lastRow=.self$last)
+    sm1 <- bigmemory.sri::attach.resource(sm_desc_comp (.self, 1))
+    sm2 <- bigmemory.sri::attach.resource(sm_desc_comp (.self, 2))
     if (length(cols) == 1 || length(rows) == 1) {
         tg.a <- any(sm1[rows, cols] != sm2[rows, cols])
     } else {
