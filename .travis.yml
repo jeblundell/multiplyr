@@ -1,5 +1,5 @@
 language: r
-sudo: false
+sudo: true
 cache: packages
 branches:
     only:
@@ -14,4 +14,4 @@ os:
     - linux
     - osx
 before_install:
-    - tlmgr install index
+    - sudo tlmgr install index
