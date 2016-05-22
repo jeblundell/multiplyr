@@ -494,6 +494,16 @@ compact = function () {
         .self$sort (decreasing=FALSE, cols=rg_cols, with.group=FALSE)
         nonempty <- (1:group_max) %in% .self$bm[, .self$groupcol]
         group_cache[!nonempty, 1:3] <<- rep(0, 3)
+        nonempty <- which (nonempty)
+
+        #FIXME: parallel
+        for (g in nonempty) {
+            w <- which(bm[, groupcol] == g)
+            group_cache[g, 1] <<- min(w)
+            group_cache[g, 2] <<- max(w)
+            group_cache[g, 3] <<- length(w)
+        }
+
         # partition_group
         # rebuild_grouped
     }
