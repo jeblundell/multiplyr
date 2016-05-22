@@ -1,5 +1,11 @@
 language: r
+sudo: false
 cache: packages
+branches:
+    only:
+        - master
+        - stable
+        - develop
 r:
     - oldrel
     - release
@@ -7,3 +13,5 @@ r:
 os:
     - linux
     - osx
+before_install:
+    - tlmgr install index
