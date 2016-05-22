@@ -1,3 +1,8 @@
+[![Build Status](https://travis-ci.org/jeblundell/multiplyr.svg?branch=develop)](https://travis-ci.org/jeblundell/multiplyr) [![](http://www.r-pkg.org/badges/version/multiplyr)](https://cran.r-project.org/web/packages/multiplyr/index.html) [![](http://cranlogs.r-pkg.org/badges/grand-total/multiplyr)](http://cran.rstudio.com/web/packages/grand-total/multiplyr/index.html)
+
+Overview
+--------
+
 multiplyr provides a simple interface for manipulating data combined with easy parallel processing capabilities. It's intended that this works very similarly (eventually almost interchangably) with the dplyr package, as many people may be familiar with that already.
 
 ``` r
