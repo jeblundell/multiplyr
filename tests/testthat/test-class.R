@@ -363,7 +363,7 @@ test_that ("$calc_group_sizes() works appropriately", {
     dat %>% group_by (G)
 
     dat$calc_group_sizes (delay=FALSE)
-    expect_equal (dat$group_sizes, rep(25, 4))
+    expect_equal (dat$group_cache[, 3], rep(25, 4))
 
     dat$bm[, dat$filtercol] <- rep(c(rep(1, 10), rep(0, 15)), 4)
     dat$filtered <- TRUE
@@ -372,27 +372,27 @@ test_that ("$calc_group_sizes() works appropriately", {
     dat$group_sizes_stale <- FALSE
     dat$calc_group_sizes(delay=TRUE)
     expect_true (dat$group_sizes_stale)
-    expect_equal (dat$group_sizes, rep(25, 4))
+    expect_equal (dat$group_cache[, 3], rep(25, 4))
 
     #delay=TRUE should not change group sizes even when stale
     dat$group_sizes_stale <- TRUE
     dat$calc_group_sizes(delay=TRUE)
-    expect_equal (dat$group_sizes, rep(25, 4))
+    expect_equal (dat$group_cache[, 3], rep(25, 4))
 
     #delay=FALSE should not change sizes if not stale
     dat$group_sizes_stale <- FALSE
     dat$calc_group_sizes(delay=FALSE)
-    expect_equal (dat$group_sizes, rep(25, 4))
+    expect_equal (dat$group_cache[, 3], rep(25, 4))
 
     #delay=FALSE with stale=TRUE should update
     dat$group_sizes_stale <- TRUE
     dat$calc_group_sizes(delay=FALSE)
-    expect_equal (dat$group_sizes, rep(10, 4))
+    expect_equal (group_sizes(dat), rep(10, 4))
 
     dat$empty <- TRUE
     dat$group_sizes_stale <- TRUE
     dat$calc_group_sizes (delay=FALSE)
-    expect_equal (dat$group_sizes, rep(0, 4))
+    expect_equal (group_sizes(dat), rep(0, 4))
 })
 
 test_that ("$cluster_eval(...) evaluates ...", {
