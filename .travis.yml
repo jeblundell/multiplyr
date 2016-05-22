@@ -14,4 +14,5 @@ os:
     - linux
     - osx
 before_install:
-    - sudo tlmgr install index
+    - sudo apt-get update -qq
+    - sudo apt-get install texlive-latex-extra 
