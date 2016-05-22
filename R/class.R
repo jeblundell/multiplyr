@@ -463,7 +463,7 @@ compact = function () {
     #(5) Submatrix master, propagate to local
     filtered <<- FALSE
     if (last > 0) {
-        bm <<- bm.master <<- bigmemory::sub.big.matrix (desc.master, firstRow=1, lastRow=last)
+        bm <<- bigmemory::sub.big.matrix (desc.master, firstRow=1, lastRow=last)
         desc.master <<- sm_desc_update (desc.master, 1, last)
         cluster_export ("last", ".last")
         cluster_eval ({
