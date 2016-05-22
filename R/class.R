@@ -276,20 +276,19 @@ calc_group_sizes = function (delay=TRUE) {
         # FIXME: Maybe make parallel if group_max > something?
         group_cache[, 3] <<- (group_cache[, 2] - group_cache[, 1]) + 1
     } else {
-        nr <- distribute (group_cache[, 3], N)
         N <- length(cls)
         if (group_max == 1) {
             Gi <- distribute (1, N)
             Gi[Gi == 0] <- NA
         } else {
-            Gi <- distribute (G, N)
+            Gi <- distribute (group_cache[, 3], N)
         }
         cluster_export_each ("Gi", ".groups")
 
         cluster_eval ({
             if (!(NA %in% .groups)) {
                 for (.g in .groups) {
-                    .grp <- bigmemory.sri::attach.resource (sm_desc_group (.local$desc.master, .g))
+                    .grp <- bigmemory.sri::attach.resource (sm_desc_group (.local, .g))
                     .local$group_cache [.g, 3] <- sum(.grp[, .local$filtercol])
                 }
             }
@@ -828,9 +827,14 @@ group_restrict = function (group=0) {
     grp$profile ("start", "group_restrict")
     grp$group <- group
 
-    grp$first <- group_cache[group, 1]
-    grp$last <- group_cache[group, 2]
-    if (grp$first <= 0 || grp$last < grp$first) {
+    if (!empty) {
+        grp$first <- group_cache[group, 1]
+        grp$last <- group_cache[group, 2]
+        if (grp$first <= 0 || grp$last < grp$first) {
+            grp$empty <- TRUE
+        }
+    }
+    if (grp$empty) {
         grp$bm <- NA_class_ ("big.matrix")
         grp$empty <- TRUE
         grp$profile ("stop", "group_restrict")
@@ -882,7 +886,7 @@ partition_even = function (extend=FALSE) {
     } else {
         .last <- cumsum(nr)
         .first <- c(0, .last)[1:N] + 1
-        if (extend) { 
+        if (extend) {
             .last <- .last + 1
             .last[N] <- last
         }
