@@ -30,77 +30,77 @@ to get a better overview: \code{vignette("basics")}
 \section{Fields}{
 
 \describe{
+\item{\code{auto_compact}}{Compact data after each filtering etc. operation}
+
+\item{\code{auto_partition}}{Re-partition after group_by}
+
+\item{\code{bindenv}}{Environment for \code{within_group} etc. operations}
+
 \item{\code{bm}}{big.matrix (internal representation of data)}
 
 \item{\code{bm.master}}{big.matrix for certain operations that need non-subsetted data}
 
-\item{\code{desc.master}}{big.matrix.descriptor for setting up shared memory access}
-
 \item{\code{cls}}{SOCKcluster created by parallel package}
 
-\item{\code{slave}}{Flag indicating whether cluster_* operations are valid}
+\item{\code{col.names}}{Name of each column; names starting "." are special and NA is a free column}
+
+\item{\code{desc.master}}{big.matrix.descriptor for setting up shared memory access}
+
+\item{\code{empty}}{Flag indicating that this data frame is empty}
 
 \item{\code{factor.cols}}{Which columns are factors/character}
 
 \item{\code{factor.levels}}{List (same length as factor.cols) containing corresponding factor levels}
 
-\item{\code{type.cols}}{Column type (0=numeric, 1=character, 2=factor)}
+\item{\code{filtercol}}{Which column in bm indicates filtering (1=included, 0=excluded)}
+
+\item{\code{filtered}}{Flag indicating that this data frame has had filtering applied}
+
+\item{\code{first}}{Subsetting: first row}
+
+\item{\code{group.cols}}{Which columns are involved in grouping}
+
+\item{\code{groupcol}}{Which column in bm contains the group ID}
+
+\item{\code{grouped}}{Flag indicating whether grouped}
+
+\item{\code{group_max}}{Number of groups}
+
+\item{\code{group_partition}}{Flag indicating that \code{partition_group()} has been used}
+
+\item{\code{group_sizes_stale}}{Flag indicating that group sizes need to be re-calculated}
+
+\item{\code{group}}{Which group IDs are assigned to this data frame}
+
+\item{\code{last}}{Subsetting: last row}
+
+\item{\code{nsamode}}{Flag indicating whether data frame is in no-strings-attached mode}
 
 \item{\code{order.cols}}{Display order of columns}
 
 \item{\code{pad}}{Number of spaces to pad each column or 0 for dynamic}
 
-\item{\code{col.names}}{Name of each column; names starting "." are special and NA is a free column}
-
-\item{\code{nsamode}}{Flag indicating whether data frame is in no-strings-attached mode}
-
-\item{\code{grouped}}{Flag indicating whether grouped}
-
-\item{\code{group}}{Which group IDs are assigned to this data frame}
-
-\item{\code{group_partition}}{Flag indicating that \code{partition_group()} has been used}
-
-\item{\code{group.cols}}{Which columns are involved in grouping}
-
-\item{\code{group_max}}{Number of groups}
-
-\item{\code{bindenv}}{Environment for \code{within_group} etc. operations}
-
-\item{\code{first}}{Subsetting: first row}
-
-\item{\code{last}}{Subsetting: last row}
-
-\item{\code{filtercol}}{Which column in bm indicates filtering (1=included, 0=excluded)}
-
-\item{\code{groupcol}}{Which column in bm contains the group ID}
-
-\item{\code{tmpcol}}{Which column may be used for temporary calculations}
-
-\item{\code{empty}}{Flag indicating that this data frame is empty}
-
-\item{\code{filtered}}{Flag indicating that this data frame has had filtering applied}
-
-\item{\code{auto_compact}}{Compact data after each filtering etc. operation}
-
-\item{\code{auto_partition}}{Re-partition after group_by}
-
-\item{\code{group_sizes_stale}}{Flag indicating that group sizes need to be re-calculated}
-
 \item{\code{profile_names}}{Profile names}
-
-\item{\code{profile_user}}{Total user time for each profile}
-
-\item{\code{profile_sys}}{Total system time for each profile}
 
 \item{\code{profile_real}}{Total elapsed time for each profile}
 
-\item{\code{profile_ruser}}{Reference time for user}
+\item{\code{profile_rreal}}{Reference time for total elapsed}
 
 \item{\code{profile_rsys}}{Reference time for system}
 
-\item{\code{profile_rreal}}{Reference time for total elapsed}
+\item{\code{profile_ruser}}{Reference time for user}
+
+\item{\code{profile_sys}}{Total system time for each profile}
+
+\item{\code{profile_user}}{Total user time for each profile}
 
 \item{\code{profiling}}{Flag indicating that profiling is to be used}
+
+\item{\code{slave}}{Flag indicating whether cluster_* operations are valid}
+
+\item{\code{tmpcol}}{Which column may be used for temporary calculations}
+
+\item{\code{type.cols}}{Column type (0=numeric, 1=character, 2=factor)}
 }}
 \section{Methods}{
 

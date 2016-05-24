@@ -27,104 +27,137 @@ setOldClass (c("cluster", "SOCKcluster"))
 #' dat <- Multiplyr (dat.df, cl=2)
 #' dat %>% shutdown()
 #' }
-#' @field bm                big.matrix (internal representation of data)
-#' @field bm.master         big.matrix for certain operations that need non-subsetted data
-#' @field desc.master       big.matrix.descriptor for setting up shared memory access
-#' @field cls               SOCKcluster created by parallel package
-#' @field slave             Flag indicating whether cluster_* operations are valid
-#' @field factor.cols       Which columns are factors/character
-#' @field factor.levels     List (same length as factor.cols) containing corresponding factor levels
-#' @field type.cols         Column type (0=numeric, 1=character, 2=factor)
-#' @field order.cols        Display order of columns
-#' @field pad               Number of spaces to pad each column or 0 for dynamic
-#' @field col.names         Name of each column; names starting "." are special and NA is a free column
-#' @field nsamode           Flag indicating whether data frame is in no-strings-attached mode
-#' @field grouped           Flag indicating whether grouped
-#' @field group             Which group IDs are assigned to this data frame
-#' @field group_partition   Flag indicating that \code{partition_group()} has been used
-#' @field group.cols        Which columns are involved in grouping
-#' @field group_max         Number of groups
-#' @field bindenv           Environment for \code{within_group} etc. operations
-#' @field first             Subsetting: first row
-#' @field last              Subsetting: last row
-#' @field filtercol         Which column in bm indicates filtering (1=included, 0=excluded)
-#' @field groupcol          Which column in bm contains the group ID
-#' @field tmpcol            Which column may be used for temporary calculations
-#' @field empty             Flag indicating that this data frame is empty
-#' @field filtered          Flag indicating that this data frame has had filtering applied
 #' @field auto_compact      Compact data after each filtering etc. operation
 #' @field auto_partition    Re-partition after group_by
+#' @field bindenv           Environment for \code{within_group} etc. operations
+#' @field bm                big.matrix (internal representation of data)
+#' @field bm.master         big.matrix for certain operations that need non-subsetted data
+#' @field cls               SOCKcluster created by parallel package
+#' @field col.names         Name of each column; names starting "." are special and NA is a free column
+#' @field desc.master       big.matrix.descriptor for setting up shared memory access
+#' @field empty             Flag indicating that this data frame is empty
+#' @field factor.cols       Which columns are factors/character
+#' @field factor.levels     List (same length as factor.cols) containing corresponding factor levels
+#' @field filtercol         Which column in bm indicates filtering (1=included, 0=excluded)
+#' @field filtered          Flag indicating that this data frame has had filtering applied
+#' @field first             Subsetting: first row
+#' @field group.cols        Which columns are involved in grouping
+#' @field groupcol          Which column in bm contains the group ID
+#' @field grouped           Flag indicating whether grouped
+#' @field group_max         Number of groups
+#' @field group_partition   Flag indicating that \code{partition_group()} has been used
 #' @field group_sizes_stale Flag indicating that group sizes need to be re-calculated
+#' @field group             Which group IDs are assigned to this data frame
+#' @field last              Subsetting: last row
+#' @field nsamode           Flag indicating whether data frame is in no-strings-attached mode
+#' @field order.cols        Display order of columns
+#' @field pad               Number of spaces to pad each column or 0 for dynamic
 #' @field profile_names     Profile names
-#' @field profile_user      Total user time for each profile
-#' @field profile_sys       Total system time for each profile
 #' @field profile_real      Total elapsed time for each profile
-#' @field profile_ruser     Reference time for user
-#' @field profile_rsys      Reference time for system
 #' @field profile_rreal     Reference time for total elapsed
+#' @field profile_rsys      Reference time for system
+#' @field profile_ruser     Reference time for user
+#' @field profile_sys       Total system time for each profile
+#' @field profile_user      Total user time for each profile
 #' @field profiling         Flag indicating that profiling is to be used
+#' @field slave             Flag indicating whether cluster_* operations are valid
+#' @field tmpcol            Which column may be used for temporary calculations
+#' @field type.cols         Column type (0=numeric, 1=character, 2=factor)
 Multiplyr <- setRefClass("Multiplyr",
-    fields=list(bm              = "big.matrix",
-                bm.master       = "big.matrix",
-                desc.master     = "big.matrix.descriptor",
-                group_cache     = "big.matrix",
-                cls             = "SOCKcluster",
-                cls.created     = "logical",
-                slave           = "logical",
-                factor.cols     = "numeric",
-                factor.levels   = "list",
-                type.cols       = "numeric",
-                order.cols      = "numeric",
-                pad             = "numeric",
-                col.names       = "character",
-                nsamode         = "logical",
-                grouped         = "logical",
-                group           = "numeric",
-                group_partition = "logical",
-                group.cols      = "numeric",
-                group_max       = "numeric",
-                bindenv         = "environment",
-                first           = "numeric",
-                last            = "numeric",
-                filtercol       = "numeric",
-                groupcol        = "numeric",
-                tmpcol          = "numeric",
-                empty           = "logical",
-                filtered        = "logical",
-                auto_compact    = "logical",
-                auto_partition  = "logical",
-                group_sizes_stale = "logical",
-                profile_names   = "character",
-                profile_user    = "numeric",
-                profile_sys     = "numeric",
-                profile_real    = "numeric",
-                profile_ruser   = "numeric",
-                profile_rsys    = "numeric",
-                profile_rreal   = "numeric",
-                profiling       = "logical",
-                nullframe       = "logical"
-                ),
+    fields=list(
+        auto_compact      = "logical",
+        auto_partition    = "logical",
+        bindenv           = "environment",
+        bm                = "big.matrix",
+        bm.master         = "big.matrix",
+        cls.created       = "logical",
+        cls               = "SOCKcluster",
+        col.names         = "character",
+        desc.master       = "big.matrix.descriptor",
+        empty             = "logical",
+        factor.cols       = "numeric",
+        factor.levels     = "list",
+        filtercol         = "numeric",
+        filtered          = "logical",
+        first             = "numeric",
+        group_cache       = "big.matrix",
+        groupcol          = "numeric",
+        group.cols        = "numeric",
+        grouped           = "logical",
+        group_max         = "numeric",
+        group             = "numeric",
+        group_partition   = "logical",
+        group_sizes_stale = "logical",
+        last              = "numeric",
+        nsamode           = "logical",
+        nullframe         = "logical",
+        order.cols        = "numeric",
+        pad               = "numeric",
+        profile_names     = "character",
+        profile_real      = "numeric",
+        profile_rreal     = "numeric",
+        profile_rsys      = "numeric",
+        profile_ruser     = "numeric",
+        profile_sys       = "numeric",
+        profile_user      = "numeric",
+        profiling         = "logical",
+        slave             = "logical",
+        tmpcol            = "numeric",
+        type.cols         = "numeric"
+    ),
     methods=list(
 initialize = function (..., alloc=0, cl=NULL,
                        auto_compact=TRUE,
                        auto_partition=TRUE,
                        profiling=TRUE) {
     "Constructor"
+
     vars <- list(...)
 
+    #Default/NULL values
+    auto_compact      <<- auto_compact
+    auto_partition    <<- auto_partition
+    bindenv           <<- new.env()
+    bm                <<- NA_class_("big.matrix")
+    bm.master         <<- NA_class_("big.matrix")
+    cls.created       <<- FALSE
+    cls               <<- NA_class_ ("SOCKcluster")
+    col.names         <<- character(0)
+    desc.master       <<- NA_class_("big.matrix.descriptor")
+    empty             <<- TRUE
+    factor.cols       <<- numeric(0)
+    factor.levels     <<- list()
+    filtercol         <<- 0
+    filtered          <<- FALSE
+    first             <<- 0
+    group             <<- 0
+    group.cols        <<- numeric(0)
+    groupcol          <<- 0
+    grouped           <<- FALSE
+    group_cache       <<- NA_class_("big.matrix")
+    group_max         <<- 0
+    group_partition   <<- FALSE
+    group_sizes_stale <<- FALSE
+    last              <<- 0
+    nsamode           <<- FALSE
+    nullframe         <<- FALSE
+    order.cols        <<-  numeric(0)
+    pad               <<- numeric(0)
+    profile_names     <<- character(0)
+    profile_ruser     <<- profile_rsys <<- profile_rreal <<- numeric(0)
+    profile_user      <<- profile_sys <<- profile_real <<- numeric(0)
+    profiling         <<- profiling
+    slave             <<- TRUE
+    tmpcol            <<- 0
+    type.cols         <<- numeric(0)
+
     if (length(vars) == 0) {
-        nullframe <<- TRUE
-        # Session aborts in RStudio if no bm set?
-        bm <<- bm.master <<- group_cache <<- NA_class_("big.matrix")
-        cls <<- NA_class_("SOCKcluster")
-        group_cache <<- NA_class_("big.matrix")
         return()
     }
 
     dots <- lazyeval::auto_name (lazyeval::lazy_dots (...))
     vnames <- names(dots)
 
-    profiling <<- profiling
     profile ("start", "initialize")
 
     if (length(vars) == 1) {
@@ -194,18 +227,7 @@ initialize = function (..., alloc=0, cl=NULL,
     profile ("stop", "initialize.load")
     profile ("stop", "initialize.data")
 
-    nsamode <<- FALSE
-    group.cols <<- 0
-    grouped <<- FALSE
-    group <<- 0
-    group_partition <<- FALSE
     empty <<- nrows == 0
-    filtered <<- FALSE
-    auto_compact <<- auto_compact
-    auto_partition <<- auto_partition
-    group_sizes_stale <<- FALSE
-    nullframe <<- FALSE
-    group_cache <<- NA_class_("big.matrix")
 
     desc.master <<- bigmemory.sri::describe (bm)
 
