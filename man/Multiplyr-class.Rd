@@ -149,7 +149,7 @@ to get a better overview: \code{vignette("basics")}
 
 \item{\code{get_data(i = NULL, j = NULL, nsa = NULL, drop = TRUE)}}{Retrieve given rows (i), columns (j). drop=TRUE with 1 column will return a vector, otherwise a standard data.frame. If no strings attached mode is enabled, this will only return a vector or a matrix}
 
-\item{\code{group_restrict(group = 0)}}{Returns a new Multiplyr data frame with data restricted to specified group ID}
+\item{\code{group_restrict(grpid = 0)}}{Returns a new Multiplyr data frame with data restricted to specified group ID}
 
 \item{\code{initialize(..., alloc = 0, cl = NULL, auto_compact = TRUE,
   auto_partition = TRUE, profiling = TRUE)}}{Constructor}

@@ -1,4 +1,4 @@
-# fastdf class functions
+# Multiplyr class functions
 
 setOldClass (c("cluster", "SOCKcluster"))
 #' Parallel processing data frame
@@ -115,8 +115,7 @@ initialize = function (..., alloc=0, cl=NULL,
     if (length(vars) == 0) {
         nullframe <<- TRUE
         # Session aborts in RStudio if no bm set?
-        bm <<- bigmemory::big.matrix (nrow=1, ncol=1)
-        bm.master <<- bm
+        bm <<- bm.master <<- group_cache <<- NA_class_("big.matrix")
         cls <<- NA_class_("SOCKcluster")
         group_cache <<- NA_class_("big.matrix")
         return()
@@ -154,6 +153,7 @@ initialize = function (..., alloc=0, cl=NULL,
     order.cols <<- c(seq_len(length(vars)), rep(0, alloc), rep(0, length(special)))
 
     bm.master <<- bm <<- bigmemory::big.matrix (nrow=nrows, ncol=ncols)
+    group_cache <<- NA_class_("big.matrix")
 
     first <<- 1
     last <<- nrows
@@ -291,8 +291,12 @@ calc_group_sizes = function (delay=TRUE) {
         cluster_eval ({
             if (!(NA %in% .groups)) {
                 for (.g in .groups) {
-                    .grp <- bigmemory.sri::attach.resource (sm_desc_group (.local, .g))
-                    .local$group_cache [.g, 3] <- sum(.grp[, .local$filtercol])
+                    if (.local$group_cache[.g, 1] > 0 && .local$group_cache[.g, 2] >= .local$group_cache[.g, 1]) {
+                        .sm <- .local$submatrix (.local$group_cache[.g, 1], .local$group_cache[.g, 2])
+                        .local$group_cache [.g, 3] <- sum(.sm[, .local$filtercol])
+                    } else {
+                        .local$group_cache [.g, 3] <- 0
+                    }
                 }
             }
             NULL
@@ -504,33 +508,35 @@ compact = function () {
             group_cache[g, 3] <<- length(w)
         }
 
-        # partition_group
-        # rebuild_grouped
+        partition_group_ (.self)
     }
 },
 copy = function (shallow = FALSE) {
     "Create a copy of the data frame"
+
     if (!shallow) {
         stop ("Non-shallow copy not implemented safely yet")
     }
+
     if (profiling) {
         t1 <- proc.time()
-        res <- callSuper (shallow)
+        res <- callSuper (TRUE)
         t2 <- proc.time() - t1
         res$profile_names <- "copy"
         res$profile_sys <- t2[1][[1]]
         res$profile_user <- t2[2][[1]]
         res$profile_real <- t2[3][[1]]
         res$profile_rsys <- res$profile_ruser <- res$profile_rreal <- 0
-        return (res)
     } else {
-        callSuper (shallow)
+        res <- callSuper (TRUE)
     }
+
+    return (res)
 },
 describe = function () {
     "Describes data frame (for later use by reattach_slave)"
     fnames <- names(.refClassDef@fieldClasses)
-    fnames <- as.list(fnames[-match(c("bm", "bm.master", "cls", "bindenv"), fnames)])
+    fnames <- as.list(fnames[-match(c("bm", "bm.master", "group_cache", "cls", "bindenv"), fnames)])
     out <- lapply(fnames, function (x, d) { d$field(x) }, .self)
     names(out) <- fnames
     class(out) <- "Multiplyr.desc"
@@ -831,7 +837,7 @@ get_data = function (i=NULL, j=NULL, nsa=NULL, drop=TRUE) {
 group_cache_attach = function (descres) {
     group_cache <<- bigmemory.sri::attach.resource(descres)
 },
-group_restrict = function (group=0) {
+group_restrict = function (grpid=0) {
     "Returns a new Multiplyr data frame with data restricted to specified group ID"
     if (group <= 0) {
         stop ("Need to specify a group number")
@@ -841,11 +847,11 @@ group_restrict = function (group=0) {
     }
     grp <- copy (shallow=TRUE)
     grp$profile ("start", "group_restrict")
-    grp$group <- group
+    grp$group <- grpid
 
     if (!empty) {
-        grp$first <- group_cache[group, 1]
-        grp$last <- group_cache[group, 2]
+        grp$first <- group_cache[grpid, 1]
+        grp$last <- group_cache[grpid, 2]
         if (grp$first <= 0 || grp$last < grp$first) {
             grp$empty <- TRUE
         }
@@ -856,9 +862,12 @@ group_restrict = function (group=0) {
         grp$profile ("stop", "group_restrict")
         return (grp)
     }
-    grp$bm <- bigmemory.sri::attach.resource(sm_desc_group(.self, group))
-    grp$first <- group_cache[group, 1]
-    grp$last <- group_cache[group, 2]
+    #tryCatch({
+        grp$bm <- grp$submatrix (group_cache[grpid, 1], group_cache[grpid, 2])
+    #}, error=function (e) { stop (sprintf ("Multiplyr$group_restrict failed: submatrix with group ID=%d(%d) (%d:%d)", grpid, length(grpid), group_cache[grpid, 1], group_cache[grpid, 2])) })
+
+    grp$first <- group_cache[grpid, 1]
+    grp$last <- group_cache[grpid, 2]
     grp$empty <- FALSE
     grp$profile ("stop", "group_restrict")
     return (grp)
@@ -868,7 +877,7 @@ local_subset = function (first, last) {
     if (empty) { return() }
     first <<- first
     last <<- last
-    bm <<- bigmemory.sri::attach.resource (sm_desc_subset (.self, first, last))
+    bm <<- submatrix (first, last)
 },
 partition_even = function (extend=FALSE) {
     "Partitions data evenly across cluster, irrespective of grouping boundaries"
@@ -1340,6 +1349,9 @@ update_fields = function (fieldnames) {
         })
     }
     profile ("stop", "update_fields")
+},
+submatrix = function (a, b) {
+    sub.big.matrix (desc.master, firstRow=a, lastRow=b)
 }
 ))
 

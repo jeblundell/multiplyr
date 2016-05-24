@@ -364,7 +364,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
 
     #(6) Each cluster node constructs group_cache[, 2]
     .self$cluster_eval ({
-        .local$group_cache <- bigmemory.sri::attach.resource(.gcdesc)
+        .local$group_cache_attach (.gcdesc)
         if (.length > 0) {
             .local$group_cache[.offset:(.offset+.length-1), 1] <- .breaks
             #.local$group_cache <- bigmemory.sri::attach.resource(sm_desc_subset(.gcdesc, .offset, .offset+.length-1))
