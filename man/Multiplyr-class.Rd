@@ -64,6 +64,8 @@ to get a better overview: \code{vignette("basics")}
 
 \item{\code{grouped}}{Flag indicating whether grouped}
 
+\item{\code{groupenv}}{List of environments corresponding to group IDs in group}
+
 \item{\code{group_max}}{Number of groups}
 
 \item{\code{group_partition}}{Flag indicating that \code{partition_group()} has been used}
@@ -107,8 +109,6 @@ to get a better overview: \code{vignette("basics")}
 \describe{
 \item{\code{alloc_col(name = ".tmp", update = FALSE)}}{Allocate a new column and optionally update cluster nodes to do the same. Returns the column number}
 
-\item{\code{build_grouped()}}{Build data frames on the cluster (a list called .grouped) with its data subsetted to the appropriate group}
-
 \item{\code{calc_group_sizes(delay = TRUE)}}{Calculate group sizes (if delay=TRUE then this will just mark group sizes as being stale)}
 
 \item{\code{cluster_eval(...)}}{Executes specified expression on cluster}
@@ -148,8 +148,6 @@ to get a better overview: \code{vignette("basics")}
 \item{\code{free_col(cols, update = FALSE)}}{Free specified (numeric) column and optionally update cluster}
 
 \item{\code{get_data(i = NULL, j = NULL, nsa = NULL, drop = TRUE)}}{Retrieve given rows (i), columns (j). drop=TRUE with 1 column will return a vector, otherwise a standard data.frame. If no strings attached mode is enabled, this will only return a vector or a matrix}
-
-\item{\code{group_restrict(grpid = 0)}}{Returns a new Multiplyr data frame with data restricted to specified group ID}
 
 \item{\code{initialize(..., alloc = 0, cl = NULL, auto_compact = TRUE,
   auto_partition = TRUE, profiling = TRUE)}}{Constructor}

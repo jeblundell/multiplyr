@@ -44,6 +44,7 @@ setOldClass (c("cluster", "SOCKcluster"))
 #' @field group.cols        Which columns are involved in grouping
 #' @field groupcol          Which column in bm contains the group ID
 #' @field grouped           Flag indicating whether grouped
+#' @field groupenv          List of environments corresponding to group IDs in group
 #' @field group_max         Number of groups
 #' @field group_partition   Flag indicating that \code{partition_group()} has been used
 #' @field group_sizes_stale Flag indicating that group sizes need to be re-calculated
@@ -70,6 +71,7 @@ Multiplyr <- setRefClass("Multiplyr",
         bindenv           = "environment",
         bm                = "big.matrix",
         bm.master         = "big.matrix",
+        bm.temp           = "big.matrix",
         cls.created       = "logical",
         cls               = "SOCKcluster",
         col.names         = "character",
@@ -84,6 +86,7 @@ Multiplyr <- setRefClass("Multiplyr",
         groupcol          = "numeric",
         group.cols        = "numeric",
         grouped           = "logical",
+        groupenv          = "list",
         group_max         = "numeric",
         group             = "numeric",
         group_partition   = "logical",
@@ -103,6 +106,7 @@ Multiplyr <- setRefClass("Multiplyr",
         profiling         = "logical",
         slave             = "logical",
         tmpcol            = "numeric",
+        tmpenv            = "environment",
         type.cols         = "numeric"
     ),
     methods=list(
@@ -120,6 +124,7 @@ initialize = function (..., alloc=0, cl=NULL,
     bindenv           <<- new.env()
     bm                <<- NA_class_("big.matrix")
     bm.master         <<- NA_class_("big.matrix")
+    bm.temp           <<- NA_class_("big.matrix")
     cls.created       <<- FALSE
     cls               <<- NA_class_ ("SOCKcluster")
     col.names         <<- character(0)
@@ -130,10 +135,11 @@ initialize = function (..., alloc=0, cl=NULL,
     filtercol         <<- 0
     filtered          <<- FALSE
     first             <<- 0
-    group             <<- 0
+    group             <<- numeric(0)
     group.cols        <<- numeric(0)
     groupcol          <<- 0
     grouped           <<- FALSE
+    groupenv          <<- list()
     group_cache       <<- NA_class_("big.matrix")
     group_max         <<- 0
     group_partition   <<- FALSE
@@ -149,6 +155,7 @@ initialize = function (..., alloc=0, cl=NULL,
     profiling         <<- profiling
     slave             <<- TRUE
     tmpcol            <<- 0
+    tmpenv            <<- new.env()
     type.cols         <<- numeric(0)
 
     if (length(vars) == 0) {
@@ -265,19 +272,16 @@ alloc_col = function (name=".tmp", update=FALSE) {
     return (res)
 },
 build_grouped = function () {
-    "Build data frames on the cluster (a list called .grouped) with its data subsetted to the appropriate group"
     if (empty) { return() }
     cluster_eval ({
-        if (!.local$empty) {
-            .grouped <- list()
-            for (.g in 1:length(.local$group)) {
-                .grp <- .local$group_restrict(.local$group[.g])
-                .grouped <- append(.grouped, list(.grp))
-            }
+        if (length(.local$group) > 0) {
+            .local$groupenv <- replicate (length(.local$group), new.env())
         }
 
         NULL
     })
+    #Allow group_restrict on master node
+    groupenv <<- replicate (length(group), new.env())
 },
 calc_group_sizes = function (delay=TRUE) {
     "Calculate group sizes (if delay=TRUE then this will just mark group sizes as being stale)"
@@ -390,16 +394,6 @@ cluster_profile = function () {
     "Update profile totals to include all nodes' totals (also resets nodes' totals to 0)"
     if (!profiling || slave) { return() }
     res <- cluster_eval({
-        if (exists(".grouped")) {
-            for (.grp in .grouped) {
-                .local$profile_import (.grp$profile())
-                if (length(.grp$profile_names) > 0) {
-                    .grp$profile_names <- character(0)
-                    .grp$profile_sys <- numeric(0)
-                    .grp$profile_user <- numeric(0)
-                }
-            }
-        }
         res <- .local$profile()
         if (nrow(res) > 0) {
             .local$profile_names <- character(0)
@@ -558,7 +552,7 @@ copy = function (shallow = FALSE) {
 describe = function () {
     "Describes data frame (for later use by reattach_slave)"
     fnames <- names(.refClassDef@fieldClasses)
-    fnames <- as.list(fnames[-match(c("bm", "bm.master", "group_cache", "cls", "bindenv"), fnames)])
+    fnames <- as.list(fnames[-match(c("bm", "bm.master", "group_cache", "cls", "bindenv", "groupenv"), fnames)])
     out <- lapply(fnames, function (x, d) { d$field(x) }, .self)
     names(out) <- fnames
     class(out) <- "Multiplyr.desc"
@@ -659,6 +653,7 @@ filter_range = function (start, end) {
     "Only include specified rows. Note that start and end are relative to all rows in the big.matrix, filtered or otherwise"
     if (empty) { return() }
     profile ("start", "filter_range")
+    #FIXME: GROUPED
     if (start > 1) {
         bm[1:(start-1), filtercol] <<- 0
     }
@@ -672,6 +667,7 @@ filter_rows = function (rows) {
     "Only include specified numeric rows. Note that rows refer to all rows in the big.matrix, filtered or otherwise"
     if (empty) { return() }
     profile ("start", "filter_rows")
+    #FIXME: GROUPED
     bm[, tmpcol] <<- 0
     bm[rows, tmpcol] <<- 1
 
@@ -684,6 +680,7 @@ filter_vector = function (rows) {
     "Only include these rows (given as a vector of TRUE/FALSE values). Note that this applies to all rows in the big.matrix, filtered or otherwise"
     if (empty) { return() }
     profile ("start", "filter_vector")
+    #FIXME: GROUPED
     bm[, filtercol] <<- bm[, filtercol] * rows
     empty <<- sum(bm[, filtercol]) == 0
     filtered <<- TRUE
@@ -723,11 +720,6 @@ free_col = function (cols, update=FALSE) {
         cluster_export ("cols", ".cols")
         cluster_eval ({
             .local$free_col (.cols, update=FALSE)
-            if (exists(".grouped")) {
-                for (.grp in .grouped) {
-                    .grp$free_col (.cols, update=FALSE)
-                }
-            }
             NULL
         })
     }
@@ -859,40 +851,20 @@ get_data = function (i=NULL, j=NULL, nsa=NULL, drop=TRUE) {
 group_cache_attach = function (descres) {
     group_cache <<- bigmemory.sri::attach.resource(descres)
 },
-group_restrict = function (grpid=0) {
-    "Returns a new Multiplyr data frame with data restricted to specified group ID"
-    if (group <= 0) {
-        stop ("Need to specify a group number")
+group_restrict = function (grpid=NULL) {
+    if (is.null (grpid)) {
+        bm <<- bm.temp
+        bm.temp <<- NA_class_ ("big.matrix")
+        bindenv <<- tmpenv
+        return()
     }
-    if (all(.self$group == 0) && !grouped) {
-        stop ("group_restrict may only be used on grouped data")
-    }
-    grp <- copy (shallow=TRUE)
-    grp$profile ("start", "group_restrict")
-    grp$group <- grpid
+    bm.temp <<- bm
+    tmpenv <<- bindenv
 
-    if (!empty) {
-        grp$first <- group_cache[grpid, 1]
-        grp$last <- group_cache[grpid, 2]
-        if (grp$first <= 0 || grp$last < grp$first) {
-            grp$empty <- TRUE
-        }
-    }
-    if (grp$empty) {
-        grp$bm <- NA_class_ ("big.matrix")
-        grp$empty <- TRUE
-        grp$profile ("stop", "group_restrict")
-        return (grp)
-    }
-    #tryCatch({
-        grp$bm <- grp$submatrix (group_cache[grpid, 1], group_cache[grpid, 2])
-    #}, error=function (e) { stop (sprintf ("Multiplyr$group_restrict failed: submatrix with group ID=%d(%d) (%d:%d)", grpid, length(grpid), group_cache[grpid, 1], group_cache[grpid, 2])) })
+    bindenv <<- groupenv[[which (group == grpid)]]
+    bm <<- submatrix (group_cache[grpid, 1], group_cache[grpid, 2])
 
-    grp$first <- group_cache[grpid, 1]
-    grp$last <- group_cache[grpid, 2]
-    grp$empty <- FALSE
-    grp$profile ("stop", "group_restrict")
-    return (grp)
+    return ()
 },
 local_subset = function (first, last) {
     "Applies sub.big.matrix to bm"
@@ -1362,11 +1334,6 @@ update_fields = function (fieldnames) {
         cluster_eval({
             .local$field (name = .fieldname, value = .fieldval)
             if (.local$empty) { return(NULL) }
-            if (exists(".grouped")) {
-                for (.g in 1:length(.grouped)) {
-                    .grouped[[.g]]$field (name = .fieldname, value = .fieldval)
-                }
-            }
             NULL
         })
     }

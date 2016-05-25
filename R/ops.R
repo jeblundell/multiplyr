@@ -253,11 +253,14 @@ filter_ <- function (.self, ..., .dots, auto_compact = NULL) {
     .self$cluster_eval ({
         if (.local$empty) { return (NULL) }
         if (.local$grouped) {
-            for (.g in 1:length(.local$group)) {
-                for (.i in 1:length(.dots)) {
-                    if (.grouped[[.g]]$empty) { next }
-                    .res <- lazyeval::lazy_eval (.dots[.i], .grouped[[.g]]$envir())
-                    .grouped[[.g]]$filter_vector (.res[[1]])
+            for (.g in .local$group) {
+                if (.local$group_cache[.g, 3] > 0) {
+                    for (.i in 1:length(.dots)) {
+                        .local$group_restrict (.g)
+                        .res <- lazyeval::lazy_eval (.dots[.i], .local$envir())
+                        .local$filter_vector (.res[[1]])
+                        .local$group_restrict ()
+                    }
                 }
             }
         } else {
@@ -388,6 +391,9 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
         .self$bm[.self$group_cache[i, 1]:.self$group_cache[i, 2], .self$groupcol] <- i
     }
 
+    #Needed to allow $group_restrict on master node
+    .self$group <- 1:G.count
+
     if (auto_partition && !regroup_partition) {
         .self$group_partition <- TRUE
         regroup_partition <- TRUE
@@ -456,10 +462,14 @@ mutate_ <- function (.self, ..., .dots) {
     .self$cluster_eval ({
         if (.local$empty) { return (NULL) }
         if (.local$grouped) {
-            for (.g in 1:length(.local$group)) {
-                for (.i in 1:length(.dots)) {
-                    .res <- lazyeval::lazy_eval (.dots[.i], .grouped[[.g]]$envir())
-                    .grouped[[.g]]$set_data (, .rescols[.i], .res[[1]])
+            for (.g in .local$group) {
+                if (.local$group_cache[.g, 3] > 0) {
+                    for (.i in 1:length(.dots)) {
+                        .local$group_restrict (.g)
+                        .res <- lazyeval::lazy_eval (.dots[.i], .local$envir())
+                        .local$set_data (, .rescols[.i], .res[[1]])
+                        .local$group_restrict ()
+                    }
                 }
             }
         } else {
@@ -609,18 +619,18 @@ reduce_ <- function (.self, ..., .dots, auto_compact = NULL) {
     if (!.self$empty) {
         if (.self$grouped) {
             for (g in 1:.self$group_max) {
-                grp <- .self$group_restrict (g)
-                res <- lazyeval::lazy_eval (.dots, grp$envir())
+                .self$group_restrict (g)
+                res <- lazyeval::lazy_eval (.dots, .self$envir())
                 len <- 0
                 for (i in 1:length(res)) {
-                    grp$bm[, newcols[i]] <- res[[i]]
+                    .self$bm[, newcols[i]] <- res[[i]]
                     if (length(res[[i]]) > len) {
                         len <- length(res[[i]])
                     }
                 }
-                grp$bm[, grp$filtercol] <- 0
-                grp$bm[1:len, grp$filtercol] <- 1
-                grp$filtered <- TRUE
+                .self$bm[, .self$filtercol] <- 0
+                .self$bm[1:len, .self$filtercol] <- 1
+                .self$filtered <- TRUE
             }
         } else {
             res <- lazyeval::lazy_eval (.dots, .self$envir())
@@ -815,8 +825,12 @@ slice <- function (.self, rows=NULL, start=NULL, end=NULL, each=FALSE, auto_comp
             .self$cluster_eval ({
                 if (.local$empty) { return (NULL) }
                 if (.local$grouped) {
-                    for (.g in 1:length(.local$group)) {
-                        .grouped[[.g]]$filter_range (.start, .end)
+                    for (.g in .local$group) {
+                        if (.local$group_cache[.g, 3] > 0) {
+                            .local$group_restrict (.g)
+                            .local$filter_range (.start, .end)
+                            .local$group_restrict()
+                        }
                     }
                 } else {
                     .local$filter_range (.start, .end)
@@ -828,8 +842,12 @@ slice <- function (.self, rows=NULL, start=NULL, end=NULL, each=FALSE, auto_comp
             .self$cluster_eval ({
                 if (.local$empty) { return (NULL) }
                 if (.local$grouped) {
-                    for (.g in 1:length(.local$group)) {
-                        .grouped[[.g]]$filter_vector (.rows)
+                    for (.g in .local$group) {
+                        if (.local$group_cache[.g, 3] > 0) {
+                            .local$group_restrict (.g)
+                            .local$filter_vector (.rows)
+                            .local$group_restrict ()
+                        }
                     }
                 } else {
                     .local$filter_vector (.rows)
@@ -841,8 +859,12 @@ slice <- function (.self, rows=NULL, start=NULL, end=NULL, each=FALSE, auto_comp
             .self$cluster_eval ({
                 if (.local$empty) { return (NULL) }
                 if (.local$grouped) {
-                    for (.g in 1:length(.local$group)) {
-                        .grouped[[.g]]$filter_rows (.rows)
+                    for (.g in .local$group) {
+                        if (.local$group_cache[.g, 3] > 0) {
+                            .local$group_restrict (.g)
+                            .local$filter_rows (.rows)
+                            .local$group_restrict ()
+                        }
                     }
                 } else {
                     .local$filter_rows (.rows)
@@ -901,18 +923,22 @@ summarise_ <- function (.self, ..., .dots, auto_compact = NULL) {
     .self$cluster_eval ({
         if (.local$empty) { return (NULL) }
         if (.local$grouped) {
-            for (.g in 1:length(.grouped)) {
-                .res <- lazyeval::lazy_eval (.dots, .grouped[[.g]]$envir())
-                .len <- 0
-                for (.i in 1:length(.res)) {
-                    .grouped[[.g]]$bm[, .newcols[.i]] <- .res[[.i]]
-                    if (length(.res[[.i]]) > .len) {
-                        .len <- length(.res[[.i]])
+            for (.g in .local$group) {
+                if (.local$group_cache[.g, 3] > 0) {
+                    .local$group_restrict (.g)
+                    .res <- lazyeval::lazy_eval (.dots, .local$envir())
+                    .len <- 0
+                    for (.i in 1:length(.res)) {
+                        .local$bm[, .newcols[.i]] <- .res[[.i]]
+                        if (length(.res[[.i]]) > .len) {
+                            .len <- length(.res[[.i]])
+                        }
                     }
+                    .local$bm[, .local$filtercol] <- 0
+                    .local$bm[1:.len, .local$filtercol] <- 1
+                    .local$filtered <- TRUE
+                    .local$group_restrict()
                 }
-                .grouped[[.g]]$bm[, .grouped[[.g]]$filtercol] <- 0
-                .grouped[[.g]]$bm[1:.len, .grouped[[.g]]$filtercol] <- 1
-                .grouped[[.g]]$filtered <- TRUE
             }
         } else {
             .res <- lazyeval::lazy_eval (.dots, .local$envir())
@@ -958,12 +984,12 @@ transmute_ <- function (.self, ..., .dots) {
 
     #mutate
     .resnames <- names(.dots)
-    .rescols <- .self$alloc_col (.resnames, update=FALSE)
+    .rescols <- .self$alloc_col (.resnames, update=TRUE)
     if (any(.rescols == .self$group.cols)) {
         if (.self$grouped) {
             stop("transmute on a group column is not permitted")
         } else {
-            .self$group.cols <- 0 #prevent regroup
+            .self$group.cols <- 0
         }
     }
 
@@ -971,10 +997,14 @@ transmute_ <- function (.self, ..., .dots) {
     .self$cluster_eval ({
         if (.local$empty) { return (NULL) }
         if (.local$grouped) {
-            for (.g in 1:length(.local$group)) {
-                for (.i in 1:length(.dots)) {
-                    .res <- lazyeval::lazy_eval (.dots[.i], .grouped[[.g]]$envir())
-                    .grouped[[.g]]$set_data (, .rescols[.i], .res[[1]])
+            for (.g in .local$group) {
+                if (.local$group_cache[.g, 3] > 0) {
+                    for (.i in 1:length(.dots)) {
+                        .local$group_restrict (.g)
+                        .res <- lazyeval::lazy_eval (.dots[.i], .local$envir())
+                        .local$set_data (, .rescols[.i], .res[[1]])
+                        .local$group_restrict ()
+                    }
                 }
             }
         } else {
@@ -985,9 +1015,6 @@ transmute_ <- function (.self, ..., .dots) {
         }
         NULL
     })
-    if (any(.rescols == .self$group.cols)) {
-        .self$calc_group_sizes()
-    }
     #/mutate
 
     dropcols <- .self$order.cols > 0
@@ -1098,8 +1125,10 @@ within_group <- function (.self, expr) {
     .self$cluster_export ("expr", ".expr")
     .self$cluster_eval({
         if (.local$empty) { return(NULL) }
-        for (.g in 1:length(.local$group)) {
-            eval (.expr, envir = .grouped[[.g]]$envir())
+        for (.g in .local$group) {
+            .local$group_restrict (.g)
+            eval (.expr, envir = .local$envir())
+            .local$group_restrict ()
         }
         NULL
     })
