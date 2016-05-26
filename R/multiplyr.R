@@ -57,3 +57,10 @@
 #' @docType package
 #' @name multiplyr
 NULL
+
+if(getRversion() >= "2.15.1") {
+    # Avoid NOTEs during check about lack of global variable bindings
+    utils::globalVariables(c(".Gbase", ".end", ".expr", ".grouped", ".groups",
+                             ".local", ".rows", ".start", ".tg", ".gcdesc",
+                             ".offset"))
+}

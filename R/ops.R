@@ -1,11 +1,5 @@
 # Operations on Multiplyr objects
 
-if(getRversion() >= "2.15.1") {
-    # Avoid NOTEs during check about lack of global variable bindings
-    utils::globalVariables(c(".Gbase", ".end", ".expr", ".grouped", ".groups",
-        ".local", ".rows", ".start", ".tg"))
-}
-
 #' @rdname arrange
 #' @export
 arrange_ <- function (.self, ..., .dots) {
@@ -137,7 +131,7 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
 
     # (1) determine local distinct rows
     trans <- .self$cluster_eval ({
-        if (.local$empty) { 
+        if (.local$empty) {
             .res <- NA
         } else {
             if (nrow(.local$bm) == 1) {
