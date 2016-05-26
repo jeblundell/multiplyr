@@ -1,4 +1,4 @@
-# fastdf class functions
+# Multiplyr class functions
 
 setOldClass (c("cluster", "SOCKcluster"))
 #' Parallel processing data frame
@@ -27,105 +27,142 @@ setOldClass (c("cluster", "SOCKcluster"))
 #' dat <- Multiplyr (dat.df, cl=2)
 #' dat %>% shutdown()
 #' }
-#' @field bm                big.matrix (internal representation of data)
-#' @field bm.master         big.matrix for certain operations that need non-subsetted data
-#' @field desc              big.matrix.descriptor for setting up shared memory access
-#' @field cls               SOCKcluster created by parallel package
-#' @field slave             Flag indicating whether cluster_* operations are valid
-#' @field factor.cols       Which columns are factors/character
-#' @field factor.levels     List (same length as factor.cols) containing corresponding factor levels
-#' @field type.cols         Column type (0=numeric, 1=character, 2=factor)
-#' @field order.cols        Display order of columns
-#' @field pad               Number of spaces to pad each column or 0 for dynamic
-#' @field col.names         Name of each column; names starting "." are special and NA is a free column
-#' @field nsamode           Flag indicating whether data frame is in no-strings-attached mode
-#' @field grouped           Flag indicating whether grouped
-#' @field group             Which group IDs are assigned to this data frame
-#' @field group_partition   Flag indicating that \code{partition_group()} has been used
-#' @field group.cols        Which columns are involved in grouping
-#' @field group_sizes       Size of each group (NB not necessarily current: see \code{calc_group_sizes})
-#' @field group_max         Number of groups
-#' @field bindenv           Environment for \code{within_group} etc. operations
-#' @field first             Subsetting: first row
-#' @field last              Subsetting: last row
-#' @field filtercol         Which column in bm indicates filtering (1=included, 0=excluded)
-#' @field groupcol          Which column in bm contains the group ID
-#' @field tmpcol            Which column may be used for temporary calculations
-#' @field empty             Flag indicating that this data frame is empty
-#' @field filtered          Flag indicating that this data frame has had filtering applied
 #' @field auto_compact      Compact data after each filtering etc. operation
 #' @field auto_partition    Re-partition after group_by
-#' @field group_sizes_stale Flag indicating that group_sizes need to be re-calculated
+#' @field bindenv           Environment for \code{within_group} etc. operations
+#' @field bm                big.matrix (internal representation of data)
+#' @field bm.master         big.matrix for certain operations that need non-subsetted data
+#' @field cls               SOCKcluster created by parallel package
+#' @field col.names         Name of each column; names starting "." are special and NA is a free column
+#' @field desc.master       big.matrix.descriptor for setting up shared memory access
+#' @field empty             Flag indicating that this data frame is empty
+#' @field factor.cols       Which columns are factors/character
+#' @field factor.levels     List (same length as factor.cols) containing corresponding factor levels
+#' @field filtercol         Which column in bm indicates filtering (1=included, 0=excluded)
+#' @field filtered          Flag indicating that this data frame has had filtering applied
+#' @field first             Subsetting: first row
+#' @field group.cols        Which columns are involved in grouping
+#' @field groupcol          Which column in bm contains the group ID
+#' @field grouped           Flag indicating whether grouped
+#' @field groupenv          List of environments corresponding to group IDs in group
+#' @field group_max         Number of groups
+#' @field group_partition   Flag indicating that \code{partition_group()} has been used
+#' @field group_sizes_stale Flag indicating that group sizes need to be re-calculated
+#' @field group             Which group IDs are assigned to this data frame
+#' @field last              Subsetting: last row
+#' @field nsamode           Flag indicating whether data frame is in no-strings-attached mode
+#' @field order.cols        Display order of columns
+#' @field pad               Number of spaces to pad each column or 0 for dynamic
 #' @field profile_names     Profile names
-#' @field profile_user      Total user time for each profile
-#' @field profile_sys       Total system time for each profile
 #' @field profile_real      Total elapsed time for each profile
-#' @field profile_ruser     Reference time for user
-#' @field profile_rsys      Reference time for system
 #' @field profile_rreal     Reference time for total elapsed
+#' @field profile_rsys      Reference time for system
+#' @field profile_ruser     Reference time for user
+#' @field profile_sys       Total system time for each profile
+#' @field profile_user      Total user time for each profile
 #' @field profiling         Flag indicating that profiling is to be used
+#' @field slave             Flag indicating whether cluster_* operations are valid
+#' @field tmpcol            Which column may be used for temporary calculations
+#' @field type.cols         Column type (0=numeric, 1=character, 2=factor)
 Multiplyr <- setRefClass("Multiplyr",
-    fields=list(bm              = "big.matrix",
-                bm.master       = "big.matrix",
-                desc            = "big.matrix.descriptor",
-                cls             = "SOCKcluster",
-                cls.created     = "logical",
-                slave           = "logical",
-                factor.cols     = "numeric",
-                factor.levels   = "list",
-                type.cols       = "numeric",
-                order.cols      = "numeric",
-                pad             = "numeric",
-                col.names       = "character",
-                nsamode         = "logical",
-                grouped         = "logical",
-                group           = "numeric",
-                group_partition = "logical",
-                group.cols      = "numeric",
-                group_sizes     = "numeric",
-                group_max       = "numeric",
-                bindenv         = "environment",
-                first           = "numeric",
-                last            = "numeric",
-                filtercol       = "numeric",
-                groupcol        = "numeric",
-                tmpcol          = "numeric",
-                empty           = "logical",
-                filtered        = "logical",
-                auto_compact    = "logical",
-                auto_partition  = "logical",
-                group_sizes_stale = "logical",
-                profile_names   = "character",
-                profile_user    = "numeric",
-                profile_sys     = "numeric",
-                profile_real    = "numeric",
-                profile_ruser   = "numeric",
-                profile_rsys    = "numeric",
-                profile_rreal   = "numeric",
-                profiling       = "logical",
-                nullframe       = "logical"
-                ),
+    fields=list(
+        auto_compact      = "logical",
+        auto_partition    = "logical",
+        bindenv           = "environment",
+        bm                = "big.matrix",
+        bm.master         = "big.matrix",
+        cls.created       = "logical",
+        cls               = "SOCKcluster",
+        col.names         = "character",
+        desc.master       = "big.matrix.descriptor",
+        empty             = "logical",
+        factor.cols       = "numeric",
+        factor.levels     = "list",
+        filtercol         = "numeric",
+        filtered          = "logical",
+        first             = "numeric",
+        group_cache       = "big.matrix",
+        groupcol          = "numeric",
+        group.cols        = "numeric",
+        grouped           = "logical",
+        groupenv          = "list",
+        group_max         = "numeric",
+        group             = "numeric",
+        group_partition   = "logical",
+        group_sizes_stale = "logical",
+        last              = "numeric",
+        nsamode           = "logical",
+        nullframe         = "logical",
+        order.cols        = "numeric",
+        pad               = "numeric",
+        profile_names     = "character",
+        profile_real      = "numeric",
+        profile_rreal     = "numeric",
+        profile_rsys      = "numeric",
+        profile_ruser     = "numeric",
+        profile_sys       = "numeric",
+        profile_user      = "numeric",
+        profiling         = "logical",
+        savestate         = "list",
+        slave             = "logical",
+        tmpcol            = "numeric",
+        type.cols         = "numeric"
+    ),
     methods=list(
 initialize = function (..., alloc=0, cl=NULL,
                        auto_compact=TRUE,
                        auto_partition=TRUE,
                        profiling=TRUE) {
     "Constructor"
+
     vars <- list(...)
 
+    #Default/NULL values
+    auto_compact      <<- auto_compact
+    auto_partition    <<- auto_partition
+    bindenv           <<- new.env()
+    bm                <<- NA_class_("big.matrix")
+    bm.master         <<- NA_class_("big.matrix")
+    cls.created       <<- FALSE
+    cls               <<- NA_class_ ("SOCKcluster")
+    col.names         <<- character(0)
+    desc.master       <<- NA_class_("big.matrix.descriptor")
+    empty             <<- TRUE
+    factor.cols       <<- numeric(0)
+    factor.levels     <<- list()
+    filtercol         <<- 0
+    filtered          <<- FALSE
+    first             <<- 0
+    group             <<- numeric(0)
+    group.cols        <<- numeric(0)
+    groupcol          <<- 0
+    grouped           <<- FALSE
+    groupenv          <<- list()
+    group_cache       <<- NA_class_("big.matrix")
+    group_max         <<- 0
+    group_partition   <<- FALSE
+    group_sizes_stale <<- FALSE
+    last              <<- 0
+    nsamode           <<- FALSE
+    nullframe         <<- FALSE
+    order.cols        <<- numeric(0)
+    pad               <<- numeric(0)
+    profile_names     <<- character(0)
+    profile_ruser     <<- profile_rsys <<- profile_rreal <<- numeric(0)
+    profile_user      <<- profile_sys <<- profile_real <<- numeric(0)
+    profiling         <<- profiling
+    savestate         <<- list()
+    slave             <<- TRUE
+    tmpcol            <<- 0
+    type.cols         <<- numeric(0)
+
     if (length(vars) == 0) {
-        nullframe <<- TRUE
-        # Session aborts in RStudio if no bm set?
-        bm <<- bigmemory::big.matrix (nrow=1, ncol=1)
-        bm.master <<- bm
-        cls <<- .clsna()
         return()
     }
 
     dots <- lazyeval::auto_name (lazyeval::lazy_dots (...))
     vnames <- names(dots)
 
-    profiling <<- profiling
     profile ("start", "initialize")
 
     if (length(vars) == 1) {
@@ -153,8 +190,8 @@ initialize = function (..., alloc=0, cl=NULL,
     col.names <<- c(vnames, rep(NA, alloc), special)
     order.cols <<- c(seq_len(length(vars)), rep(0, alloc), rep(0, length(special)))
 
-    bm <<- bigmemory::big.matrix (nrow=nrows, ncol=ncols)
-    bm.master <<- bm
+    bm.master <<- bm <<- bigmemory::big.matrix (nrow=nrows, ncol=ncols)
+    group_cache <<- NA_class_("big.matrix")
 
     first <<- 1
     last <<- nrows
@@ -195,19 +232,9 @@ initialize = function (..., alloc=0, cl=NULL,
     profile ("stop", "initialize.load")
     profile ("stop", "initialize.data")
 
-    nsamode <<- FALSE
-    group.cols <<- 0
-    grouped <<- FALSE
-    group <<- 0
-    group_partition <<- FALSE
     empty <<- nrows == 0
-    filtered <<- FALSE
-    auto_compact <<- auto_compact
-    auto_partition <<- auto_partition
-    group_sizes_stale <<- FALSE
-    nullframe <<- FALSE
 
-    desc <<- bigmemory.sri::describe (bm)
+    desc.master <<- bigmemory.sri::describe (bm)
 
     cluster_export_self ()
 
@@ -243,22 +270,21 @@ alloc_col = function (name=".tmp", update=FALSE) {
     return (res)
 },
 build_grouped = function () {
-    "Build data frames on the cluster (a list called .grouped) with its data subsetted to the appropriate group"
     if (empty) { return() }
     cluster_eval ({
-        if (.local$empty) { return(NULL) }
-
-        .grouped <- list()
-        for (.g in 1:length(.local$group)) {
-            .grp <- .master$group_restrict(.local$group[.g])
-            .grouped <- append(.grouped, list(.grp))
+        if (length(.local$group) > 0) {
+            .local$groupenv <- replicate (length(.local$group), new.env())
         }
-
         NULL
     })
+    #Allow group_restrict on master node
+    groupenv <<- replicate (length(group), new.env())
 },
 calc_group_sizes = function (delay=TRUE) {
     "Calculate group sizes (if delay=TRUE then this will just mark group sizes as being stale)"
+    if (!grouped) {
+        return ()
+    }
     if (delay) {
         group_sizes_stale <<- TRUE
         return()
@@ -268,15 +294,34 @@ calc_group_sizes = function (delay=TRUE) {
     }
 
     if (empty) {
-        group_sizes <<- rep(0, group_max)
-    } else if (filtered) {
-        bm[, tmpcol] <<- bm[, groupcol] * bm[, filtercol]
-        group_sizes <<- sapply(seq_len(group_max), function (g) {
-            sum(.self$bm[, .self$tmpcol] == g)
-        })
+        group_cache[, 3] <<- rep(0, group_max)
+    } else if (!filtered) {
+        group_cache[, 3] <<- (group_cache[, 2] - group_cache[, 1]) + 1
+        if (any(group_cache[, 1] == 0)) {
+            group_cache[group_cache[, 1] == 0, 3] <<- 0
+        }
     } else {
-        group_sizes <<- sapply(seq_len(group_max), function (g) {
-            sum(.self$bm[, .self$groupcol] == g)
+        N <- length(cls)
+        if (group_max == 1) {
+            Gi <- distribute (1, N)
+            Gi[Gi == 0] <- NA
+        } else {
+            Gi <- distribute (group_cache[, 3], N)
+        }
+        cluster_export_each ("Gi", ".groups")
+
+        cluster_eval ({
+            if (!(NA %in% .groups)) {
+                for (.g in .groups) {
+                    if (.local$group_cache[.g, 1] > 0 && .local$group_cache[.g, 2] >= .local$group_cache[.g, 1]) {
+                        .sm <- .local$submatrix (.local$group_cache[.g, 1], .local$group_cache[.g, 2])
+                        .local$group_cache [.g, 3] <- sum(.sm[, .local$filtercol])
+                    } else {
+                        .local$group_cache [.g, 3] <- 0
+                    }
+                }
+            }
+            NULL
         })
     }
     group_sizes_stale <<- FALSE
@@ -333,12 +378,11 @@ cluster_export_each = function (var, var.as=var, envir=parent.frame()) {
     profile ("stop", "cluster_export_each")
 },
 cluster_export_self = function () {
-    "Exports this data frame to the cluster (naming it .master)"
-    #Replaces cluster_export (".master")
+    "Exports this data frame to the cluster (naming it .local)"
     .res <- .self$describe()
     cluster_export (".res")
     cluster_eval({
-        .master <- Multiplyr(.res)
+        .local <- Multiplyr(.res)
         NULL
     })
 },
@@ -346,16 +390,6 @@ cluster_profile = function () {
     "Update profile totals to include all nodes' totals (also resets nodes' totals to 0)"
     if (!profiling || slave) { return() }
     res <- cluster_eval({
-        if (exists(".grouped")) {
-            for (.grp in .grouped) {
-                .local$profile_import (.grp$profile())
-                if (length(.grp$profile_names) > 0) {
-                    .grp$profile_names <- character(0)
-                    .grp$profile_sys <- numeric(0)
-                    .grp$profile_user <- numeric(0)
-                }
-            }
-        }
         res <- .local$profile()
         if (nrow(res) > 0) {
             .local$profile_names <- character(0)
@@ -387,7 +421,6 @@ cluster_start = function (cl=NULL) {
     } else {
         cls <<- cl
         cluster_eval ({
-            if (exists(".master")) { rm(.master) }
             if (exists(".local")) { rm(.local) }
             NULL
         })
@@ -407,7 +440,7 @@ cluster_stop = function (only.if.started=FALSE) {
     if (cls.created || !only.if.started) {
         parallel::stopCluster(cls)
     }
-    cls <<- .clsna()
+    cls <<- NA_class_("SOCKcluster")
 },
 compact = function () {
     "Re-sorts data so all rows included after filtering are contiguous (and calls sub.big.matrix in the process)"
@@ -441,29 +474,28 @@ compact = function () {
 
     #(4) Within each node/group, move data to target range
     cluster_eval ({
-        if (.N == 0) { return(NULL) }
-        .local$bm.master[.dest:(.dest+.N-1),] <- .local$bm[1:.N,]
+        if (.N > 0) {
+            .local$bm.master[.dest:(.dest+.N-1),] <- .local$bm[1:.N,]
+        }
         NULL
     })
 
     #(5) Submatrix master, propagate to local
     filtered <<- FALSE
     if (last > 0) {
-        bm <<- bigmemory::sub.big.matrix (desc, firstRow=1, lastRow=last)
-        desc <<- sm_desc_update (desc, 1, last)
+        bm <<- bigmemory::sub.big.matrix (desc.master, firstRow=1, lastRow=last)
+        desc.master <<- sm_desc_update (desc.master, 1, last)
         cluster_export ("last", ".last")
         cluster_eval ({
-            .master$last <- .last
-            .master$filtered <- FALSE
-            .master$bm <- bigmemory::sub.big.matrix (.master$desc, firstRow=1, lastRow=.master$last)
-            .master$desc <- sm_desc_update (.master$desc, 1, .master$last)
-            rm (.local)
+            .local$filtered <- FALSE
+            .local$desc.master <- sm_desc_update (.local$desc.master, 1, .last)
+            .local$bm.master <- bigmemory.sri::attach.resource (.local$desc.master)
             NULL
         })
     } else {
         empty <<- TRUE
         cluster_eval ({
-            .master$empty <- TRUE
+            .local$empty <- TRUE
             NULL
         })
     }
@@ -475,48 +507,61 @@ compact = function () {
     group_partition <<- rg_partion
     group.cols <<- rg_cols
 
-    #(group_by_ will call rebuild_grouped and partition_group)
     if (grouped) {
-        group_by_ (.self, .cols=rg_cols)
+        .self$sort (decreasing=FALSE, cols=rg_cols, with.group=FALSE)
+        nonempty <- (1:group_max) %in% .self$bm[, .self$groupcol]
+        group_cache[!nonempty, 1:3] <<- rep(0, 3)
+        nonempty <- which (nonempty)
+
+        for (g in nonempty) {
+            w <- which(bm[, groupcol] == g)
+            group_cache[g, 1] <<- min(w)
+            group_cache[g, 2] <<- max(w)
+            group_cache[g, 3] <<- length(w)
+        }
+
+        partition_group_ (.self)
     }
 },
 copy = function (shallow = FALSE) {
     "Create a copy of the data frame"
+
     if (!shallow) {
         stop ("Non-shallow copy not implemented safely yet")
     }
+
     if (profiling) {
         t1 <- proc.time()
-        res <- callSuper (shallow)
+        res <- callSuper (TRUE)
         t2 <- proc.time() - t1
         res$profile_names <- "copy"
         res$profile_sys <- t2[1][[1]]
         res$profile_user <- t2[2][[1]]
         res$profile_real <- t2[3][[1]]
         res$profile_rsys <- res$profile_ruser <- res$profile_rreal <- 0
-        return (res)
     } else {
-        callSuper (shallow)
+        res <- callSuper (TRUE)
     }
+
+    return (res)
 },
 describe = function () {
     "Describes data frame (for later use by reattach_slave)"
     fnames <- names(.refClassDef@fieldClasses)
-    fnames <- as.list(fnames[-match(c("bm", "bm.master", "cls", "bindenv"), fnames)])
+    fnames <- as.list(fnames[-match(c("bm", "bm.master", "group_cache", "cls", "bindenv", "groupenv", "savestate"), fnames)])
     out <- lapply(fnames, function (x, d) { d$field(x) }, .self)
     names(out) <- fnames
     class(out) <- "Multiplyr.desc"
     return (out)
 },
 destroy_grouped = function () {
-    "Removes .grouped data frame on remote nodes"
-    cluster_profile ()
-    cluster_eval ({
-        if (exists(".grouped")) {
-            rm (.grouped)
-        }
-        NULL
-    })
+    "Removes grouped data on remote nodes"
+    if (grouped) {
+        cluster_eval ({
+            .local$groupenv <- list()
+            NULL
+        })
+    }
 },
 envir = function (nsa=NULL) {
     "Returns an environment with active bindings to columns (may also temporarily set no strings attached mode)"
@@ -666,13 +711,7 @@ free_col = function (cols, update=FALSE) {
     if (update) {
         cluster_export ("cols", ".cols")
         cluster_eval ({
-            .master$free_col (.cols, update=FALSE)
             .local$free_col (.cols, update=FALSE)
-            if (exists(".grouped")) {
-                for (.grp in .grouped) {
-                    .grp$free_col (.cols, update=FALSE)
-                }
-            }
             NULL
         })
     }
@@ -738,8 +777,8 @@ get_data = function (i=NULL, j=NULL, nsa=NULL, drop=TRUE) {
                 }
                 filtrows <- filtrows[rowslice]
             } else {
-                if (max(rowslice) > ((last-first+1))) {
-                    stop (sprintf("Invalid row reference: %d > %d", max(rowslice), (last-first)+1))
+                if (max(rowslice) > nrow(bm)) {
+                    stop (sprintf("Invalid row reference: %d > %d", max(rowslice), nrow(bm)))
                 }
                 filtrows <- rowslice
             }
@@ -751,7 +790,7 @@ get_data = function (i=NULL, j=NULL, nsa=NULL, drop=TRUE) {
                 }
                 filtrows <- filtrows[rowslice]
             } else {
-                if (((last-first)+1) %% length(rowslice) != 0) {
+                if (nrow(bm) %% length(rowslice) != 0) {
                     stop ("Number of available rows needs to be an exact multiple of rowslice length")
                 }
                 filtrows <- rowslice
@@ -801,48 +840,47 @@ get_data = function (i=NULL, j=NULL, nsa=NULL, drop=TRUE) {
 
     return (out)
 },
-group_restrict = function (group=0) {
-    "Returns a new Multiplyr data frame with data restricted to specified group ID"
-    if (group <= 0) {
-        stop ("Need to specify a group number")
-    }
-    if (all(.self$group == 0) && !grouped) {
+group_cache_attach = function (descres) {
+    group_cache <<- bigmemory.sri::attach.resource(descres)
+},
+group_restrict = function (grpid=NULL) {
+    if (!grouped || length(group) == 0) {
         stop ("group_restrict may only be used on grouped data")
     }
-    grp <- copy (shallow=TRUE)
-    grp$profile ("start", "group_restrict")
-    grp$group_sizes <- grp$group_sizes[grp$group == group]
-    grp$group <- group
-
-    #presumes that dat is sorted by grouping column first
-    rows <- which (grp$bm[, grp$groupcol] == grp$group)
-    if (length(rows) == 0) {
-        grp$empty <- TRUE
-        grp$profile ("stop", "group_restrict")
-        return (grp)
+    if (is.null (grpid)) {
+        bm <<- savestate[[1]]
+        bindenv <<- savestate[[2]]
+        empty <<- savestate[[3]]
+        savestate <<- list()
+        return()
     }
-    lims <- range(rows)
-    grp$bm <- bigmemory::sub.big.matrix(grp$desc,
-                                          firstRow=lims[1],
-                                          lastRow=lims[2])
-    grp$desc <- sm_desc_update (grp$desc, lims[1], lims[2])
-    grp$first <- lims[1]
-    grp$last <- lims[2]
-    grp$empty <- FALSE
-    grp$profile ("stop", "group_restrict")
-    return (grp)
+    if (length(savestate) == 0) {
+        savestate <<- list(bm, bindenv, empty)
+    } else {
+        stop ("Attempted to call group_restrict more than once")
+    }
+
+    bindenv <<- groupenv[[which (group == grpid)]]
+    if (group_cache[grpid, 1] <= group_cache[grpid, 2] && group_cache[grpid, 1] > 0) {
+        bm <<- submatrix (group_cache[grpid, 1], group_cache[grpid, 2])
+    } else {
+        bm <<- NA_class_("big.matrix")
+        empty <<- TRUE
+    }
+    empty <<- group_cache[grpid, 3] == 0
+
+    return ()
 },
 local_subset = function (first, last) {
     "Applies sub.big.matrix to bm"
     if (empty) { return() }
     first <<- first
     last <<- last
-    bm <<- bigmemory::sub.big.matrix (desc, firstRow=first, lastRow=last)
-    desc <<- sm_desc_update (desc, first, last)
+    bm <<- submatrix (first, last)
 },
-partition_even = function (max.row = last) {
+partition_even = function (extend=FALSE) {
     "Partitions data evenly across cluster, irrespective of grouping boundaries"
-    if (empty || max.row == 0) { return() }
+    if (empty) { return() }
     N <- length(cls)
 
     profile ("start", "partition_even")
@@ -852,12 +890,8 @@ partition_even = function (max.row = last) {
     }
     grouped <<- group_partition <<- FALSE
 
-    if (max.row == 0) {
+    if (last == 0) {
         cluster_eval ({
-            if (exists(".master")) {
-                .master$empty <- TRUE
-                .master$grouped <- .master$group_partition <- FALSE
-            }
             if (exists(".local")) {
                 .local$empty <- TRUE
                 .local$grouped <- .local$group_partition <- FALSE
@@ -868,30 +902,30 @@ partition_even = function (max.row = last) {
         return()
     }
 
-    nr <- distribute (max.row, N)
-    if (max.row < N) {
-        nr[nr != 0] <- 1:max.row
+    nr <- distribute (last, N)
+    if (last < N) {
+        nr[nr != 0] <- 1:last
         cluster_export_each ("nr", ".first")
         cluster_export_each ("nr", ".last")
     } else {
         .last <- cumsum(nr)
         .first <- c(0, .last)[1:N] + 1
+        if (extend) {
+            .last <- .last + 1
+            .last[N] <- last
+        }
         cluster_export_each (".first")
         cluster_export_each (".last")
     }
 
     cluster_eval ({
-        if (!exists(".local")) {
-            .local <- .master$copy (shallow=TRUE)
-        }
-        .local$desc <- .master$desc
-
-        .master$grouped <- .local$grouped <- FALSE
-        .master$group_partition <- .local$group_partition <- FALSE
+        .local$grouped <- FALSE
+        .local$group_partition <- FALSE
 
         .local$empty <- (.last < .first || .last == 0)
-        if (.local$empty) { return(NULL) }
-        .local$local_subset (.first, .last)
+        if (!.local$empty) {
+            .local$local_subset (.first, .last)
+        }
         NULL
     })
 
@@ -983,11 +1017,9 @@ reattach_slave = function (descres) {
         field(nm[i], descres[[i]])
     }
 
-    bm <<- bigmemory::attach.big.matrix(desc)
-    bm.master <<- bm
+    bm.master <<- bm <<- bigmemory::attach.big.matrix(desc.master)
     slave <<- TRUE
-    bindenv <<- new.env()
-    cls <<- .clsna()
+    cls <<- NA_class_("SOCKcluster")
 },
 rebuild_grouped = function () {
     "Executes destroy_grouped(), followed by build_grouped()"
@@ -1002,7 +1034,7 @@ row_names = function () {
     if (filtered) {
         return (seq_len(sum(bm[, filtercol] == 1)))
     } else {
-        return (seq_len((last - first)+1))
+        return (seq_len(nrow(bm)))
     }
 },
 set_data = function (i=NULL, j=NULL, value, nsa=NULL) {
@@ -1043,7 +1075,7 @@ set_data = function (i=NULL, j=NULL, value, nsa=NULL) {
             filtrows <- bm[, filtercol] == 1
             nr <- sum(filtrows)
         } else {
-            nr <- (last - first) + 1
+            nr <- nrow(bm)
             filtrows <- NULL
         }
     } else {
@@ -1059,7 +1091,7 @@ set_data = function (i=NULL, j=NULL, value, nsa=NULL) {
                 }
                 filtrows <- filtrows[rowslice]
             } else {
-                nr <- (last - first) + 1
+                nr <- nrow(bm)
                 if (max(rowslice) > nr) {
                     stop (sprintf("Invalid row reference: %d > %d", max(rowslice), nr))
                 }
@@ -1075,7 +1107,7 @@ set_data = function (i=NULL, j=NULL, value, nsa=NULL) {
                 }
                 filtrows <- filtrows[rowslice]
             } else {
-                nr <- (last - first) + 1
+                nr <- nrow(bm)
                 if (nr %% length(rowslice) != 0) {
                     stop ("Number of available rows needs to be an exact multiple of rowslice length")
                 }
@@ -1237,12 +1269,12 @@ show = function (max.row=10) {
             .self$calc_group_sizes (delay=FALSE)
         }
         cat (sprintf ("Groups: %d\n", group_max))
-        gs <- sprintf ("Group sizes: %s\n", paste(group_sizes, collapse=", "))
+        gs <- sprintf ("Group sizes: %s\n", paste(group_cache[, 3], collapse=", "))
         if (nchar(gs) >= 80) {
             cat(sprintf ("Group sizes: median %.1f (IQR %.0f-%.0f, range %.0f-%.0f)\n",
-                         median(group_sizes), quantile(group_sizes, 0.25),
-                         quantile(group_sizes, 0.75), min(group_sizes),
-                         max(group_sizes)))
+                         median(group_cache[, 3]), quantile(group_cache[, 3], 0.25),
+                         quantile(group_cache[, 3], 0.75), min(group_cache[, 3]),
+                         max(group_cache[, 3])))
         } else {
             cat (gs)
         }
@@ -1252,19 +1284,27 @@ show = function (max.row=10) {
         cat ("Cluster not currently running\n")
     } else if (group_partition) {
         res <- cluster_eval ({
-            if (.local$empty) { return(0) }
-            return (length(.local$group))
+            if (.local$empty) {
+                .res <- 0
+            } else {
+                .res <- length(.local$group)
+            }
+            .res
         })
         res <- do.call (c, res)
         cat (sprintf ("Group partioned over %d clusters\n", length(cls)))
         cat (sprintf ("Groups per cluster: %s\n", paste(res, collapse=", ")))
     } else {
         res <- cluster_eval ({
-            if (.local$empty) { return(0) }
-            return (nrow(.local$bm))
+            if (.local$empty) {
+                .res <- 0
+            } else {
+                .res <- nrow(.local$bm)
+            }
+            .res
         })
         cat (sprintf ("\nData partitioned over %d clusters\n", length(cls)))
-        if (grouped) {
+        if (grouped && length(cls) > 1) {
             cat ("Warning: You may want to run partition_group() as each cluster has partial groups\n")
         } else {
             cat (sprintf ("N per cluster: %s\n", paste(res, collapse=", ")))
@@ -1305,18 +1345,14 @@ update_fields = function (fieldnames) {
         .fieldval <- .self$field(name=.fieldname)
         cluster_export (c(".fieldname", ".fieldval"))
         cluster_eval({
-            .master$field (name = .fieldname, value = .fieldval)
             .local$field (name = .fieldname, value = .fieldval)
-            if (.local$empty) { return(NULL) }
-            if (exists(".grouped")) {
-                for (.g in 1:length(.grouped)) {
-                    .grouped[[.g]]$field (name = .fieldname, value = .fieldval)
-                }
-            }
             NULL
         })
     }
     profile ("stop", "update_fields")
+},
+submatrix = function (a, b) {
+    sub.big.matrix (desc.master, firstRow=a, lastRow=b)
 }
 ))
 

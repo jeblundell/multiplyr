@@ -6,3 +6,6 @@
 ^cran-comments\.md$
 ^max-roxygen$
 ^man-roxygen/*$
+^\..*$
+\/\..*$
+^Makefile$

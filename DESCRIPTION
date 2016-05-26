@@ -2,10 +2,12 @@ Package: multiplyr
 Type: Package
 Title: Data Manipulation with Parallelism and Shared Memory Matrices
 Description: Provides a new form of data frame backed by shared memory matrices and a way to manipulate them. Upon creation these data frames are shared across multiple local nodes to allow for simple parallel processing.
-Version: 0.1.0
+Version: 0.1.1
 Date: 2016-05-15
-Maintainer: Jim Blundell <james.blundell@keble.ox.ac.uk>
-Authors@R: c(person(given="Jim", family="Blundell", role = c("aut", "cre", "cph"), email = "james.blundell@keble.ox.ac.uk"))
+Maintainer: Jim Blundell <jeb80@cam.ac.uk>
+Authors@R: c(person(given="Jim", family="Blundell", role = c("aut", "cre", "cph"), email = "jeb80@cam.ac.uk"))
+URL: http://github.com/jeblundell/multiplyr/
+BugReports: https://github.com/jeblundell/multiplyr/issues/new
 License: GPL-3
 Imports: bigmemory (>= 4.5.19), bigmemory.sri (>= 0.1.3), lazyeval (>= 0.1.10), parallel, methods
 Depends: magrittr (>= 1.5)

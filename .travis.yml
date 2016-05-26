@@ -1,0 +1,15 @@
+language: r
+sudo: true
+cache: packages
+branches:
+    only:
+        - master
+        - stable
+        - develop
+r:
+    - oldrel
+    - release
+    - devel
+os:
+    - linux
+r_check_args: --as-cran --run-donttest --run-dontrun
