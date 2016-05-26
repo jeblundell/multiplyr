@@ -37,18 +37,36 @@
     return (nm)
 }
 
+#' Capture ... for later evaluation
+#'
+#' @param ... Dots from function
+#' @return Dots object for use with \code{\link{dotseval}}
 #' @keywords internal
 #' @export
 dotscapture <- function (...) {
-    lazyeval::auto_name (lazyeval::lazy_dots(...))
+    dots <- lazyeval::auto_name (lazyeval::lazy_dots(...))
+    if (length(dots) > 0) {
+        for (i in 1:length(dots)) {
+            dots[[i]]$env <- NULL
+        }
+    }
+    dots
 }
 
+#' Combine explicit and implicit dots
+#'
+#' @return Dots object for use with \code{\link{dotseval}}
 #' @keywords internal
 #' @export
 dotscombine <- function (dots, ...) {
     lazyeval::all_dots (dots, ..., all_named=TRUE)
 }
 
+#' Evaluate previously captured dots
+#'
+#' @param dots Captured ... from \code{\link{dotscapture}}
+#' @param env Environment to evaluate in
+#' @return Results of evaluating expression
 #' @keywords internal
 #' @export
 dotseval <- function (dots, env) {
