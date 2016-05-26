@@ -454,7 +454,7 @@ mutate_ <- function (.self, ..., .dots) {
         if (.self$grouped) {
             stop("mutate on a group column is not permitted")
         } else {
-            .self$group.cols <- 0
+            .self$group.cols <- numeric(0)
         }
     }
 
@@ -683,7 +683,7 @@ regroup <- function (.self, auto_partition=NULL) {
         warning ("regroup attempted on an object that's already grouped")
         return (.self)
     }
-    if (.self$group.cols == 0) {
+    if (length(.self$group.cols) == 0) {
         stop ("regroup may only be used after group_by (and without modifying the group columns)")
     }
 
@@ -989,7 +989,7 @@ transmute_ <- function (.self, ..., .dots) {
         if (.self$grouped) {
             stop("transmute on a group column is not permitted")
         } else {
-            .self$group.cols <- 0
+            .self$group.cols <- numeric(0)
         }
     }
 

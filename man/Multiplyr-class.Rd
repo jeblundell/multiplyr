@@ -131,7 +131,7 @@ to get a better overview: \code{vignette("basics")}
 
 \item{\code{describe()}}{Describes data frame (for later use by reattach_slave)}
 
-\item{\code{destroy_grouped()}}{Removes .grouped data frame on remote nodes}
+\item{\code{destroy_grouped()}}{Removes grouped data on remote nodes}
 
 \item{\code{envir(nsa = NULL)}}{Returns an environment with active bindings to columns (may also temporarily set no strings attached mode)}
 

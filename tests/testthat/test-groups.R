@@ -205,22 +205,28 @@ test_that ("group_by() maintains data integrity across cluster nodes", {
 
     res.x <- do.call (c, dat$cluster_eval({
         out <- c()
-        for (i in 1:length(.groups)) {
-            out <- c(out, .grouped[[i]][, "x"])
+        for (g in .local$group) {
+            .local$group_restrict (g)
+            out <- c(out, .local[, "x"])
+            .local$group_restrict ()
         }
         out
     }))
     res.y <- do.call (c, dat$cluster_eval ({
         out <- c()
-        for (i in 1:length(.groups)) {
-            out <- c(out, .grouped[[i]][, "y"])
+        for (g in .local$group) {
+            .local$group_restrict (g)
+            out <- c(out, .local[, "y"])
+            .local$group_restrict ()
         }
         out
     }))
     res.G <- do.call (c, dat$cluster_eval ({
         out <- c()
-        for (i in 1:length(.groups)) {
-            out <- c(out, .grouped[[i]][, "G"])
+        for (g in .local$group) {
+            .local$group_restrict (g)
+            out <- c(out, .local[, "G"])
+            .local$group_restrict ()
         }
         out
     }))
@@ -312,11 +318,8 @@ test_that ("regroup() works appropriately", {
     res <- do.call (c, dat$cluster_eval(.local$group))
     expect_equal (sort(res), 1:4)
 
-    res <- do.call (c, dat$cluster_eval (length(.grouped)))
+    res <- do.call (c, dat$cluster_eval (length(.local$group)))
     expect_equal (res, c(2, 2))
-
-    res <- do.call (c, dat$cluster_eval (c(nrow(.grouped[[1]]$bm), nrow(.grouped[[2]]$bm))))
-    expect_equal (res, rep(25, 4))
 
     res <- do.call (c, dat$cluster_eval (.local$grouped))
     expect_equal (res, c(TRUE, TRUE))

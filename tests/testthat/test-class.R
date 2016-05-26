@@ -37,9 +37,9 @@ test_that ("Multiplyr(x=...) creates the appropriate structure", {
     res <- do.call (c, dat$cluster_eval (123))
     expect_equal (res, rep(123, 2))
 
-    expect_equal (dat$group.cols, 0)
+    expect_equal (dat$group.cols, numeric(0))
     expect_equal (dat$grouped, FALSE)
-    expect_equal (dat$group, 0)
+    expect_equal (dat$group, numeric(0))
     expect_equal (dat$group_partition, FALSE)
     expect_equal (dat$empty, FALSE)
 })
@@ -83,9 +83,9 @@ test_that ("Multiplyr() works on a data.frame", {
     res <- do.call (c, dat$cluster_eval (123))
     expect_equal (res, rep(123, 2))
 
-    expect_equal (dat$group.cols, 0)
+    expect_equal (dat$group.cols, numeric(0))
     expect_equal (dat$grouped, FALSE)
-    expect_equal (dat$group, 0)
+    expect_equal (dat$group, numeric(0))
     expect_equal (dat$group_partition, FALSE)
     expect_equal (dat$empty, FALSE)
 })
@@ -140,9 +140,9 @@ test_that ("dat$copy(shallow=TRUE) creates the appropriate structure", {
     res <- do.call (c, dat$cluster_eval (123))
     expect_equal (res, rep(123, 2))
 
-    expect_equal (dat$group.cols, 0)
+    expect_equal (dat$group.cols, numeric(0))
     expect_equal (dat$grouped, FALSE)
-    expect_equal (dat$group, 0)
+    expect_equal (dat$group, numeric(0))
     expect_equal (dat$group_partition, FALSE)
 })
 
@@ -346,10 +346,8 @@ test_that ("$alloc_col(update=...) works appropriately", {
     dat %>% group_by (G)
     dat$alloc_col ("y")
     expect_false ("y" %in% do.call (c, dat$cluster_eval (.local$col.names)))
-    expect_false ("y" %in% do.call (c, dat$cluster_eval (.grouped[[1]]$col.names)))
     dat$alloc_col ("z", update=TRUE)
     expect_true ("z" %in% do.call (c, dat$cluster_eval (.local$col.names)))
-    expect_true ("z" %in% do.call (c, dat$cluster_eval (.grouped[[1]]$col.names)))
 })
 
 #FIXME: build_grouped
@@ -460,7 +458,7 @@ test_that ("$describe() returns the appropriate structure", {
     dat %>% group_by (G)
 
     res <- dat$describe()
-    skip.fields <- c("bm", "bm.master", "cls", "bindenv")
+    skip.fields <- c("bm", "bm.master", "bm.temp", "group_cache", "cls", "bindenv", "groupenv", "tmpenv")
     fields <- ls(dat$.refClassDef@fieldPrototypes)
     fields <- fields[!fields %in% skip.fields]
 
@@ -470,15 +468,6 @@ test_that ("$describe() returns the appropriate structure", {
         nm <- names(res)[i]
         expect_equal (res[[i]], dat$field(nm), info=nm)
     }
-})
-
-test_that ("$destroy_grouped() destroys .grouped on cluster", {
-    dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
-    dat %>% group_by (G)
-
-    expect_equal (dat$cluster_eval(length(.grouped)), list(1, 1))
-    dat$destroy_grouped()
-    expect_equal (dat$cluster_eval(exists(".grouped")), list(FALSE, FALSE))
 })
 
 test_that ("$factor_map() works appropriately", {
@@ -643,21 +632,22 @@ test_that ("$get_data() works on filtered data", {
 })
 rm (dat)
 
-test_that ("$group_restrict(...) returns a group restricted data frame", {
+test_that ("$group_restrict(...) sets/unsets data frame to group restricted mode", {
     dat <- Multiplyr(x=1:100,
                      f=factor(rep(c("f1", "f2"), each=50), levels=c("f1", "f2")),
                      G=rep(c("A", "B", "C", "D"), each=25),
                      alloc=1,
                      cl=cl2)
     dat %>% group_by (G)
-    grp <- dat$group_restrict (3)
-    expect_equal (grp["x"], 51:75)
-    expect_equal (grp["G"], rep("C", 25))
+    dat$group_restrict (3)
+    expect_equal (dat["x"], 51:75)
+    expect_equal (dat["G"], rep("C", 25))
+    dat$group_restrict ()
     expect_equal (dat["x"], 1:100)
     expect_equal (dat["G"], rep(c("A", "B", "C", "D"), each=25))
 })
 
-test_that ("$group_restrict(...) throws an error for no parameters or non-grouped data", {
+test_that ("$group_restrict(...) throws an error for non-grouped data", {
     dat <- Multiplyr(x=1:100,
                      f=factor(rep(c("f1", "f2"), each=50), levels=c("f1", "f2")),
                      G=rep(c("A", "B", "C", "D"), each=25),
@@ -665,10 +655,9 @@ test_that ("$group_restrict(...) throws an error for no parameters or non-groupe
                      cl=cl2)
     expect_error (dat$group_restrict(1), "grouped")
     dat %>% group_by (G)
-    expect_error (dat$group_restrict(), "specify")
 })
 
-test_that ("$group_restrict() for an empty group returns a frame with $empty=TRUE ", {
+test_that ("$group_restrict() for an empty group throws an error ", {
     dat <- Multiplyr(x=1:100,
                      f=factor(rep(c("f1", "f2"), each=50), levels=c("f1", "f2")),
                      G=rep(c("A", "B", "C", "D"), each=25),
@@ -676,8 +665,10 @@ test_that ("$group_restrict() for an empty group returns a frame with $empty=TRU
                      cl=cl2)
     dat %>% group_by (G)
     dat %>% filter(x<50)
-    grp <- dat$group_restrict(3)
-    expect_true (grp$empty)
+    dat$group_restrict(3)
+    expect_true (dat$empty)
+    dat$group_restrict()
+    expect_false (dat$empty)
 })
 
 test_that ("$local_subset() works appropriately", {
@@ -827,7 +818,6 @@ test_that ("$update_fields() works appropriately", {
     dat$pad <- 1:100
     dat$update_fields ("pad")
     expect_equal (dat$cluster_eval(.local$pad), list(1:100, 1:100))
-    expect_equal (dat$cluster_eval(.grouped[[1]]$pad), list(1:100, 1:100))
 })
 
 dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)

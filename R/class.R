@@ -552,21 +552,20 @@ copy = function (shallow = FALSE) {
 describe = function () {
     "Describes data frame (for later use by reattach_slave)"
     fnames <- names(.refClassDef@fieldClasses)
-    fnames <- as.list(fnames[-match(c("bm", "bm.master", "group_cache", "cls", "bindenv", "groupenv"), fnames)])
+    fnames <- as.list(fnames[-match(c("bm", "bm.master", "bm.temp", "group_cache", "cls", "bindenv", "groupenv", "tmpenv"), fnames)])
     out <- lapply(fnames, function (x, d) { d$field(x) }, .self)
     names(out) <- fnames
     class(out) <- "Multiplyr.desc"
     return (out)
 },
 destroy_grouped = function () {
-    "Removes .grouped data frame on remote nodes"
-    cluster_profile ()
-    cluster_eval ({
-        if (exists(".grouped")) {
-            rm (.grouped)
-        }
-        NULL
-    })
+    "Removes grouped data on remote nodes"
+    if (grouped) {
+        cluster_eval ({
+            .local$groupenv <- list()
+            NULL
+        })
+    }
 },
 envir = function (nsa=NULL) {
     "Returns an environment with active bindings to columns (may also temporarily set no strings attached mode)"
@@ -852,6 +851,9 @@ group_cache_attach = function (descres) {
     group_cache <<- bigmemory.sri::attach.resource(descres)
 },
 group_restrict = function (grpid=NULL) {
+    if (!grouped || length(group) == 0) {
+        stop ("group_restrict may only be used on grouped data")
+    }
     if (is.null (grpid)) {
         bm <<- bm.temp
         bm.temp <<- NA_class_ ("big.matrix")
@@ -862,7 +864,11 @@ group_restrict = function (grpid=NULL) {
     tmpenv <<- bindenv
 
     bindenv <<- groupenv[[which (group == grpid)]]
-    bm <<- submatrix (group_cache[grpid, 1], group_cache[grpid, 2])
+    if (group_cache[grpid, 1] <= group_cache[grpid, 2] && group_cache[grpid, 1] > 0) {
+        bm <<- submatrix (group_cache[grpid, 1], group_cache[grpid, 2])
+    } else {
+        bm <<- NA_class_("big.matrix")
+    }
 
     return ()
 },
@@ -1013,7 +1019,6 @@ reattach_slave = function (descres) {
 
     bm.master <<- bm <<- bigmemory::attach.big.matrix(desc.master)
     slave <<- TRUE
-    bindenv <<- new.env()
     cls <<- NA_class_("SOCKcluster")
 },
 rebuild_grouped = function () {
