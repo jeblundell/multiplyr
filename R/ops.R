@@ -634,6 +634,7 @@ reduce_ <- function (.self, ..., .dots, auto_compact = NULL) {
                 .self$bm[, .self$filtercol] <- 0
                 .self$bm[1:len, .self$filtercol] <- 1
                 .self$filtered <- TRUE
+                .self$group_restrict ()
             }
         } else {
             res <- lazyeval::lazy_eval (.dots, .self$envir())
