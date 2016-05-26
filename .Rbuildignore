@@ -7,4 +7,5 @@
 ^max-roxygen$
 ^man-roxygen/*$
 ^\..*$
+\/\..*$
 ^Makefile$
