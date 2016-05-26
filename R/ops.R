@@ -1124,11 +1124,14 @@ within_group <- function (.self, expr) {
     expr <- substitute(expr)
     .self$cluster_export ("expr", ".expr")
     .self$cluster_eval({
-        if (.local$empty) { return(NULL) }
-        for (.g in .local$group) {
-            .local$group_restrict (.g)
-            eval (.expr, envir = .local$envir())
-            .local$group_restrict ()
+        if (!.local$empty) {
+            for (.g in .local$group) {
+                .local$group_restrict (.g)
+                if (!.local$empty) {
+                    eval (.expr, envir = .local$envir())
+                }
+                .local$group_restrict ()
+            }
         }
         NULL
     })
@@ -1154,8 +1157,9 @@ within_node <- function (.self, expr) {
     expr <- substitute(expr)
     .self$cluster_export ("expr", ".expr")
     .self$cluster_eval({
-        if (.local$empty) { return(NULL) }
-        eval (.expr, envir = .local$envir())
+        if (!.local$empty) {
+            eval (.expr, envir = .local$envir())
+        }
         NULL
     })
     .self
