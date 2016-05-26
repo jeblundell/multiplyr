@@ -96,7 +96,7 @@ test_that ("filter() updates group sizes", {
     dat <- Multiplyr (x=1:100, G=rep(1:2, each=50), cl=cl2)
     dat %>% group_by (G)
     dat %>% filter (x<=50)
-    expect_equal (group_sizes(dat), 50)
+    expect_equal (group_sizes(dat), c(50, 0))
 })
 
 parallel::stopCluster (cl2)

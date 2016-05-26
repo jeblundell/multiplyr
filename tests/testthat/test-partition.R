@@ -62,13 +62,13 @@ test_that("partition_group() can partition 2 groups over 2 nodes", {
     res <- do.call (c, dat$cluster_eval(length(.local$group)))
     expect_equal (res, c(1, 1))
     res1 <- do.call (c, dat$cluster_eval({
-        .local$group_restrict(1)
+        .local$group_restrict(.local$group[1])
         res <- sum(.local[, "G"]==1)
         .local$group_restrict()
         res
     }))
-    res1 <- do.call (c, dat$cluster_eval({
-        .local$group_restrict(1)
+    res2 <- do.call (c, dat$cluster_eval({
+        .local$group_restrict(.local$group[1])
         res <- sum(.local[, "G"]==2)
         .local$group_restrict()
         res
@@ -77,9 +77,10 @@ test_that("partition_group() can partition 2 groups over 2 nodes", {
     expect_equal (sort(res2), c(0, 50))
     expect_equal (res1, rev(res2))
     res <- dat$cluster_eval({
-        .local$group_restrict (1)
-        .local[, "x"]
+        .local$group_restrict (.local$group[1])
+        res <- .local[, "x"]
         .local$group_restrict ()
+        res
     })
     expect_equal (res[[1]], seq(1, 99, by=2))
     expect_equal (res[[2]], seq(2, 100, by=2))
