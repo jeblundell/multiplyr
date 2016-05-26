@@ -105,7 +105,7 @@ test_that ("group_by() can group by one level", {
     expect_equal (dat$bm[, dat$groupcol], dat[, "G"])
     expect_equal (dat$group.cols, match("G", dat$col.names))
     expect_true (dat$grouped)
-    expect_equal (dat$group_sizes, rep(25, 4))
+    expect_equal (group_sizes(dat), rep(25, 4))
     expect_equal (dat$group_max, 4)
 
     rm (dat)
@@ -121,7 +121,7 @@ test_that ("group_by() run a second time only groups by the second set of factor
     expect_equal (dat$bm[, dat$groupcol], dat[, "G"])
     expect_equal (dat$group.cols, match("G", dat$col.names))
     expect_true (dat$grouped)
-    expect_equal (dat$group_sizes, rep(50, 2))
+    expect_equal (group_sizes(dat), rep(50, 2))
     expect_equal (dat$group_max, 2)
 
     rm (dat)
@@ -134,7 +134,7 @@ test_that ("group_by() can group by multiple levels", {
     expect_equal (dat$bm[, dat$groupcol], rep(1:20, each=5))
     expect_equal (dat$group.cols, match(c("G", "H"), dat$col.names))
     expect_true (dat$grouped)
-    expect_equal (length(dat$group_sizes), 20)
+    expect_equal (length(group_sizes(dat)), 20)
     expect_equal (sum(group_sizes(dat)), 100)
     expect_equal (dat$group_max, 20)
 
@@ -150,7 +150,7 @@ test_that ("group_by() can group uneven sizes", {
     expect_equal (dat$bm[, dat$groupcol], dat[, "G"])
     expect_equal (dat$group.cols, match("G", dat$col.names))
     expect_true (dat$grouped)
-    expect_equal (dat$group_sizes, c(7, 6))
+    expect_equal (group_sizes(dat), c(7, 6))
     expect_equal (dat$group_max, 2)
 
     rm (dat)
@@ -163,7 +163,7 @@ test_that ("group_by() can group when size of group=1", {
     expect_equal (dat$bm[, dat$groupcol], 1:4)
     expect_equal (dat$group.cols, match(c("G", "H"), dat$col.names))
     expect_true (dat$grouped)
-    expect_equal (dat$group_sizes, rep(1, 4))
+    expect_equal (group_sizes(dat), rep(1, 4))
     expect_equal (dat$group_max, 4)
 
     rm (dat)
@@ -176,14 +176,14 @@ test_that ("group_by() can group a single item", {
     expect_equal (dat$bm[, dat$groupcol], 1)
     expect_equal (dat$group.cols, match("G", dat$col.names))
     expect_true (dat$grouped)
-    expect_equal (dat$group_sizes, 1)
+    expect_equal (group_sizes(dat), 1)
     expect_equal (dat$group_max, 1)
 
     dat %>% group_by (G, H)
     expect_equal (dat$bm[, dat$groupcol], 1)
     expect_equal (dat$group.cols, match(c("G", "H"), dat$col.names))
     expect_true (dat$grouped)
-    expect_equal (dat$group_sizes, 1)
+    expect_equal (group_sizes(dat), 1)
     expect_equal (dat$group_max, 1)
 
     rm (dat)
@@ -205,22 +205,28 @@ test_that ("group_by() maintains data integrity across cluster nodes", {
 
     res.x <- do.call (c, dat$cluster_eval({
         out <- c()
-        for (i in 1:length(.groups)) {
-            out <- c(out, .grouped[[i]][, "x"])
+        for (g in .local$group) {
+            .local$group_restrict (g)
+            out <- c(out, .local[, "x"])
+            .local$group_restrict ()
         }
         out
     }))
     res.y <- do.call (c, dat$cluster_eval ({
         out <- c()
-        for (i in 1:length(.groups)) {
-            out <- c(out, .grouped[[i]][, "y"])
+        for (g in .local$group) {
+            .local$group_restrict (g)
+            out <- c(out, .local[, "y"])
+            .local$group_restrict ()
         }
         out
     }))
     res.G <- do.call (c, dat$cluster_eval ({
         out <- c()
-        for (i in 1:length(.groups)) {
-            out <- c(out, .grouped[[i]][, "G"])
+        for (g in .local$group) {
+            .local$group_restrict (g)
+            out <- c(out, .local[, "G"])
+            .local$group_restrict ()
         }
         out
     }))
@@ -306,17 +312,14 @@ test_that ("regroup() works appropriately", {
 
     expect_equal (dat$group.cols, match("G", dat$col.names))
     expect_true (dat$grouped)
-    expect_equal (dat$group_sizes, rep(25, 4))
+    expect_equal (group_sizes(dat), rep(25, 4))
     expect_equal (dat$group_max, 4)
 
     res <- do.call (c, dat$cluster_eval(.local$group))
     expect_equal (sort(res), 1:4)
 
-    res <- do.call (c, dat$cluster_eval (length(.grouped)))
+    res <- do.call (c, dat$cluster_eval (length(.local$group)))
     expect_equal (res, c(2, 2))
-
-    res <- do.call (c, dat$cluster_eval (c(nrow(.grouped[[1]]$bm), nrow(.grouped[[2]]$bm))))
-    expect_equal (res, rep(25, 4))
 
     res <- do.call (c, dat$cluster_eval (.local$grouped))
     expect_equal (res, c(TRUE, TRUE))

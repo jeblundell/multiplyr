@@ -37,19 +37,60 @@
     return (nm)
 }
 
-#' Returns NA as a cluster object
+#' Returns NA of a particular class
 #'
 #' This is a horrible kludge needed so copy() doesn't complain about
 #' assigning NULL to a field when there's no cluster, i.e. for the slave nodes
 #'
-#' @name clsna
-#' @return NA with class set to SOCKcluster
+#' @name NA_class_
+#' @param type Name of class
+#' @return NA with class set to type
 #' @keywords internal
 #' @export
-.clsna <- function () {
-    clsna <- NA
-    class(clsna) <- "SOCKcluster"
-    return (clsna)
+NA_class_ <- function (type) {
+    res <- NA
+    class(res) <- type
+    return (res)
+}
+
+#' Returns big.matrix descriptor offset by 1 (for row by row comparisons)
+#'
+#' @param .self Data frame
+#' @param start 1 or 2
+#' @return big.matrix.descriptor subset to 1:last-1 or 2:last
+#' @export
+#' @keywords internal
+sm_desc_comp <- function (.self, start) {
+    if (start == 1) {
+        return (sm_desc_update (.self$desc.master, .self$first, .self$last-1))
+    } else if (start == 2) {
+        return (sm_desc_update (.self$desc.master, .self$first+1, .self$last))
+    }
+}
+
+#' Returns a big.matrix descriptor for a particular group ID
+#'
+#' @param .self Data frame
+#' @param group_id Group ID (from groupcol)
+#' @return big.matrix.descriptor that would restrict to this group
+#' @export
+#' @keywords internal
+sm_desc_group <- function (.self, group_id) {
+    return (sm_desc_update(.self$desc.master,
+                           .self$group_cache[group_id, 1],
+                           .self$group_cache[group_id, 2]))
+}
+
+#' Returns big.matrix descriptor limited to particular start/end row
+#'
+#' @param .self Data frame
+#' @param first First row
+#' @param last Last row
+#' @return big.matrix.descriptor that would restrict to this group
+#' @export
+#' @keywords internal
+sm_desc_subset <- function (.self, first, last) {
+    return (sm_desc_update(.self$desc.master, first, last))
 }
 
 #' Update description of a big.matrix after a row subset (internal)
@@ -91,8 +132,8 @@ test_transition <- function (.self, cols, rows) {
     rows.i <- which (!is.na(rows)) #subsetting gets stroppy with NA
     rows <- rows[rows.i]
 
-    sm1 <- bigmemory::sub.big.matrix (.self$desc, firstRow=1, lastRow=nrow(.self$bm)-1)
-    sm2 <- bigmemory::sub.big.matrix (.self$desc, firstRow=2, lastRow=nrow(.self$bm))
+    sm1 <- bigmemory.sri::attach.resource(sm_desc_comp (.self, 1))
+    sm2 <- bigmemory.sri::attach.resource(sm_desc_comp (.self, 2))
     if (length(cols) == 1 || length(rows) == 1) {
         tg.a <- any(sm1[rows, cols] != sm2[rows, cols])
     } else {
