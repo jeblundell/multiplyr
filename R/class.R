@@ -862,7 +862,7 @@ group_restrict = function (grpid=NULL) {
     if (length(savestate) == 0) {
         savestate <<- list(bm, bindenv, empty)
     } else {
-        warning ("Attempting to call group_restrict more than once")
+        stop ("Attempted to call group_restrict more than once")
     }
 
     bindenv <<- groupenv[[which (group == grpid)]]
