@@ -160,7 +160,7 @@ initialize = function (..., alloc=0, cl=NULL,
         return()
     }
 
-    dots <- lazyeval::auto_name (lazyeval::lazy_dots (...))
+    dots <- dotscapture (...)
     vnames <- names(dots)
 
     profile ("start", "initialize")
@@ -429,7 +429,6 @@ cluster_start = function (cl=NULL) {
     if (any(!res)) {
         cluster_eval ({
             library (multiplyr)
-            library (lazyeval)
             NULL
         })
     }
@@ -1320,7 +1319,7 @@ sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=TRUE) {
     if (empty) { return() }
     profile ("start", "sort")
     if (is.null(cols)) {
-        namelist <- .dots2names (lazyeval::all_dots (dots, all_named = TRUE))
+        namelist <- .dots2names (dots)
         cols <- match(namelist, col.names)
         if (any(is.na(cols))) {
             stop (.p("Undefined column(s): ", paste0(namelist[is.na(cols)], collapse=", ")))

@@ -37,6 +37,24 @@
     return (nm)
 }
 
+#' @keywords internal
+#' @export
+dotscapture <- function (...) {
+    lazyeval::auto_name (lazyeval::lazy_dots(...))
+}
+
+#' @keywords internal
+#' @export
+dotscombine <- function (dots, ...) {
+    lazyeval::all_dots (dots, ..., all_named=TRUE)
+}
+
+#' @keywords internal
+#' @export
+dotseval <- function (dots, env) {
+    lazyeval::lazy_eval (dots, env)
+}
+
 #' Returns NA of a particular class
 #'
 #' This is a horrible kludge needed so copy() doesn't complain about

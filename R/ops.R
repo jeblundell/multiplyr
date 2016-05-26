@@ -8,7 +8,7 @@ arrange_ <- function (.self, ..., .dots) {
     if (!is(.self, "Multiplyr")) {
         stop ("arrange operation only valid for Multiplyr objects")
     }
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    .dots <- dotscombine (.dots, ...)
     if (length(.dots) == 0 || .self$empty) {
         return (.self)
     }
@@ -27,7 +27,7 @@ define_ <- function (.self, ..., .dots) {
     if (!is(.self, "Multiplyr")) {
         stop ("arrange operation only valid for Multiplyr objects")
     }
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    .dots <- dotscombine (.dots, ...)
     if (length(.dots) == 0) {
         stop ("No column names specified")
     }
@@ -66,7 +66,7 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
         stop ("distinct operation only valid for Multiplyr objects")
     }
     if (.self$empty) { return() }
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    .dots <- dotscombine (.dots, ...)
 
     if (is.null(auto_compact)) {
         auto_compact <- .self$auto_compact
@@ -236,7 +236,7 @@ filter_ <- function (.self, ..., .dots, auto_compact = NULL) {
         return (.self)
     }
 
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    .dots <- dotscombine (.dots, ...)
     if (length(.dots) == 0) {
         stop ("No filtering criteria specified")
     }
@@ -253,7 +253,7 @@ filter_ <- function (.self, ..., .dots, auto_compact = NULL) {
                     if (.local$group_cache[.g, 3] > 0) {
                         for (.i in 1:length(.dots)) {
                             .local$group_restrict (.g)
-                            .res <- lazyeval::lazy_eval (.dots[.i], .local$envir())
+                            .res <- dotseval (.dots[.i], .local$envir())
                             .local$filter_vector (.res[[1]])
                             .local$group_restrict ()
                         }
@@ -261,7 +261,7 @@ filter_ <- function (.self, ..., .dots, auto_compact = NULL) {
                 }
             } else {
                 for (.i in 1:length(.dots)) {
-                    .res <- lazyeval::lazy_eval (.dots[.i], .local$envir())
+                    .res <- dotseval (.dots[.i], .local$envir())
                     .local$filter_vector (.res[[1]])
                 }
             }
@@ -288,7 +288,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
     if (.self$empty) { return (.self) }
 
     if (is.null(.cols)) {
-        .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+        .dots <- dotscombine (.dots, ...)
         namelist <- .dots2names (.dots)
 
         .cols <- match(namelist, .self$col.names)
@@ -440,7 +440,7 @@ mutate_ <- function (.self, ..., .dots) {
     }
     if (.self$empty) { return (.self) }
 
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    .dots <- dotscombine (.dots, ...)
     if (length(.dots) == 0) {
         stop ("No mutation operations specified")
     }
@@ -463,7 +463,7 @@ mutate_ <- function (.self, ..., .dots) {
                     if (.local$group_cache[.g, 3] > 0) {
                         for (.i in 1:length(.dots)) {
                             .local$group_restrict (.g)
-                            .res <- lazyeval::lazy_eval (.dots[.i], .local$envir())
+                            .res <- dotseval (.dots[.i], .local$envir())
                             .local$set_data (, .rescols[.i], .res[[1]])
                             .local$group_restrict ()
                         }
@@ -471,7 +471,7 @@ mutate_ <- function (.self, ..., .dots) {
                 }
             } else {
                 for (.i in 1:length(.dots)) {
-                    .res <- lazyeval::lazy_eval (.dots[.i], .local$envir())
+                    .res <- dotseval (.dots[.i], .local$envir())
                     .local$set_data (, .rescols[.i], .res[[1]])
                 }
             }
@@ -541,7 +541,7 @@ partition_group_ <- function (.self, ..., .dots) {
     if (!is(.self, "Multiplyr")) {
         stop ("partition_group operation only valid for Multiplyr objects")
     }
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    .dots <- dotscombine (.dots, ...)
 
     if (length(.dots) > 0) {
         .self$group_partition <- TRUE
@@ -592,7 +592,7 @@ reduce_ <- function (.self, ..., .dots, auto_compact = NULL) {
     if (!is(.self, "Multiplyr")) {
         stop ("reduce operation only valid for Multiplyr objects")
     }
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    .dots <- dotscombine (.dots, ...)
     if (length(.dots) == 0) {
         stop ("No reduce operations specified")
     }
@@ -617,7 +617,7 @@ reduce_ <- function (.self, ..., .dots, auto_compact = NULL) {
         if (.self$grouped) {
             for (g in 1:.self$group_max) {
                 .self$group_restrict (g)
-                res <- lazyeval::lazy_eval (.dots, .self$envir())
+                res <- dotseval (.dots, .self$envir())
                 len <- 0
                 for (i in 1:length(res)) {
                     .self$bm[, newcols[i]] <- res[[i]]
@@ -631,7 +631,7 @@ reduce_ <- function (.self, ..., .dots, auto_compact = NULL) {
                 .self$group_restrict ()
             }
         } else {
-            res <- lazyeval::lazy_eval (.dots, .self$envir())
+            res <- dotseval (.dots, .self$envir())
             len <- 0
             for (i in 1:length(res)) {
                 .self$bm[, newcols[i]] <- res[[i]]
@@ -708,7 +708,7 @@ rename_ <- function (.self, ..., .dots) {
     if (!is(.self, "Multiplyr")) {
         stop ("rename operation only valid for Multiplyr objects")
     }
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    .dots <- dotscombine (.dots, ...)
     if (length(.dots) == 0) {
         stop ("No renaming operations specified")
     }
@@ -729,7 +729,7 @@ select_ <- function (.self, ..., .dots) {
     if (!is(.self, "Multiplyr")) {
         stop ("select operation only valid for Multiplyr objects")
     }
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    .dots <- dotscombine (.dots, ...)
     if (length(.dots) == 0) {
         stop ("No select columns specified")
     }
@@ -899,7 +899,7 @@ summarise_ <- function (.self, ..., .dots, auto_compact = NULL) {
     if (!is(.self, "Multiplyr")) {
         stop ("summarise operation only valid for Multiplyr objects")
     }
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    .dots <- dotscombine (.dots, ...)
     if (length(.dots) == 0) {
         stop ("No summarise operations specified")
     }
@@ -927,7 +927,7 @@ summarise_ <- function (.self, ..., .dots, auto_compact = NULL) {
                 for (.g in .local$group) {
                     if (.local$group_cache[.g, 3] > 0) {
                         .local$group_restrict (.g)
-                        .res <- lazyeval::lazy_eval (.dots, .local$envir())
+                        .res <- dotseval (.dots, .local$envir())
                         .len <- 0
                         for (.i in 1:length(.res)) {
                             .local$bm[, .newcols[.i]] <- .res[[.i]]
@@ -942,7 +942,7 @@ summarise_ <- function (.self, ..., .dots, auto_compact = NULL) {
                     }
                 }
             } else {
-                .res <- lazyeval::lazy_eval (.dots, .local$envir())
+                .res <- dotseval (.dots, .local$envir())
                 .len <- 0
                 for (.i in 1:length(.res)) {
                     .local$bm[, .newcols[.i]] <- .res[[.i]]
@@ -979,7 +979,7 @@ transmute_ <- function (.self, ..., .dots) {
 
     if (.self$empty) { return (.self) }
 
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    .dots <- dotscombine (.dots, ...)
     if (length(.dots) == 0) {
         stop ("No mutation operations specified")
     }
@@ -1003,7 +1003,7 @@ transmute_ <- function (.self, ..., .dots) {
                     if (.local$group_cache[.g, 3] > 0) {
                         for (.i in 1:length(.dots)) {
                             .local$group_restrict (.g)
-                            .res <- lazyeval::lazy_eval (.dots[.i], .local$envir())
+                            .res <- dotseval (.dots[.i], .local$envir())
                             .local$set_data (, .rescols[.i], .res[[1]])
                             .local$group_restrict ()
                         }
@@ -1011,7 +1011,7 @@ transmute_ <- function (.self, ..., .dots) {
                 }
             } else {
                 for (.i in 1:length(.dots)) {
-                    .res <- lazyeval::lazy_eval (.dots[.i], .local$envir())
+                    .res <- dotseval (.dots[.i], .local$envir())
                     .local$set_data (, .rescols[.i], .res[[1]])
                 }
             }
@@ -1040,7 +1040,7 @@ undefine_ <- function (.self, ..., .dots) {
         stop ("undefine operation only valid for Multiplyr objects")
     }
 
-    .dots <- lazyeval::all_dots (.dots, ..., all_named=TRUE)
+    .dots <- dotscombine (.dots, ...)
     if (length(.dots) == 0) {
         stop ("No undefine operations specified")
     }
