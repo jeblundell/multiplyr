@@ -36,9 +36,9 @@ dat \%>\% shutdown()
 }
 }
 \seealso{
-Other column manipulations: \code{\link{define}},
-  \code{\link{define_}}; \code{\link{rename}},
-  \code{\link{rename_}}; \code{\link{select}},
-  \code{\link{select_}}
+Other column manipulations: \code{\link{add_rownames}};
+  \code{\link{define}}, \code{\link{define_}};
+  \code{\link{rename}}, \code{\link{rename_}};
+  \code{\link{select}}, \code{\link{select_}}
 }
 

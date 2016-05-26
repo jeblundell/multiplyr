@@ -1,5 +1,23 @@
 # Operations on Multiplyr objects
 
+#' Add a new column with row names
+#'
+#' @family column manipulations
+#' @param .self Data frame
+#' @param var Optional name of column
+#' @return Data frame
+#' @export
+add_rownames <- function (.self, var="rowname") {
+    if (!is(.self, "Multiplyr")) {
+        stop ("add_rownames operation only valid for Multiplyr objects")
+    }
+
+    col <- .self$alloc_col (var)
+    .self$bm.master[, col] <- 1:nrow(.self$bm.master)
+
+    return (.self)
+}
+
 #' @rdname arrange
 #' @export
 arrange_ <- function (.self, ..., .dots) {
@@ -430,6 +448,23 @@ group_sizes <- function (.self) {
     }
     .self$calc_group_sizes (delay=FALSE)
     .self$group_cache[, 3]
+}
+
+#' Return number of groups
+#'
+#' @family utility functions
+#' @param .self Data frame
+#' @return Number of groups in data frame
+#' @export
+n_groups <- function (.self) {
+    if (!is(.self, "Multiplyr")) {
+        stop ("n_groups operation only valid for Multiplyr objects")
+    }
+    if (!.self$grouped) {
+        return (0)
+    } else {
+        return (nrow(.self$group_cache))
+    }
 }
 
 #' @rdname mutate

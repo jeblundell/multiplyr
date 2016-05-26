@@ -24,4 +24,13 @@ numbers representing the size of groups.
 distribute (100, 4)
 distribute (c(25, 25, 50), 2)
 }
+\seealso{
+Other utility functions: \code{\link{between}};
+  \code{\link{cumall}}; \code{\link{cumany}};
+  \code{\link{cummean}}; \code{\link{first}};
+  \code{\link{lag}}; \code{\link{last}};
+  \code{\link{lead}}; \code{\link{n_distinct}};
+  \code{\link{n_groups}}; \code{\link{nth}};
+  \code{\link{n}}
+}
 

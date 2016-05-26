@@ -30,10 +30,10 @@ dat \%>\% shutdown()
 }
 }
 \seealso{
-Other column manipulations: \code{\link{define}},
-  \code{\link{define_}}; \code{\link{rename}},
-  \code{\link{rename_}}; \code{\link{undefine}},
-  \code{\link{undefine_}}, \code{\link{unselect}},
-  \code{\link{unselect_}}
+Other column manipulations: \code{\link{add_rownames}};
+  \code{\link{define}}, \code{\link{define_}};
+  \code{\link{rename}}, \code{\link{rename_}};
+  \code{\link{undefine}}, \code{\link{undefine_}},
+  \code{\link{unselect}}, \code{\link{unselect_}}
 }
 

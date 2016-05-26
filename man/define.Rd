@@ -31,10 +31,10 @@ created using \code{template} as a template. This is useful for creating
 new factors.
 }
 \seealso{
-Other column manipulations: \code{\link{rename}},
-  \code{\link{rename_}}; \code{\link{select}},
-  \code{\link{select_}}; \code{\link{undefine}},
-  \code{\link{undefine_}}, \code{\link{unselect}},
-  \code{\link{unselect_}}
+Other column manipulations: \code{\link{add_rownames}};
+  \code{\link{rename}}, \code{\link{rename_}};
+  \code{\link{select}}, \code{\link{select_}};
+  \code{\link{undefine}}, \code{\link{undefine_}},
+  \code{\link{unselect}}, \code{\link{unselect_}}
 }
 
