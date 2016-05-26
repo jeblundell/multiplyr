@@ -5,7 +5,7 @@ Description: Provides a new form of data frame backed by shared memory matrices 
 Version: 0.1.1
 Date: 2016-05-15
 Maintainer: Jim Blundell <jeb80@cam.ac.uk>
-Authors@R: c(person(given="Jim", family="Blundell", role = c("aut", "cre", "cph"), email = "james.blundell@keble.ox.ac.uk"))
+Authors@R: c(person(given="Jim", family="Blundell", role = c("aut", "cre", "cph"), email = "jeb80@cam.ac.uk"))
 URL: http://github.com/jeblundell/multiplyr/
 BugReports: https://github.com/jeblundell/multiplyr/issues/new
 License: GPL-3
