@@ -458,7 +458,7 @@ test_that ("$describe() returns the appropriate structure", {
     dat %>% group_by (G)
 
     res <- dat$describe()
-    skip.fields <- c("bm", "bm.master", "bm.temp", "group_cache", "cls", "bindenv", "groupenv", "tmpenv")
+    skip.fields <- c("bm", "bm.master", "group_cache", "cls", "bindenv", "groupenv", "savestate")
     fields <- ls(dat$.refClassDef@fieldPrototypes)
     fields <- fields[!fields %in% skip.fields]
 

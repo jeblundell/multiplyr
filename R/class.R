@@ -71,7 +71,6 @@ Multiplyr <- setRefClass("Multiplyr",
         bindenv           = "environment",
         bm                = "big.matrix",
         bm.master         = "big.matrix",
-        bm.temp           = "big.matrix",
         cls.created       = "logical",
         cls               = "SOCKcluster",
         col.names         = "character",
@@ -104,9 +103,9 @@ Multiplyr <- setRefClass("Multiplyr",
         profile_sys       = "numeric",
         profile_user      = "numeric",
         profiling         = "logical",
+        savestate         = "list",
         slave             = "logical",
         tmpcol            = "numeric",
-        tmpenv            = "environment",
         type.cols         = "numeric"
     ),
     methods=list(
@@ -124,7 +123,6 @@ initialize = function (..., alloc=0, cl=NULL,
     bindenv           <<- new.env()
     bm                <<- NA_class_("big.matrix")
     bm.master         <<- NA_class_("big.matrix")
-    bm.temp           <<- NA_class_("big.matrix")
     cls.created       <<- FALSE
     cls               <<- NA_class_ ("SOCKcluster")
     col.names         <<- character(0)
@@ -147,15 +145,15 @@ initialize = function (..., alloc=0, cl=NULL,
     last              <<- 0
     nsamode           <<- FALSE
     nullframe         <<- FALSE
-    order.cols        <<-  numeric(0)
+    order.cols        <<- numeric(0)
     pad               <<- numeric(0)
     profile_names     <<- character(0)
     profile_ruser     <<- profile_rsys <<- profile_rreal <<- numeric(0)
     profile_user      <<- profile_sys <<- profile_real <<- numeric(0)
     profiling         <<- profiling
+    savestate         <<- list()
     slave             <<- TRUE
     tmpcol            <<- 0
-    tmpenv            <<- new.env()
     type.cols         <<- numeric(0)
 
     if (length(vars) == 0) {
@@ -552,7 +550,7 @@ copy = function (shallow = FALSE) {
 describe = function () {
     "Describes data frame (for later use by reattach_slave)"
     fnames <- names(.refClassDef@fieldClasses)
-    fnames <- as.list(fnames[-match(c("bm", "bm.master", "bm.temp", "group_cache", "cls", "bindenv", "groupenv", "tmpenv"), fnames)])
+    fnames <- as.list(fnames[-match(c("bm", "bm.master", "group_cache", "cls", "bindenv", "groupenv", "savestate"), fnames)])
     out <- lapply(fnames, function (x, d) { d$field(x) }, .self)
     names(out) <- fnames
     class(out) <- "Multiplyr.desc"
@@ -855,20 +853,26 @@ group_restrict = function (grpid=NULL) {
         stop ("group_restrict may only be used on grouped data")
     }
     if (is.null (grpid)) {
-        bm <<- bm.temp
-        bm.temp <<- NA_class_ ("big.matrix")
-        bindenv <<- tmpenv
+        bm <<- savestate[[1]]
+        bindenv <<- savestate[[2]]
+        empty <<- savestate[[3]]
+        savestate <<- list()
         return()
     }
-    bm.temp <<- bm
-    tmpenv <<- bindenv
+    if (length(savestate) == 0) {
+        savestate <<- list(bm, bindenv, empty)
+    } else {
+        warning ("Attempting to call group_restrict more than once")
+    }
 
     bindenv <<- groupenv[[which (group == grpid)]]
     if (group_cache[grpid, 1] <= group_cache[grpid, 2] && group_cache[grpid, 1] > 0) {
         bm <<- submatrix (group_cache[grpid, 1], group_cache[grpid, 2])
     } else {
         bm <<- NA_class_("big.matrix")
+        empty <<- TRUE
     }
+    empty <<- group_cache[grpid, 3] == 0
 
     return ()
 },
