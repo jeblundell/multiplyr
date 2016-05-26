@@ -296,7 +296,6 @@ calc_group_sizes = function (delay=TRUE) {
     if (empty) {
         group_cache[, 3] <<- rep(0, group_max)
     } else if (!filtered) {
-        # FIXME: Maybe make parallel if group_max > something?
         group_cache[, 3] <<- (group_cache[, 2] - group_cache[, 1]) + 1
         if (any(group_cache[, 1] == 0)) {
             group_cache[group_cache[, 1] == 0, 3] <<- 0
@@ -514,7 +513,6 @@ compact = function () {
         group_cache[!nonempty, 1:3] <<- rep(0, 3)
         nonempty <- which (nonempty)
 
-        #FIXME: parallel
         for (g in nonempty) {
             w <- which(bm[, groupcol] == g)
             group_cache[g, 1] <<- min(w)
@@ -650,7 +648,6 @@ filter_range = function (start, end) {
     "Only include specified rows. Note that start and end are relative to all rows in the big.matrix, filtered or otherwise"
     if (empty) { return() }
     profile ("start", "filter_range")
-    #FIXME: GROUPED
     if (start > 1) {
         bm[1:(start-1), filtercol] <<- 0
     }
@@ -664,7 +661,6 @@ filter_rows = function (rows) {
     "Only include specified numeric rows. Note that rows refer to all rows in the big.matrix, filtered or otherwise"
     if (empty) { return() }
     profile ("start", "filter_rows")
-    #FIXME: GROUPED
     bm[, tmpcol] <<- 0
     bm[rows, tmpcol] <<- 1
 
@@ -677,7 +673,6 @@ filter_vector = function (rows) {
     "Only include these rows (given as a vector of TRUE/FALSE values). Note that this applies to all rows in the big.matrix, filtered or otherwise"
     if (empty) { return() }
     profile ("start", "filter_vector")
-    #FIXME: GROUPED
     bm[, filtercol] <<- bm[, filtercol] * rows
     empty <<- sum(bm[, filtercol]) == 0
     filtered <<- TRUE
