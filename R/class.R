@@ -785,8 +785,8 @@ get_data = function (i=NULL, j=NULL, nsa=NULL, drop=TRUE) {
                 }
                 filtrows <- filtrows[rowslice]
             } else {
-                if (max(rowslice) > ((last-first+1))) {
-                    stop (sprintf("Invalid row reference: %d > %d", max(rowslice), (last-first)+1))
+                if (max(rowslice) > nrow(bm)) {
+                    stop (sprintf("Invalid row reference: %d > %d", max(rowslice), nrow(bm)))
                 }
                 filtrows <- rowslice
             }
@@ -798,7 +798,7 @@ get_data = function (i=NULL, j=NULL, nsa=NULL, drop=TRUE) {
                 }
                 filtrows <- filtrows[rowslice]
             } else {
-                if (((last-first)+1) %% length(rowslice) != 0) {
+                if (nrow(bm) %% length(rowslice) != 0) {
                     stop ("Number of available rows needs to be an exact multiple of rowslice length")
                 }
                 filtrows <- rowslice
@@ -1029,7 +1029,7 @@ row_names = function () {
     if (filtered) {
         return (seq_len(sum(bm[, filtercol] == 1)))
     } else {
-        return (seq_len((last - first)+1))
+        return (seq_len(nrow(bm)))
     }
 },
 set_data = function (i=NULL, j=NULL, value, nsa=NULL) {
@@ -1070,7 +1070,7 @@ set_data = function (i=NULL, j=NULL, value, nsa=NULL) {
             filtrows <- bm[, filtercol] == 1
             nr <- sum(filtrows)
         } else {
-            nr <- (last - first) + 1
+            nr <- nrow(bm)
             filtrows <- NULL
         }
     } else {
@@ -1086,7 +1086,7 @@ set_data = function (i=NULL, j=NULL, value, nsa=NULL) {
                 }
                 filtrows <- filtrows[rowslice]
             } else {
-                nr <- (last - first) + 1
+                nr <- nrow(bm)
                 if (max(rowslice) > nr) {
                     stop (sprintf("Invalid row reference: %d > %d", max(rowslice), nr))
                 }
@@ -1102,7 +1102,7 @@ set_data = function (i=NULL, j=NULL, value, nsa=NULL) {
                 }
                 filtrows <- filtrows[rowslice]
             } else {
-                nr <- (last - first) + 1
+                nr <- nrow(bm)
                 if (nr %% length(rowslice) != 0) {
                     stop ("Number of available rows needs to be an exact multiple of rowslice length")
                 }
