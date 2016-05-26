@@ -13,5 +13,7 @@ r:
 os:
     - linux
 r_check_args: --as-cran --run-donttest --run-dontrun
+r_github_packages:
+  - jimhester/covr
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  - Rscript -e 'covr::codecov()'
