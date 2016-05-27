@@ -457,7 +457,7 @@ compact = function () {
     partition_even()
     N <- cluster_eval ({
         #(1) Sort by filtercol decreasing
-        bigmemory::mpermute (.local$bm, cols=.local$filtercol, decreasing=TRUE)
+        bm_mpermute (.local$bm, cols=.local$filtercol, decreasing=TRUE)
 
         #(2) Find the length of each included block
         .N <- sum(.local$bm[, .local$filtercol])
@@ -1334,7 +1334,7 @@ sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=TRUE) {
     if (length(cols) == 0) {
         stop ("No sorting column(s) specified")
     }
-    bigmemory::mpermute (bm, cols=cols, decreasing=decreasing)
+    bm_mpermute (bm, cols=cols, decreasing=decreasing)
     profile ("stop", "sort")
 },
 update_fields = function (fieldnames) {

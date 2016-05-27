@@ -37,6 +37,65 @@
     return (nm)
 }
 
+#' Extension of bigmemory::morder to allow decreasing parameter to be a vector
+#'
+#' @param x bigmemmory::big.matrix
+#' @param cols Columns to sort on
+#' @param na.last Handling of missing values: TRUE (last), FALSE (first), NA (omit)
+#' @param decreasing Sort in decreasing order: single value or equal to length of x for tie breaking
+#' @return Returns ordering vector
+#' @export
+#' @keywords internal
+bm_morder <- function (x, cols, na.last=TRUE, decreasing=FALSE) {
+    # Have left out checking whether just calling bigmemory::morder would be
+    # more efficient here, so can do sensible unit testing. bm_mpermute will
+    # check whether it's more efficient, though.
+    if (decreasing[1]) {
+        #would na.last=!na.last make sense here?
+        ord <- (nrow(x) + 1) - rank(x[, cols[1]], ties.method="min", na.last = na.last)
+    } else {
+        ord <- rank(x[, cols[1]], ties.method="min", na.last = na.last)
+    }
+    ties <- nonunique (ord)
+    i <- 2
+    while (length(ties) > 0 && i <= length(cols)) {
+        for (j in ties) {
+            w <- ord == j
+            if (decreasing[i]) {
+                ordbrk <- (sum(w)+1) - rank(x[w, cols[i]], ties.method="min", na.last=na.last)
+            } else {
+                ordbrk <- rank(x[w, cols[i]], ties.method="min", na.last=na.last)
+            }
+            ord[w] <- (ord[w] - 1) + ordbrk
+        }
+        ties <- nonunique (ord)
+        i <- i + 1
+    }
+    return (ord)
+}
+
+#' Extension of bigmemory::mpermute to allow decreasing parameter to be a vector
+#'
+#' @param x bigmemmory::big.matrix
+#' @param order Ordering vector
+#' @param cols Columns to sort on
+#' @param allow.duplicates If TRUE allows row to be duplicated in result (order will be non-permutation of 1:nrow(x))
+#' @param decreasing Sort in decreasing order: single value or equal to length of x for tie breaking
+#' @param ... Additional parameters to pass to \code{\link{bm_morder}}
+#' @return No return value: permutes in place
+#' @export
+#' @keywords internal
+bm_mpermute <- function (x, order=NULL, cols=NULL, allow.duplicates=FALSE, decreasing=FALSE, ...) {
+    if (all(decreasing) || all(!decreasing) || !is.null(order)) {
+        decreasing <- decreasing[1]
+    }
+    if (length(decreasing) == 1) {
+        bigmemory::mpermute (x, order=order, cols=cols, allow.duplicates=allow.duplicates, decreasing=decreasing, ...)
+    } else {
+        bigmemory::mpermute (x, order=bm_morder(x, cols=cols, decreasing=decreasing, ...), allow.duplicates=allow.duplicates)
+    }
+}
+
 #' Capture ... for later evaluation
 #'
 #' @param ... Dots from function
@@ -87,6 +146,14 @@ NA_class_ <- function (type) {
     res <- NA
     class(res) <- type
     return (res)
+}
+
+#' Returns values of x that are non-unique
+#'
+#' @export
+#' @keywords internal
+nonunique <- function (x) {
+    unique(x[duplicated(x)])
 }
 
 #' Returns big.matrix descriptor offset by 1 (for row by row comparisons)
