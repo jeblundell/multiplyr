@@ -378,14 +378,14 @@ test_that ("n() returns the number of items in a group (unfiltered)", {
     rm (dat)
 })
 
-#test_that ("n() returns the number of items in a group (filtered)", {
-#    dat <- Multiplyr (x=1:100, G=rep(1:4, each=25), cl=cl2, alloc=1, auto_compact=FALSE)
-#    dat %>% group_by (G)
-#    dat %>% filter (x <= 50)
-#    dat %>% summarise (N=n())
-#    expect_equal (dat["N"], c(25, 25, 0, 0))
-#    rm (dat)
-#})
+test_that ("n() returns the number of items in a group (filtered)", {
+    dat <- Multiplyr (x=1:100, G=rep(1:4, each=25), cl=cl2, alloc=1, auto_compact=FALSE)
+    dat %>% group_by (G)
+    dat %>% filter (x <= 50)
+    dat %>% summarise (N=n())
+    expect_equal (dat["N"], c(25, 25, 0, 0))
+    rm (dat)
+})
 
 test_that ("n_groups() returns number of groups", {
     dat <- Multiplyr (x=1:100, G=rep(1:4, each=25), cl=cl2)

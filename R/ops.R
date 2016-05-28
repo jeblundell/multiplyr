@@ -525,7 +525,7 @@ mutate_ <- function (.self, ..., .dots) {
         if (!.local$empty) {
             if (.local$grouped) {
                 for (.g in .local$group) {
-                    if (.local$group_cache[.g, 3] > 0) {
+                    if (.local$group_cache[.g, 1] > 0) {
                         for (.i in 1:length(.dots)) {
                             .local$group_restrict (.g)
                             .res <- dotseval (.dots[.i], .local$envir())
@@ -889,7 +889,7 @@ slice <- function (.self, rows=NULL, start=NULL, end=NULL, each=FALSE, auto_comp
                 if (!.local$empty) {
                     if (.local$grouped) {
                         for (.g in .local$group) {
-                            if (.local$group_cache[.g, 3] > 0) {
+                            if (.local$group_cache[.g, 1] > 0) {
                                 .local$group_restrict (.g)
                                 .local$filter_range (.start, .end)
                                 .local$group_restrict()
@@ -990,7 +990,7 @@ summarise_ <- function (.self, ..., .dots, auto_compact = NULL) {
         if (!.local$empty) {
             if (.local$grouped) {
                 for (.g in .local$group) {
-                    if (.local$group_cache[.g, 3] > 0) {
+                    if (.local$group_cache[.g, 1] > 0) {
                         .local$group_restrict (.g)
                         .res <- dotseval (.dots, .local$envir())
                         .len <- 0
@@ -1065,7 +1065,7 @@ transmute_ <- function (.self, ..., .dots) {
         if (!.local$empty) {
             if (.local$grouped) {
                 for (.g in .local$group) {
-                    if (.local$group_cache[.g, 3] > 0) {
+                    if (.local$group_cache[.g, 1] > 0) {
                         for (.i in 1:length(.dots)) {
                             .local$group_restrict (.g)
                             .res <- dotseval (.dots[.i], .local$envir())
