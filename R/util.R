@@ -72,6 +72,21 @@ cummean <- function (x) {
     cumsum (x) / 1:length(x)
 }
 
+#' Arrange specified column in descending order
+#'
+#' @param var Variable to arrange in descending order
+#' @seealso \code{\link{arrange}}
+#' @export
+#' @examples
+#' \donttest{
+#' dat <- Multiplyr (x=1:100, cl=2)
+#' dat %>% arrange(desc(x))
+#' dat %>% shutdown()
+#' }
+desc <- function (var) {
+    stop ("This function should not be called directly")
+}
+
 #' Calculations for how to distribute x items over N nodes
 #'
 #' This function is used to determine how to distribute the contents of a

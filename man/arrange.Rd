@@ -25,7 +25,8 @@ Sorts data frame using the columns specified
 \details{
 This function takes a parallel data frame and sorts it by the first
 column specified. If there are any ties then it sorts by the second,
-and so on.
+and so on. Use \code{desc(x)} to specify that x should be sorted in
+descending order (see \code{\link{desc}}).
 }
 \examples{
 \donttest{

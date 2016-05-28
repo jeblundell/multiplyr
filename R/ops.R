@@ -36,12 +36,29 @@ arrange_ <- function (.self, ..., .dots) {
     if (length(.dots) == 0 || .self$empty) {
         return (.self)
     }
-    nm <- .dots2names(.dots)
-    cols <- match(nm, .self$col.names)
-    if (any(is.na(cols))) {
-        stop (sprintf("Undefined columns: %s", paste0(nm[is.na(cols)], collapse=", ")))
+
+    sort.names <- c()
+    sort.desc <- c()
+    for (i in 1:length(.dots)) {
+        if (length(.dots[[i]]$expr) == 1) {
+            sort.names <- c(sort.names, as.character(.dots[[i]]$expr))
+            sort.desc <- c(sort.desc, FALSE)
+        } else {
+            fn <- as.character(.dots[[i]]$expr[[1]])
+            if (length(.dots[[i]]$expr) == 2 && fn == "desc") {
+                sort.names <- c(sort.names, as.character(.dots[[i]]$expr[[2]]))
+                sort.desc <- c(sort.desc, TRUE)
+            } else {
+                stop (paste0 ("arrange can't handle sorting expression: ", deparse(.dots[[i]]$expr)))
+            }
+        }
     }
-    .self$sort(decreasing=FALSE, .dots)
+
+    cols <- match(sort.names, .self$col.names)
+    if (any(is.na(cols))) {
+        stop (sprintf("Undefined columns: %s", paste0(sort.names[is.na(cols)], collapse=", ")))
+    }
+    .self$sort(decreasing=sort.desc, cols=cols)
     return (.self)
 }
 

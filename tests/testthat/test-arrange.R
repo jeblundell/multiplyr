@@ -106,5 +106,32 @@ test_that ("arrange() throws an error for non-Multiplyr objects", {
     expect_error (data.frame(x=1:100) %>% arrange(x), "Multiplyr")
 })
 
+test_that ("arrange() can sort descending", {
+    dat <- Multiplyr (x=sample(1:100, 100), cl=cl2)
+    dat %>% arrange (desc(x))
+    expect_equal (dat["x"], 100:1)
+    rm (dat)
+})
+
+test_that ("arrange() can sort with mixed orders", {
+    dat <- Multiplyr (x=c(1, 1, 1, 2, 2, 2, 3, 3, 3),
+                      y=c(2, 1, 1, 2, 1, 1, 2, 1, 1),
+                      z=c(1, 2, 3, 1, 2, 3, 1, 2, 3), cl=cl2)
+    dat %>% arrange (desc(x), y, desc(z))
+    expect_equal (dat["x"], c(3, 3, 3, 2, 2, 2, 1, 1, 1))
+    expect_equal (dat["y"], c(1, 1, 2, 1, 1, 2, 1, 1, 2))
+    expect_equal (dat["z"], c(3, 2, 1, 3, 2, 1, 3, 2, 1))
+    rm (dat)
+})
+
+test_that ("arrange() throws an error for inappropriate sorting expressions", {
+    dat <- Multiplyr (x=c(1, 1, 1, 2, 2, 2, 3, 3, 3),
+                      y=c(2, 1, 1, 2, 1, 1, 2, 1, 1),
+                      z=c(1, 2, 3, 1, 2, 3, 1, 2, 3), cl=cl2)
+    expect_error (dat %>% arrange(sum(x)), "sorting expression")
+    expect_error (dat %>% arrange(desc(x, y)), "sorting expression")
+    rm (dat)
+})
+
 parallel::stopCluster (cl1)
 parallel::stopCluster (cl2)
