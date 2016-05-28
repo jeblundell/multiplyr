@@ -17,7 +17,7 @@ Cumulative all
 }
 \examples{
 cumall (c(TRUE, FALSE, FALSE, TRUE, TRUE))
-cumall (c(TRUE, TRUE, TRUE, FALSE, TRUE)
+cumall (c(TRUE, TRUE, TRUE, FALSE, TRUE))
 }
 \seealso{
 Other utility functions: \code{\link{between}},

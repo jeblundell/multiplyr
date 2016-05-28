@@ -24,7 +24,7 @@ between <- function (x, left, right) {
 #' @export
 #' @examples
 #' cumall (c(TRUE, FALSE, FALSE, TRUE, TRUE))
-#' cumall (c(TRUE, TRUE, TRUE, FALSE, TRUE)
+#' cumall (c(TRUE, TRUE, TRUE, FALSE, TRUE))
 cumall <- function (x) {
     if (!x[[1]]) {
         return (rep(FALSE, length(x)))
