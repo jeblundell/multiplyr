@@ -28,10 +28,32 @@ Run the following code once multiplyr is installed for more details:
 vignette ("basics")
 ```
 
-Roadmap
--------
+Installation
+------------
 
-### 0.1.1
+Install latest version from CRAN:
+
+``` r
+install.packages ("multiplyr")
+```
+
+Development
+-----------
+
+### Branches
+
+-   master: represents the version currently in CRAN
+-   stable: the latest commit from develop that passes all tests
+-   develop: current state of development
+
+Install latest stable development version:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("jeblundell/multiplyr", ref="stable", build_vignettes = TRUE)
+```
+
+### Plans for 0.1.1
 
 -   Any new bugfixes from first submission
 -   Optimisations
@@ -39,7 +61,7 @@ Roadmap
 -   Support for reading data tables
 -   alloc\_rows= parameter to Multiplyr
 
-### 0.2
+### Plans for 0.2
 
 -   Non-local cluster nodes
 -   Remote read.csv
