@@ -7,6 +7,12 @@
 #' @param var Optional name of column
 #' @return Data frame
 #' @export
+#' @examples
+#' \donttest{
+#' dat <- Multiplyr (x=rnorm(100), cl=2)
+#' dat %>% add_rownames()
+#' dat %>% shutdown()
+#' }
 add_rownames <- function (.self, var="rowname") {
     if (!is(.self, "Multiplyr")) {
         stop ("add_rownames operation only valid for Multiplyr objects")
@@ -456,6 +462,13 @@ group_sizes <- function (.self) {
 #' @param .self Data frame
 #' @return Number of groups in data frame
 #' @export
+#' @examples
+#' \donttest{
+#' dat <- Multiplyr (x=1:100, G=rep(1:4, each=25), cl=2)
+#' dat %>% group_by (G)
+#' n_groups (dat)
+#' dat %>% shutdown()
+#' }
 n_groups <- function (.self) {
     if (!is(.self, "Multiplyr")) {
         stop ("n_groups operation only valid for Multiplyr objects")
