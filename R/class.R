@@ -438,6 +438,12 @@ cluster_stop = function (only.if.started=FALSE) {
     "Stops cluster"
     if (!cluster_running()) { return() }
     if (cls.created || !only.if.started) {
+        cluster_eval ({
+            if (exists (".local")) {
+                rm (.local)
+            }
+            NULL
+        })
         parallel::stopCluster(cls)
     }
     cls <<- NA_class_("SOCKcluster")
