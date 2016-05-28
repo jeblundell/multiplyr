@@ -126,7 +126,7 @@ distribute <- function (x, N) {
 #' @export
 #' @examples
 #' first (1:10)
-#' first (numeric(0), defalt=123)
+#' first (numeric(0), default=123)
 first <- function (x, default=NA) {
     if (length(x) == 0) {
         return (default)

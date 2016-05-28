@@ -19,7 +19,7 @@ Returns first value in vector
 }
 \examples{
 first (1:10)
-first (numeric(0), defalt=123)
+first (numeric(0), default=123)
 }
 \seealso{
 Other utility functions: \code{\link{between}},
