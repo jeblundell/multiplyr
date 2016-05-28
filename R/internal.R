@@ -25,9 +25,11 @@
 #' @keywords internal
 #' @rdname dots2names
 #' @examples
+#' \donttest{
 #' f <- function (...) { lazyeval::lazy_dots (...) }
 #' dots <- f(x, y=z)
 #' .dots2names (dots)
+#' }
 .dots2names <- function (dots) {
     nm <- names (dots)
     exprs <- nm == ""
@@ -46,6 +48,14 @@
 #' @return Returns ordering vector
 #' @export
 #' @keywords internal
+#' @examples
+#' \donttest{
+#' bm <- bigmemory::big.matrix (9, 3)
+#' bm[] <- sample(1:3, 27, replace=TRUE)
+#' bm[]
+#' bm_morder (bm, cols=1, decreasing=c(TRUE, FALSE))
+#' bm_morder (bm, cols=1, decreasing=c(FALSE, TRUE))
+#' }
 bm_morder <- function (x, cols, na.last=TRUE, decreasing=FALSE) {
     # Have left out checking whether just calling bigmemory::morder would be
     # more efficient here, so can do sensible unit testing. bm_mpermute will
@@ -97,6 +107,14 @@ bm_morder <- function (x, cols, na.last=TRUE, decreasing=FALSE) {
 #' @return No return value: permutes in place
 #' @export
 #' @keywords internal
+#' @examples
+#' \donttest{
+#' bm <- bigmemory::big.matrix (9, 3)
+#' bm[] <- sample(1:3, 27, replace=TRUE)
+#' bm[]
+#' bm_mpermute (bm, cols=1, decreasing=c(TRUE, FALSE))
+#' bm_mpermute (bm, cols=1, decreasing=c(FALSE, TRUE))
+#' }
 bm_mpermute <- function (x, order=NULL, cols=NULL, allow.duplicates=FALSE, decreasing=FALSE, ...) {
     if (all(decreasing) || all(!decreasing) || !is.null(order)) {
         decreasing <- decreasing[1]
@@ -114,6 +132,13 @@ bm_mpermute <- function (x, order=NULL, cols=NULL, allow.duplicates=FALSE, decre
 #' @return Dots object for use with \code{\link{dotseval}}
 #' @keywords internal
 #' @export
+#' @examples
+#' \donttest{
+#' f <- function (...) { dotscapture(...) }
+#' x <- 123
+#' dots <- f (x)
+#' dotseval (dots, sys.frame())
+#' }
 dotscapture <- function (...) {
     dots <- lazyeval::auto_name (lazyeval::lazy_dots(...))
     if (length(dots) > 0) {
@@ -140,6 +165,13 @@ dotscombine <- function (dots, ...) {
 #' @return Results of evaluating expression
 #' @keywords internal
 #' @export
+#' @examples
+#' \donttest{
+#' f <- function (...) { dotscapture(...) }
+#' x <- 123
+#' dots <- f (x)
+#' dotseval (dots, sys.frame())
+#' }
 dotseval <- function (dots, env) {
     lazyeval::lazy_eval (dots, env)
 }
@@ -154,6 +186,10 @@ dotseval <- function (dots, env) {
 #' @return NA with class set to type
 #' @keywords internal
 #' @export
+#' @examples
+#' \donttest{
+#' nacls <- NA_class_ ("SOCKcluster")
+#' }
 NA_class_ <- function (type) {
     res <- NA
     class(res) <- type
@@ -164,6 +200,11 @@ NA_class_ <- function (type) {
 #'
 #' @export
 #' @keywords internal
+#' @examples
+#' \donttest{
+#' nonunique (c(1, 1, 1, 2, 3))
+#' nonunique (c(1, 2, 3, 3, 4, 4))
+#' }
 nonunique <- function (x) {
     unique(x[duplicated(x)])
 }

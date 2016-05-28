@@ -8,6 +8,10 @@
 #' @param right Right value
 #' @return x >= left & x <= right
 #' @export
+#' @examples
+#' between (5, 1, 10)
+#' between (11, 1, 10)
+#' between (-5, -10, 0)
 between <- function (x, left, right) {
     x >= left & x <= right
 }
@@ -18,6 +22,9 @@ between <- function (x, left, right) {
 #' @param x Values
 #' @return Cumulative all of x
 #' @export
+#' @examples
+#' cumall (c(TRUE, FALSE, FALSE, TRUE, TRUE))
+#' cumall (c(TRUE, TRUE, TRUE, FALSE, TRUE)
 cumall <- function (x) {
     if (!x[[1]]) {
         return (rep(FALSE, length(x)))
@@ -37,6 +44,9 @@ cumall <- function (x) {
 #' @param x Values
 #' @return Cumulative any of x
 #' @export
+#' @examples
+#' cumany (c(FALSE, TRUE, FALSE, FALSE))
+#' cumany (c(FALSE, FALSE, TRUE, FALSE))
 cumany <- function (x) {
     if (x[[1]]) {
         return (rep(TRUE, length(x)))
@@ -56,6 +66,8 @@ cumany <- function (x) {
 #' @param x Values to obtain cumulative mean of
 #' @return Cumulative mean of x
 #' @export
+#' @examples
+#' cummean (1:10)
 cummean <- function (x) {
     cumsum (x) / 1:length(x)
 }
@@ -112,6 +124,9 @@ distribute <- function (x, N) {
 #' @param default Value to pad missing data with
 #' @return First value in x
 #' @export
+#' @examples
+#' first (1:10)
+#' first (numeric(0), defalt=123)
 first <- function (x, default=NA) {
     if (length(x) == 0) {
         return (default)
@@ -127,6 +142,9 @@ first <- function (x, default=NA) {
 #' @param default Value to pad missing data with
 #' @return Offset values
 #' @export
+#' @examples
+#' lag (1:10)
+#' lag (1:10, 2)
 lag <- function (x, n=1, default=NA) {
     if (length(x) <= n) {
         return (rep(default, n))
@@ -141,6 +159,8 @@ lag <- function (x, n=1, default=NA) {
 #' @param default Value to pad missing data with
 #' @return Last value in x
 #' @export
+#' @examples
+#' last (1:10)
 last <- function (x, default=NA) {
     if (length(x) == 0) {
         return (default)
@@ -156,6 +176,9 @@ last <- function (x, default=NA) {
 #' @param default Value to pad missing data with
 #' @return Offset values
 #' @export
+#' @examples
+#' lead (1:10)
+#' lead (1:10, 2)
 lead <- function (x, n=1, default=NA) {
     if (length(x) <= n) {
         return (rep(default, n))
@@ -187,6 +210,8 @@ n <- function () {
 #' @param x Vector
 #' @return Number of unique values of x
 #' @export
+#' @examples
+#' n_distinct (c(1, 2, 3, 3, 3, 4, 5))
 n_distinct <- function (x) {
     length(unique(x))
 }
@@ -199,6 +224,9 @@ n_distinct <- function (x) {
 #' @param default Value to pad missing data with
 #' @return nth item from vector
 #' @export
+#' @examples
+#' nth (1:10, 5)
+#' nth (1:10, 11, default=123)
 nth <- function (x, n, default=NA) {
     if (n > length(x)) {
         return (default)
