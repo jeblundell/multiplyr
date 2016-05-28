@@ -15,6 +15,14 @@ Number of groups in data frame
 \description{
 Return number of groups
 }
+\examples{
+\donttest{
+dat <- Multiplyr (x=1:100, G=rep(1:4, each=25), cl=2)
+dat \%>\% group_by (G)
+n_groups (dat)
+dat \%>\% shutdown()
+}
+}
 \seealso{
 Other utility functions: \code{\link{between}},
   \code{\link{cumall}}, \code{\link{cumany}},

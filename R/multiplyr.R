@@ -22,6 +22,7 @@
 #'     \code{\link{group_sizes}} \tab Return size of groups \cr
 #'     \code{\link{groupwise}}   \tab Use grouped data (also known as \code{ungroup})\cr
 #'     \code{\link{mutate}}      \tab Change values of existing variables (and create new ones) \cr
+#'     \code{\link{n_groups}}    \tab Return number of groups \cr
 #'     \code{\link{rename}}      \tab Rename variables \cr
 #'     \code{\link{rowwise}}     \tab Use data as individual rows \cr
 #'     \code{\link{select}}      \tab Retain only specified variables \cr
@@ -46,6 +47,20 @@
 #'     \code{\link{reduce}}      \tab Summarise locally only \cr
 #'     \code{\link{regroup}}     \tab Return to grouped data \cr
 #'     \code{\link{undefine}}    \tab Delete variables \cr
+#' }
+#'
+#' @section Data manipulation adjuncts:
+#' \tabular{ll}{
+#'     \code{\link{between}} \tab Tests whether elements of a vector lie between two values (inclusively) \cr
+#'     \code{\link{cumall}}  \tab Cumulative all \cr
+#'     \code{\link{cumany}}  \tab Cumulative any \cr
+#'     \code{\link{cummean}} \tab Cumulative mean \cr
+#'     \code{\link{first}}   \tab Returns first value in vector \cr
+#'     \code{\link{last}}    \tab Returns last value in vector \cr
+#'     \code{\link{lag}}     \tab Offset x backwards by n \cr
+#'     \code{\link{lead}}    \tab Offset x forwards by n \cr
+#'     \code{\link{n}}       \tab Number of items in current group \cr
+#'     \code{\link{nth}}     \tab Return the nth item from a vector \cr
 #' }
 #'
 #' @importFrom bigmemory sub.big.matrix attach.big.matrix mwhich mpermute

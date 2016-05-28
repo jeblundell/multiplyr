@@ -12,6 +12,14 @@ Number of items in current group (or node if ungrouped)
 \description{
 Number of items in current group
 }
+\examples{
+\donttest{
+dat <- Multiplyr (x=1:100, G=rep(1:4, each=25), cl=2)
+dat \%>\% group_by (G)
+dat \%>\% summarise (G.size = n())
+dat \%>\% shutdown()
+}
+}
 \seealso{
 Other utility functions: \code{\link{between}},
   \code{\link{cumall}}, \code{\link{cumany}},
