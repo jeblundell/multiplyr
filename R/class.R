@@ -270,6 +270,7 @@ alloc_col = function (name=".tmp", update=FALSE) {
     return (res)
 },
 build_grouped = function () {
+    "Build group environments"
     if (empty) { return() }
     cluster_eval ({
         if (length(.local$group) > 0) {
@@ -840,9 +841,11 @@ get_data = function (i=NULL, j=NULL, nsa=NULL, drop=TRUE) {
     return (out)
 },
 group_cache_attach = function (descres) {
+    "Attach data frame to group_cache"
     group_cache <<- bigmemory.sri::attach.resource(descres)
 },
 group_restrict = function (grpid=NULL) {
+    "Restricts data to only specified group ID. If NULL, returns to non-restricted."
     if (!grouped || length(group) == 0) {
         stop ("group_restrict may only be used on grouped data")
     }
@@ -1351,6 +1354,7 @@ update_fields = function (fieldnames) {
     profile ("stop", "update_fields")
 },
 submatrix = function (a, b) {
+    "Returns a sub.big.matrix between specified rows (a:b)"
     sub.big.matrix (desc.master, firstRow=a, lastRow=b)
 }
 ))
