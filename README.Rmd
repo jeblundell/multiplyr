@@ -56,7 +56,6 @@ vignette ("basics")
 ### 0.1.1
 * Any new bugfixes from first submission
 * Optimisations
-* Minor dplyr functions not already implemented
 * arrange descending
 * Support for reading data tables
 * alloc_rows= parameter to Multiplyr
@@ -64,7 +63,5 @@ vignette ("basics")
 ### 0.2
 * Non-local cluster nodes
 * Remote read.csv
-* Matrix operations (+/- GPU)
-* SQL
+* Matrix operations
 * Joins and other set operations
-

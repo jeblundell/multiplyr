@@ -35,7 +35,6 @@ Roadmap
 
 -   Any new bugfixes from first submission
 -   Optimisations
--   Minor dplyr functions not already implemented
 -   arrange descending
 -   Support for reading data tables
 -   alloc\_rows= parameter to Multiplyr
@@ -44,6 +43,5 @@ Roadmap
 
 -   Non-local cluster nodes
 -   Remote read.csv
--   Matrix operations (+/- GPU)
--   SQL
+-   Matrix operations
 -   Joins and other set operations
