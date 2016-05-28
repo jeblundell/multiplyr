@@ -5,3 +5,6 @@ library(testthat)
 library(multiplyr)
 
 test_check("multiplyr")
+
+#Attempt to stop "no function to return from, jumping to top level"
+gc()

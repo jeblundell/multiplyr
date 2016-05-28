@@ -131,4 +131,7 @@ test_that ("partition_group() gives errors if no grouping or non-Multiplyr", {
     rm (dat)
 })
 
+#Attempt to stop "no function to return from, jumping to top level"
+gc()
+
 parallel::stopCluster(cl2)

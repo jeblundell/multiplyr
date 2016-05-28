@@ -133,5 +133,8 @@ test_that ("arrange() throws an error for inappropriate sorting expressions", {
     rm (dat)
 })
 
+#Attempt to stop "no function to return from, jumping to top level"
+gc()
+
 parallel::stopCluster (cl1)
 parallel::stopCluster (cl2)

@@ -99,5 +99,8 @@ test_that ("filter() updates group sizes", {
     expect_equal (group_sizes(dat), c(50, 0))
 })
 
+#Attempt to stop "no function to return from, jumping to top level"
+gc()
+
 parallel::stopCluster (cl2)
 

@@ -20,21 +20,21 @@ test_that ("nsa() can set/unset NSA mode and throw errors", {
 test_that ("$get_data() can work in NSA-mode", {
     dat <- Multiplyr (A=rep(c("A", "B", "C", "D"), each=25), P=rep(c("p", "q"), length.out=100), cl=cl2)
 
-    expect_equal (dat$get_data (NULL, NULL, nsa=TRUE), 
+    expect_equal (dat$get_data (NULL, NULL, nsa=TRUE),
                   matrix(c(rep(1:4, each=25), rep(1:2, length.out=100)), ncol=2))
-    expect_equal (dat$get_data (NULL, c("P", "A"), nsa=TRUE), 
+    expect_equal (dat$get_data (NULL, c("P", "A"), nsa=TRUE),
                   matrix(c(rep(1:2, length.out=100), rep(1:4, each=25)), ncol=2))
     expect_equal (dat$get_data (NULL, "A", nsa=TRUE), rep(1:4, each=25))
     expect_equal (dat$get_data (NULL, "P", nsa=TRUE), rep(1:2, length.out=100))
 
     r <- 50:60
-    expect_equal (dat$get_data (r, c("P", "A"), nsa=TRUE), 
+    expect_equal (dat$get_data (r, c("P", "A"), nsa=TRUE),
                   matrix(c(rep(1:2, length.out=100)[r], rep(1:4, each=25)[r]), ncol=2))
     expect_equal (dat$get_data (r, "A", nsa=TRUE), rep(1:4, each=25)[r])
     expect_equal (dat$get_data (r, "P", nsa=TRUE), rep(1:2, length.out=100)[r])
 
     r <- rep(c(TRUE, FALSE, FALSE, TRUE), length.out=100)
-    expect_equal (dat$get_data (r, c("P", "A"), nsa=TRUE), 
+    expect_equal (dat$get_data (r, c("P", "A"), nsa=TRUE),
                   matrix(c(rep(1:2, length.out=100)[r], rep(1:4, each=25)[r]), ncol=2))
     expect_equal (dat$get_data (r, "A", nsa=TRUE), rep(1:4, each=25)[r])
     expect_equal (dat$get_data (r, "P", nsa=TRUE), rep(1:2, length.out=100)[r])
@@ -120,5 +120,8 @@ test_that ("within_node() works in NSA-mode", {
 
     rm (dat)
 })
+
+#Attempt to stop "no function to return from, jumping to top level"
+gc()
 
 parallel::stopCluster (cl2)

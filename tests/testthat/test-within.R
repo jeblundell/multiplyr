@@ -105,4 +105,7 @@ test_that ("within_node() throws errors", {
     expect_error (data.frame(x=1:100) %>% within_group({z <- x}), "Multiplyr")
 })
 
+#Attempt to stop "no function to return from, jumping to top level"
+gc()
+
 parallel::stopCluster(cl2)

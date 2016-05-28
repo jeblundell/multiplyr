@@ -181,4 +181,7 @@ test_that ("slice() throws errors for missing parameters/non-Multiplyr", {
     rm (dat)
 })
 
+#Attempt to stop "no function to return from, jumping to top level"
+gc()
+
 parallel::stopCluster(cl2)

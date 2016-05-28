@@ -96,5 +96,8 @@ test_that ("$compact() regroups grouped data", {
 #test_that ("within_group() works on non-compacted data", { })
 #test_that ("within_node() works on non-compacted data", { })
 
+#Attempt to stop "no function to return from, jumping to top level"
+gc()
+
 parallel::stopCluster (cl2)
 
