@@ -191,6 +191,13 @@ lead <- function (x, n=1, default=NA) {
 #' @family utility functions
 #' @return Number of items in current group (or node if ungrouped)
 #' @export
+#' @examples
+#' \donttest{
+#' dat <- Multiplyr (x=1:100, G=rep(1:4, each=25), cl=2)
+#' dat %>% group_by (G)
+#' dat %>% summarise (G.size = n())
+#' dat %>% shutdown()
+#' }
 n <- function () {
     if (exists(".local", inherits=TRUE)) {
         .local <- get(".local", inherits=TRUE)
