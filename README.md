@@ -40,12 +40,6 @@ install.packages ("multiplyr")
 Development
 -----------
 
-### Branches
-
--   master: represents the version currently in CRAN
--   stable: the latest commit from develop that passes all tests
--   develop: current state of development
-
 Install latest stable development version:
 
 ``` r
@@ -53,17 +47,8 @@ Install latest stable development version:
 devtools::install_github("jeblundell/multiplyr", ref="stable", build_vignettes = TRUE)
 ```
 
-### Plans for 0.1.1
+### Branches
 
--   Any new bugfixes from first submission
--   Optimisations
--   arrange descending
--   Support for reading data tables
--   alloc\_rows= parameter to Multiplyr
-
-### Plans for 0.2
-
--   Non-local cluster nodes
--   Remote read.csv
--   Matrix operations
--   Joins and other set operations
+-   master: represents the version currently in CRAN
+-   stable: the latest commit from develop that passes all tests
+-   develop: current state of development
