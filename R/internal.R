@@ -50,9 +50,13 @@ bm_morder <- function (x, cols, na.last=TRUE, decreasing=FALSE) {
     # Have left out checking whether just calling bigmemory::morder would be
     # more efficient here, so can do sensible unit testing. bm_mpermute will
     # check whether it's more efficient, though.
+    if (length(decreasing) == 1) {
+        decreasing <- rep(decreasing, length(cols))
+    } else if (length(decreasing) < length(cols)) {
+        decreasing <- c(decreasing, rep(decreasing[length(decreasing)], length(decreasing)-length(cols)))
+    }
     if (decreasing[1]) {
-        #would na.last=!na.last make sense here?
-        ord <- (nrow(x) + 1) - rank(x[, cols[1]], ties.method="min", na.last = na.last)
+        ord <- (nrow(x)+1) - rank(x[, cols[1]], ties.method="max", na.last = na.last)
     } else {
         ord <- rank(x[, cols[1]], ties.method="min", na.last = na.last)
     }
@@ -62,7 +66,7 @@ bm_morder <- function (x, cols, na.last=TRUE, decreasing=FALSE) {
         for (j in ties) {
             w <- ord == j
             if (decreasing[i]) {
-                ordbrk <- (sum(w)+1) - rank(x[w, cols[i]], ties.method="min", na.last=na.last)
+                ordbrk <- (sum(w)+1) - rank(x[w, cols[i]], ties.method="max", na.last=na.last)
             } else {
                 ordbrk <- rank(x[w, cols[i]], ties.method="min", na.last=na.last)
             }
@@ -71,7 +75,14 @@ bm_morder <- function (x, cols, na.last=TRUE, decreasing=FALSE) {
         ties <- nonunique (ord)
         i <- i + 1
     }
-    return (ord)
+    if (length(ties) > 0) {
+        for (j in ties) {
+            w <- ord == j
+            ord[w] <- (ord[w] - 1) + 1:sum(w)
+        }
+    }
+    #ord is actually a ranking, so turn it into an ordering vector
+    return (order(ord))
 }
 
 #' Extension of bigmemory::mpermute to allow decreasing parameter to be a vector
