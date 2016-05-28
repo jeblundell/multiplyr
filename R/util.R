@@ -25,7 +25,7 @@ cumall <- function (x) {
 
     m <- match (FALSE, x)
     if (is.na(m)) {
-        return (rep(FALSE, length(x)))
+        return (rep(TRUE, length(x)))
     } else {
         return (c(rep(TRUE, m-1), rep(FALSE, (length(x)-m)+1)))
     }
@@ -57,7 +57,7 @@ cumany <- function (x) {
 #' @return Cumulative mean of x
 #' @export
 cummean <- function (x) {
-    cumsum (x) / x
+    cumsum (x) / 1:length(x)
 }
 
 #' Calculations for how to distribute x items over N nodes
@@ -128,6 +128,9 @@ first <- function (x, default=NA) {
 #' @return Offset values
 #' @export
 lag <- function (x, n=1, default=NA) {
+    if (length(x) <= n) {
+        return (rep(default, n))
+    }
     c(rep(default, n), x[1:(length(x)-n)])
 }
 
@@ -154,6 +157,9 @@ last <- function (x, default=NA) {
 #' @return Offset values
 #' @export
 lead <- function (x, n=1, default=NA) {
+    if (length(x) <= n) {
+        return (rep(default, n))
+    }
     c(x[(n+1):length(x)],rep(default, n))
 }
 
