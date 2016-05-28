@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/jeblundell/multiplyr.svg?branch=develop)](https://travis-ci.org/jeblundell/multiplyr) [![](http://www.r-pkg.org/badges/version/multiplyr)](https://cran.r-project.org/web/packages/multiplyr/index.html) [![](http://cranlogs.r-pkg.org/badges/grand-total/multiplyr)](http://cran.rstudio.com/web/packages/grand-total/multiplyr/index.html)
+[![Build Status](https://travis-ci.org/jeblundell/multiplyr.svg?branch=develop)](https://travis-ci.org/jeblundell/multiplyr) [![](http://www.r-pkg.org/badges/version/multiplyr)](https://cran.r-project.org/web/packages/multiplyr/index.html) [![](http://cranlogs.r-pkg.org/badges/grand-total/multiplyr)](https://cran.r-project.org/web/packages/multiplyr/index.html)
 
 Overview
 --------
