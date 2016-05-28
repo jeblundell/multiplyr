@@ -351,5 +351,53 @@ test_that ("regroup() gives error if no previous group or if groupcol modified",
     rm (dat)
 })
 
+test_that ("n() throws an error when not called from a cluster", {
+    expect_error (n(), "within")
+})
+
+test_that ("n() returns the number of items in a node (unfiltered)", {
+    dat <- Multiplyr (x=1:100, alloc=1, cl=cl2)
+    dat %>% summarise (N=n())
+    expect_equal (dat["N"], c(50, 50))
+    rm (dat)
+})
+
+test_that ("n() returns the number of items in a node (filtered)", {
+    dat <- Multiplyr (x=1:100, auto_compact=FALSE, alloc=1, cl=cl2)
+    dat %>% filter (x<=75)
+    dat %>% summarise (N=n())
+    expect_equal (dat["N"], c(50, 25))
+    rm (dat)
+})
+
+test_that ("n() returns the number of items in a group (unfiltered)", {
+    dat <- Multiplyr (x=1:100, G=rep(1:4, each=25), cl=cl2, alloc=1)
+    dat %>% group_by (G)
+    dat %>% summarise (N=n())
+    expect_equal (dat["N"], rep(25, 4))
+    rm (dat)
+})
+
+#test_that ("n() returns the number of items in a group (filtered)", {
+#    dat <- Multiplyr (x=1:100, G=rep(1:4, each=25), cl=cl2, alloc=1, auto_compact=FALSE)
+#    dat %>% group_by (G)
+#    dat %>% filter (x <= 50)
+#    dat %>% summarise (N=n())
+#    expect_equal (dat["N"], c(25, 25, 0, 0))
+#    rm (dat)
+#})
+
+test_that ("n_groups() returns number of groups", {
+    dat <- Multiplyr (x=1:100, G=rep(1:4, each=25), cl=cl2)
+    expect_equal (n_groups(dat), 0)
+    dat %>% group_by (G)
+    expect_equal (n_groups(dat), 4)
+    dat %>% ungroup()
+    expect_equal (n_groups(dat), 0)
+    dat %>% regroup()
+    expect_equal (n_groups(dat), 4)
+    rm (dat)
+})
+
 parallel::stopCluster(cl1)
 parallel::stopCluster(cl2)

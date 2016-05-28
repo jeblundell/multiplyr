@@ -170,7 +170,12 @@ lead <- function (x, n=1, default=NA) {
 #' @export
 n <- function () {
     if (exists(".local", inherits=TRUE)) {
-        return (nrow(get(".local", inherits=TRUE)$bm))
+        .local <- get(".local", inherits=TRUE)
+        if (.local$filtered) {
+            return (sum(.local$bm[, .local$filtercol]))
+        } else {
+            return (nrow(.local$bm))
+        }
     } else {
         stop ("This function may only be used within mutate, transmute etc.")
     }
