@@ -19,7 +19,7 @@ Add a new column with row names
 }
 \examples{
 \donttest{
-dat <- Multiplyr (x=rnorm(100), cl=2)
+dat <- Multiplyr (x=rnorm(100), alloc=1, cl=2)
 dat \%>\% add_rownames()
 dat \%>\% shutdown()
 }
