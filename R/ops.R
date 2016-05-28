@@ -177,39 +177,39 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
         } else {
             if (nrow(.local$bm) == 1) {
                 .breaks <- 1
-                return (1)
+                .res <- 1
             } else if (nrow(.local$bm) == 2) {
                 i <- ifelse (all(.local$bm[1, .cols] ==
                                      .local$bm[2, .cols]), 1, 2)
                 .breaks <- 1:i
-                return (i)
-            }
-
-            .sm1 <- bigmemory.sri::attach.resource(sm_desc_comp (.local, 1))
-            .sm2 <- bigmemory.sri::attach.resource(sm_desc_comp (.local, 2))
-
-            if (length(.cols) == 1) {
-                .breaks <- which (.sm1[,.cols] != .sm2[,.cols])
-                .breaks <- .breaks + 1
-                .res <- .local$last
+                .res <- i
             } else {
-                if (nrow(.local$bm) == 1) {
-                    .breaks <- 1
-                    .res <- 1
-                } else if (nrow(.local$bm) == 2) {
-                    i <- ifelse (all(.local$bm[1, .cols] ==
-                                         .local$bm[2, .cols]), 1, 2)
-                    .breaks <- 1:i
-                    .res <- i
-                } else {
-                    if (length(.cols) == 1) {
-                        .breaks <- which (.sm1[,.cols] != .sm2[,.cols])
-                    } else {
-                        .breaks <- which (!apply (.sm1[,.cols] == .sm2[,.cols], 1, all))
-                    }
-                    rm (.sm1, .sm2)
+                .sm1 <- bigmemory.sri::attach.resource(sm_desc_comp (.local, 1))
+                .sm2 <- bigmemory.sri::attach.resource(sm_desc_comp (.local, 2))
+
+                if (length(.cols) == 1) {
+                    .breaks <- which (.sm1[,.cols] != .sm2[,.cols])
                     .breaks <- .breaks + 1
                     .res <- .local$last
+                } else {
+                    if (nrow(.local$bm) == 1) {
+                        .breaks <- 1
+                        .res <- 1
+                    } else if (nrow(.local$bm) == 2) {
+                        i <- ifelse (all(.local$bm[1, .cols] ==
+                                             .local$bm[2, .cols]), 1, 2)
+                        .breaks <- 1:i
+                        .res <- i
+                    } else {
+                        if (length(.cols) == 1) {
+                            .breaks <- which (.sm1[,.cols] != .sm2[,.cols])
+                        } else {
+                            .breaks <- which (!apply (.sm1[,.cols] == .sm2[,.cols], 1, all))
+                        }
+                        rm (.sm1, .sm2)
+                        .breaks <- .breaks + 1
+                        .res <- .local$last
+                    }
                 }
             }
         }
