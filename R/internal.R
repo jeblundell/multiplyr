@@ -82,7 +82,8 @@ bm_morder <- function (x, cols, na.last=TRUE, decreasing=FALSE) {
         }
     }
     #ord is actually a ranking, so turn it into an ordering vector
-    return (order(ord))
+    #as.numeric needed due to bigmemory::mpermute throwing a strop
+    return (as.numeric(order(ord)))
 }
 
 #' Extension of bigmemory::mpermute to allow decreasing parameter to be a vector
