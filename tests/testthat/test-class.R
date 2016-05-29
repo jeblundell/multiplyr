@@ -696,11 +696,10 @@ test_that ("$row_names() works appropriately", {
 
 test_that ("$set_data(NULL, NULL) sets entire dataset", {
     dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
-    dat.df <- data.frame (x=100:1, G=rep(c("A", "B"), length.out=100), stringsAsFactors = FALSE)
-    dat$set_data(NULL, NULL, dat.df)
-    expect_equivalent (dat$get_data(NULL, NULL), dat.df)
-    rm (dat.df)
+    dat$set_data(NULL, NULL, data.frame (x=100:1, G=rep(c("A", "B"), length.out=100), stringsAsFactors = FALSE))
+    expect_equivalent (dat$get_data(NULL, NULL), data.frame (x=100:1, G=rep(c("A", "B"), length.out=100), stringsAsFactors = FALSE))
 })
+
 test_that ("$set_data(i, NULL) sets a row slice", {
     dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=cl2)
     dat$set_data (1:10, NULL, data.frame(x=10:1, G=rep("B", 10)))
