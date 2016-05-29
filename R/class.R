@@ -115,6 +115,7 @@ initialize = function (..., alloc=0, cl=NULL,
                        profiling=TRUE) {
     "Constructor"
 
+    dots <- dotscapture (...)
     vars <- list(...)
 
     #Default/NULL values
@@ -160,7 +161,6 @@ initialize = function (..., alloc=0, cl=NULL,
         return()
     }
 
-    dots <- dotscapture (...)
     vnames <- names(dots)
 
     profile ("start", "initialize")

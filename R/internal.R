@@ -140,13 +140,7 @@ bm_mpermute <- function (x, order=NULL, cols=NULL, allow.duplicates=FALSE, decre
 #' dotseval (dots, sys.frame())
 #' }
 dotscapture <- function (...) {
-    dots <- lazyeval::auto_name (lazyeval::lazy_dots(...))
-    if (length(dots) > 0) {
-        for (i in 1:length(dots)) {
-            dots[[i]]$env <- NULL
-        }
-    }
-    dots
+    lazyeval::auto_name (lazyeval::lazy_dots(...))
 }
 
 #' Combine explicit and implicit dots
