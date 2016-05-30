@@ -415,7 +415,7 @@ cluster_start = function (cl=NULL) {
     "Starts a cluster with cl cores if cl is numeric, detectCores()-1 if cl is NULL, or uses specified existing cluster"
     cls.created <<- is.null(cl) || is.numeric(cl)
     if (is.null (cl)) {
-        cl <- max (1, parallel::detectCores() - 1)
+        cl <- max (1, getOption("multiplyr.cores"))
         cls <<- parallel::makeCluster (cl)
     } else if (is.numeric(cl)) {
         cls <<- parallel::makeCluster(cl)

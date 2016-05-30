@@ -79,3 +79,14 @@ if(getRversion() >= "2.15.1") {
                              ".local", ".rows", ".start", ".tg", ".gcdesc",
                              ".offset"))
 }
+
+.onLoad <- function (libname, pkgname) {
+    op <- options()
+    op.multiplyr <- list(
+        multiplyr.cores = as.numeric (Sys.getenv ("R_MULTIPLYR_CORES", unset=parallel::detectCores()-1))
+    )
+    toset <- (!names(op.multiplyr) %in% names(op))
+    if (any(toset)) {
+        options(op.multiplyr[toset])
+    }
+}
