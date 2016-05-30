@@ -1,18 +1,26 @@
 language: r
-sudo: true
+sudo: false
 cache: packages
 branches:
     only:
         - master
         - stable
         - develop
-r:
-    - oldrel
-    - release
-    - devel
-os:
-    - linux
-r_check_args: --as-cran --run-donttest --run-dontrun
+matrix:
+    include:
+    - os: linux
+      r: devel
+      r_check_args: --as-cran --run-dontrun --run-donttest
+    - os: linux
+      r: release
+      r_check_args: --as-cran --run-dontrun --run-donttest
+    - os: linux
+      r: oldrel
+      r_check_args: --as-cran --run-dontrun --run-donttest
+    - os: osx
+      r: release
+      r_build_args: --no-build-vignettes --no-manual
+      r_check_args: --no-build-vignettes --no-manual --as-cran --run-dontrun --run-donttest
 r_github_packages:
   - jimhester/covr
 after_success:
