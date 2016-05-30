@@ -21,6 +21,7 @@ matrix:
       r: release
       r_build_args: --no-build-vignettes --no-manual
       r_check_args: --no-build-vignettes --no-vignettes --no-codoc --no-manual --as-cran --run-dontrun --run-donttest
+      warnings_are_errors: false
 r_github_packages:
   - jimhester/covr
 after_success:
