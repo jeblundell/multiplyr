@@ -40,16 +40,16 @@ arrange_ <- function (.self, ..., .dots) {
     sort.names <- c()
     sort.desc <- c()
     for (i in 1:length(.dots)) {
-        if (length(.dots[[i]]$expr) == 1) {
-            sort.names <- c(sort.names, as.character(.dots[[i]]$expr))
+        if (length(.dots[[i]]) == 1) {
+            sort.names <- c(sort.names, as.character(.dots[[i]]))
             sort.desc <- c(sort.desc, FALSE)
         } else {
-            fn <- as.character(.dots[[i]]$expr[[1]])
-            if (length(.dots[[i]]$expr) == 2 && fn == "desc") {
-                sort.names <- c(sort.names, as.character(.dots[[i]]$expr[[2]]))
+            fn <- as.character(.dots[[i]][[1]])
+            if (length(.dots[[i]]) == 2 && fn == "desc") {
+                sort.names <- c(sort.names, as.character(.dots[[i]][[2]]))
                 sort.desc <- c(sort.desc, TRUE)
             } else {
-                stop (paste0 ("arrange can't handle sorting expression: ", deparse(.dots[[i]]$expr)))
+                stop (paste0 ("arrange can't handle sorting expression: ", deparse(.dots[[i]])))
             }
         }
     }
@@ -73,17 +73,14 @@ define_ <- function (.self, ..., .dots) {
         stop ("No column names specified")
     }
     nm <- names(.dots)
-    vars <- .dots2names (.dots)
-    if (any(vars %in% .self$col.names)) {
-        stop (sprintf("Columns already defined: %s", paste0(.self$col.names[.self$col.names %in% vars], collapse=", ")))
+    if (any(nm %in% .self$col.names)) {
+        stop (sprintf("Columns already defined: %s", paste0(.self$col.names[.self$col.names %in% nm], collapse=", ")))
     }
     for (i in 1:length(.dots)) {
-        if (nm[i] == "") { #x
-            .self$alloc_col (vars[i])
-        } else {           #x=y
-            col <- .self$alloc_col (vars[i])
+        col <- .self$alloc_col (nm[i])
+        if (nm[i] != as.character(.dots[[i]])) { #x=y
             #Set type based on template
-            tpl <- as.character(.dots[[i]]$expr)
+            tpl <- as.character(.dots[[i]])
             tcol <- match (tpl, .self$col.names)
             .self$type.cols[col] <- .self$type.cols[tcol]
 
@@ -116,7 +113,7 @@ distinct_ <- function (.self, ..., .dots, auto_compact = NULL) {
     N <- length (.self$cls)
 
     if (length(.dots) > 0) {
-        namelist <- .dots2names (.dots)
+        namelist <- names (.dots)
         .cols <- match(namelist, .self$col.names)
         if (any(is.na(.cols))) {
             stop (sprintf("Undefined columns: %s", paste0(namelist[is.na(.cols)], collapse=", ")))
@@ -330,7 +327,7 @@ group_by_ <- function (.self, ..., .dots, .cols=NULL, auto_partition=NULL) {
 
     if (is.null(.cols)) {
         .dots <- dotscombine (.dots, ...)
-        namelist <- .dots2names (.dots)
+        namelist <- names (.dots)
 
         .cols <- match(namelist, .self$col.names)
         if (any(is.na(.cols))) {
@@ -778,7 +775,7 @@ rename_ <- function (.self, ..., .dots) {
         stop ("No renaming operations specified")
     }
     newnames <- names(.dots)
-    oldnames <- as.vector (vapply (.dots, function (x) { as.character (x$expr) }, ""))
+    oldnames <- simplify2array (as.character(.dots))
     m <- match(oldnames, .self$col.names)
     if (any(is.na(m))) {
         stop (sprintf("Undefined columns: %s", paste0(oldnames[is.na(m)], collapse=", ")))
@@ -798,7 +795,7 @@ select_ <- function (.self, ..., .dots) {
     if (length(.dots) == 0) {
         stop ("No select columns specified")
     }
-    coln <- as.vector (vapply (.dots, function (x) { as.character (x$expr) }, ""))
+    coln <- simplify2array (as.character(.dots))
     cols <- match (coln, .self$col.names)
     if (any(is.na(cols))) {
         stop (sprintf("Undefined columns: %s", paste0(coln[is.na(cols)], collapse=", ")))
@@ -1110,7 +1107,7 @@ undefine_ <- function (.self, ..., .dots) {
         stop ("No undefine operations specified")
     }
 
-    dropnames <- .dots2names (.dots)
+    dropnames <- names (.dots)
     dropcols <- match (dropnames, .self$col.names)
     if (any(is.na(dropcols))) {
         stop (sprintf("Undefined columns: %s", paste0(dropnames[is.na(dropcols)], collapse=", ")))

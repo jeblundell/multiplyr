@@ -1328,7 +1328,7 @@ sort = function (decreasing=FALSE, dots=NULL, cols=NULL, with.group=TRUE) {
     if (empty) { return() }
     profile ("start", "sort")
     if (is.null(cols)) {
-        namelist <- .dots2names (dots)
+        namelist <- names (dots)
         cols <- match(namelist, col.names)
         if (any(is.na(cols))) {
             stop (.p("Undefined column(s): ", paste0(namelist[is.na(cols)], collapse=", ")))

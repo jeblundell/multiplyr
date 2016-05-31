@@ -4,7 +4,7 @@
 \alias{dotseval}
 \title{Evaluate previously captured dots}
 \usage{
-dotseval(dots, env)
+dotseval(expr, envir)
 }
 \arguments{
 \item{dots}{Captured ... from \code{\link{dotscapture}}}

@@ -15,30 +15,6 @@
     paste0 (..., collapse="")
 }
 
-#' Extract names from a lazy_dots object (internal)
-#'
-#' This will take a lazy_dots object and will extract all the names from it
-#'
-#' @param dots Lazy dots object
-#' @return Vector of names
-#' @export
-#' @keywords internal
-#' @rdname dots2names
-#' @examples
-#' \donttest{
-#' f <- function (...) { lazyeval::lazy_dots (...) }
-#' dots <- f(x, y=z)
-#' .dots2names (dots)
-#' }
-.dots2names <- function (dots) {
-    nm <- names (dots)
-    exprs <- nm == ""
-    if (any(exprs)) {
-        nm[exprs] <- as.vector (sapply (dots[exprs], function (x) { as.character (x$expr) }))
-    }
-    return (nm)
-}
-
 #' Extension of bigmemory::morder to allow decreasing parameter to be a vector
 #'
 #' @param x bigmemmory::big.matrix
@@ -140,7 +116,7 @@ bm_mpermute <- function (x, order=NULL, cols=NULL, allow.duplicates=FALSE, decre
 #' dotseval (dots, sys.frame())
 #' }
 dotscapture <- function (...) {
-    lazyeval::auto_name (lazyeval::lazy_dots(...))
+    dotsname (eval(substitute(alist(...))))
 }
 
 #' Combine explicit and implicit dots
@@ -149,7 +125,11 @@ dotscapture <- function (...) {
 #' @keywords internal
 #' @export
 dotscombine <- function (dots, ...) {
-    lazyeval::all_dots (dots, ..., all_named=TRUE)
+    newdots <- dotscapture (...)
+    if (missing(dots)) {
+        return (newdots)
+    }
+    append(dots, newdots)
 }
 
 #' Evaluate previously captured dots
@@ -166,9 +146,40 @@ dotscombine <- function (dots, ...) {
 #' dots <- f (x)
 #' dotseval (dots, sys.frame())
 #' }
-dotseval <- function (dots, env) {
-    lazyeval::lazy_eval (dots, env)
+dotseval <- function (expr, envir) {
+    lapply (expr, eval, env=envir, enclos=envir)
 }
+
+#' Ensure captured dots are all named
+#'
+#' @param dots Captured dots
+#' @return Captured dots, all named
+#' @export
+#' @keywords internal
+dotsname <- function (dots) {
+    nm <- names(dots)
+    if (is.null(nm)) {
+        nm <- rep("", length(dots))
+    }
+    neednames <- which (nm == "")
+    nm[neednames] <- vapply (dots[neednames], dotsname1, character(1), USE.NAMES=FALSE)
+    names(dots) <- nm
+    dots
+}
+
+#' Name an expression (called by dotsname)
+#'
+#' @param expr Expression
+#' @return Name of expression
+#' @export
+#' @keywords internal
+dotsname1 <- function (expr) {
+    if (is.symbol(expr)) {
+        return (as.character(expr))
+    }
+    return (deparse (expr))
+}
+
 
 #' Returns NA of a particular class
 #'

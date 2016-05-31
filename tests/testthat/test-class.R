@@ -794,7 +794,7 @@ test_that ("$sort() returns sorted data", {
     expect_equal (dat["G"], rep(c("A", "B"), length.out=100))
     dat %>% ungroup()
 
-    f <- function (...) { lazyeval::lazy_dots (...) }
+    f <- function (...) { dotscapture (...) }
 
     .dots <- f(y)
     dat$sort (decreasing=FALSE, dots=.dots)
