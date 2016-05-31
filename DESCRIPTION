@@ -5,7 +5,7 @@ Description: Provides a new form of data frame backed by shared memory matrices
     and a way to manipulate them. Upon creation these data frames are shared across
     multiple local nodes to allow for simple parallel processing.
 Version: 0.1.1
-Date: 2016-05-29
+Date: 2016-05-31
 Maintainer: Jim Blundell <jeblundell@doctors.org.uk>
 Authors@R: c(person(given="Jim", family="Blundell", role = c("aut", "cre", "cph"), email = "jeblundell@doctors.org.uk"))
 URL: http://github.com/jeblundell/multiplyr/
