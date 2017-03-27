@@ -299,7 +299,7 @@ calc_group_sizes = function (delay=TRUE) {
     } else if (!filtered) {
         group_cache[, 3] <<- (group_cache[, 2] - group_cache[, 1]) + 1
         if (any(group_cache[, 1] == 0)) {
-            group_cache[group_cache[, 1] == 0, 3] <<- 0
+            group_cache[which(group_cache[, 1] == 0), 3] <<- 0
         }
     } else {
         N <- length(cls)
@@ -516,7 +516,7 @@ compact = function () {
     if (grouped) {
         .self$sort (decreasing=FALSE, cols=rg_cols, with.group=FALSE)
         nonempty <- (1:group_max) %in% .self$bm[, .self$groupcol]
-        group_cache[!nonempty, 1:3] <<- rep(0, 3)
+        group_cache[which(!nonempty), 1:3] <<- rep(0, 3)
         nonempty <- which (nonempty)
 
         for (g in nonempty) {
