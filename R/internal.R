@@ -268,8 +268,10 @@ sm_desc_subset <- function (.self, first, last) {
 #' @export
 #' @keywords internal
 sm_desc_update <- function (desc, first, last) {
-    desc@description$rowOffset <- desc@description$rowOffset + first - 1
-    desc@description$nrow <- last - first + 1
+    desc@description$rowOffset <- c(
+        (desc@description$rowOffset[1] + first) - 1,
+        (last-first)+1)
+    desc@description$nrow <- (last - first)+1
     return (desc)
 }
 
