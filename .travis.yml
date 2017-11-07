@@ -24,5 +24,6 @@ matrix:
       warnings_are_errors: false
 r_github_packages:
   - jimhester/covr
+  - kaneplusplus/bigmemory
 after_success:
   - Rscript -e 'covr::codecov()'
