@@ -40,4 +40,3 @@ Other data manipulations: \code{\link{mutate}},
   \code{\link{summarise}}, \code{\link{transmute}},
   \code{\link{within_node}}
 }
-

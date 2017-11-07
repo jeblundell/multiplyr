@@ -16,4 +16,3 @@ Captured dots, all named
 Ensure captured dots are all named
 }
 \keyword{internal}
-

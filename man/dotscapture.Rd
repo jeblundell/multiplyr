@@ -24,4 +24,3 @@ dotseval (dots, sys.frame())
 }
 }
 \keyword{internal}
-

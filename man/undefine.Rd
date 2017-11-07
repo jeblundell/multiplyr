@@ -2,8 +2,8 @@
 % Please edit documentation in R/nse.R, R/ops.R
 \name{undefine}
 \alias{undefine}
-\alias{undefine_}
 \alias{unselect}
+\alias{undefine_}
 \alias{unselect_}
 \title{Delete variables}
 \usage{
@@ -40,4 +40,3 @@ Other column manipulations: \code{\link{add_rownames}},
   \code{\link{define}}, \code{\link{rename}},
   \code{\link{select}}
 }
-

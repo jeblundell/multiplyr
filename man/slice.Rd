@@ -43,4 +43,3 @@ Other row manipulations: \code{\link{arrange}},
   \code{\link{distinct}}, \code{\link{filter}},
   \code{\link{group_by}}
 }
-

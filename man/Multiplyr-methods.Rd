@@ -4,6 +4,7 @@
 \name{Multiplyr-methods}
 \alias{Multiplyr-methods}
 \alias{[,Multiplyr,ANY,ANY,ANY-method}
+\alias{[<-,Multiplyr,ANY,ANY,ANY-method}
 \alias{[<-,Multiplyr,ANY,ANY-method}
 \alias{as.data.frame,Multiplyr-method}
 \alias{dimnames,Multiplyr-method}
@@ -13,7 +14,7 @@
 \usage{
 \S4method{[}{Multiplyr,ANY,ANY,ANY}(x, i, j, ..., drop = TRUE)
 
-\S4method{[}{Multiplyr,ANY,ANY}(x, i, j, ...) <- value
+\S4method{[}{Multiplyr,ANY,ANY,ANY}(x, i, j, ...) <- value
 
 \S4method{as.data.frame}{Multiplyr}(x)
 
@@ -51,4 +52,3 @@ Column names
 
 Row names
 }
-

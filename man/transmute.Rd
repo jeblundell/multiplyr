@@ -35,4 +35,3 @@ Other data manipulations: \code{\link{mutate}},
   \code{\link{summarise}}, \code{\link{within_group}},
   \code{\link{within_node}}
 }
-

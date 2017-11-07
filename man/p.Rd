@@ -19,4 +19,3 @@ Shorthand for concatenating strings together
 cat (.p("hello ", "world!"))
 }
 \keyword{internal}
-

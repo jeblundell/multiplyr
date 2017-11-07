@@ -1413,7 +1413,7 @@ setMethod ("[", "Multiplyr", function (x, i, j, ..., drop=TRUE) {
 #' Set data
 #'
 #' @rdname Multiplyr-methods
-#' @aliases [<-,Multiplyr,ANY,ANY-method
+#' @aliases [<-,Multiplyr,ANY,ANY-method [<-,Multiplyr,ANY,ANY,ANY-method
 #' @method [<- Multiplyr
 #' @docType methods
 #' @export

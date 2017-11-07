@@ -36,4 +36,3 @@ bm_mpermute (bm, cols=1, decreasing=c(FALSE, TRUE))
 }
 }
 \keyword{internal}
-

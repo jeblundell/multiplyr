@@ -32,4 +32,3 @@ Other utility functions: \code{\link{between}},
   \code{\link{n_distinct}}, \code{\link{n_groups}},
   \code{\link{n}}
 }
-

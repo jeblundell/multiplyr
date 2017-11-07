@@ -40,4 +40,3 @@ dat \%>\% shutdown()
 Other cluster functions: \code{\link{partition_even}},
   \code{\link{shutdown}}
 }
-

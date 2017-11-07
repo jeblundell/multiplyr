@@ -29,4 +29,3 @@ Other column manipulations: \code{\link{define}},
   \code{\link{rename}}, \code{\link{select}},
   \code{\link{undefine}}
 }
-

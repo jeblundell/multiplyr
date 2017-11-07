@@ -4,15 +4,15 @@ Title: Data Manipulation with Parallelism and Shared Memory Matrices
 Description: Provides a new form of data frame backed by shared memory matrices
     and a way to manipulate them. Upon creation these data frames are shared across
     multiple local nodes to allow for simple parallel processing.
-Version: 0.1.1.9000
-Date: 2016-05-31
+Version: 0.1.2
+Date: 2017-11-07
 Maintainer: Jim Blundell <jeblundell@doctors.org.uk>
 Authors@R: c(person(given="Jim", family="Blundell", role = c("aut", "cre", "cph"), email = "jeblundell@doctors.org.uk"))
 URL: http://github.com/jeblundell/multiplyr/
 BugReports: https://github.com/jeblundell/multiplyr/issues/new
 License: GPL-3
 Imports:
-    bigmemory (>= 4.5.19),
+    bigmemory (>= 4.5.25),
     bigmemory.sri (>= 0.1.3),
     parallel,
     methods
@@ -24,4 +24,4 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1

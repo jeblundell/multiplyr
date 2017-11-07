@@ -23,4 +23,3 @@ the descriptor that describe(new.sub.big.matrix) would do, but in a fraction
 of the time.
 }
 \keyword{internal}
-

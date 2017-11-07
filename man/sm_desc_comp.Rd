@@ -18,4 +18,3 @@ big.matrix.descriptor subset to 1:last-1 or 2:last
 Returns big.matrix descriptor offset by 1 (for row by row comparisons)
 }
 \keyword{internal}
-

@@ -23,4 +23,3 @@ group_sizes (dat)
 dat \%>\% shutdown()
 }
 }
-

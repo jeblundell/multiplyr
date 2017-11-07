@@ -1,3 +1,6 @@
+## multiplyr 0.1.2
+- Update to ensure functionality with new version of bigmemory
+
 ## multiplyr 0.1.1
 - Fixed "no function to return from" bug
 - Group boundaries are now cached and distributed by shared memory matrix

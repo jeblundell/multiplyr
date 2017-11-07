@@ -13,4 +13,3 @@ Dots object for use with \code{\link{dotseval}}
 Combine explicit and implicit dots
 }
 \keyword{internal}
-

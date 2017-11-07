@@ -20,4 +20,3 @@ big.matrix.descriptor that would restrict to this group
 Returns big.matrix descriptor limited to particular start/end row
 }
 \keyword{internal}
-

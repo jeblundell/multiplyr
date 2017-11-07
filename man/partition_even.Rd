@@ -20,4 +20,3 @@ ignoring any grouping variables.
 Other cluster functions: \code{\link{partition_group}},
   \code{\link{shutdown}}
 }
-

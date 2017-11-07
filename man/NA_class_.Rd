@@ -22,4 +22,3 @@ nacls <- NA_class_ ("SOCKcluster")
 }
 }
 \keyword{internal}
-

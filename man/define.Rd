@@ -35,4 +35,3 @@ Other column manipulations: \code{\link{add_rownames}},
   \code{\link{rename}}, \code{\link{select}},
   \code{\link{undefine}}
 }
-

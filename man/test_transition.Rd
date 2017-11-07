@@ -23,4 +23,3 @@ last row of one cluster and the first of the next needs to be tested on the
 master node.
 }
 \keyword{internal}
-

@@ -31,4 +31,3 @@ bm_morder (bm, cols=1, decreasing=c(FALSE, TRUE))
 }
 }
 \keyword{internal}
-

@@ -22,4 +22,3 @@ dat \%>\% shutdown()
 \seealso{
 \code{\link{arrange}}
 }
-

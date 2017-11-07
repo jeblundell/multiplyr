@@ -41,4 +41,3 @@ Other row manipulations: \code{\link{distinct}},
   \code{\link{filter}}, \code{\link{group_by}},
   \code{\link{slice}}
 }
-

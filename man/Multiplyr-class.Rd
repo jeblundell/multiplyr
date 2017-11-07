@@ -2,8 +2,8 @@
 % Please edit documentation in R/class.R
 \docType{class}
 \name{Multiplyr-class}
-\alias{Multiplyr}
 \alias{Multiplyr-class}
+\alias{Multiplyr}
 \title{Parallel processing data frame}
 \arguments{
 \item{...}{Either a data frame or a list of name=value pairs}
@@ -104,6 +104,7 @@ to get a better overview: \code{vignette("basics")}
 
 \item{\code{type.cols}}{Column type (0=numeric, 1=character, 2=factor)}
 }}
+
 \section{Methods}{
 
 \describe{
@@ -180,6 +181,7 @@ to get a better overview: \code{vignette("basics")}
 
 \item{\code{update_fields(fieldnames)}}{Update specified cluster data frames' field names to be the same as this one's}
 }}
+
 \examples{
 \donttest{
 dat <- Multiplyr (x=1:100, G=rep(c("A", "B"), each=50), cl=2)
@@ -189,4 +191,3 @@ dat <- Multiplyr (dat.df, cl=2)
 dat \%>\% shutdown()
 }
 }
-

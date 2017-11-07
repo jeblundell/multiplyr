@@ -37,4 +37,3 @@ Other data manipulations: \code{\link{mutate}},
   \code{\link{transmute}}, \code{\link{within_group}},
   \code{\link{within_node}}
 }
-

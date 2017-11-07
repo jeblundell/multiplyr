@@ -33,4 +33,3 @@ Other utility functions: \code{\link{cumall}},
   \code{\link{n_groups}}, \code{\link{nth}},
   \code{\link{n}}
 }
-

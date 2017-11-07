@@ -18,4 +18,3 @@ big.matrix.descriptor that would restrict to this group
 Returns a big.matrix descriptor for a particular group ID
 }
 \keyword{internal}
-

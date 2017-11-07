@@ -18,4 +18,3 @@ execute it explicitly. This does not affect any of the data.
 Other cluster functions: \code{\link{partition_even}},
   \code{\link{partition_group}}
 }
-

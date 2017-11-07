@@ -16,4 +16,3 @@ Name of expression
 Name an expression (called by dotsname)
 }
 \keyword{internal}
-
